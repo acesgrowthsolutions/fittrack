@@ -1,0 +1,283 @@
+"use client";
+
+import { useState, useMemo } from "react";
+import Link from "next/link";
+import { Calculator, Flame } from "lucide-react";
+import { UserProfile } from "@/components/auth/user-profile";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useSession } from "@/lib/auth-client";
+
+/**
+ * MET (Metabolic Equivalent of Task) values for common exercises.
+ * Source: Compendium of Physical Activities.
+ */
+const EXERCISE_TYPES = [
+  { value: "running", label: "Running", met: 9.8 },
+  { value: "cycling", label: "Cycling", met: 7.5 },
+  { value: "strength", label: "Strength Training", met: 6.0 },
+  { value: "hiit", label: "HIIT", met: 8.0 },
+  { value: "yoga", label: "Yoga", met: 3.0 },
+  { value: "swimming", label: "Swimming", met: 8.0 },
+  { value: "walking", label: "Walking", met: 3.8 },
+  { value: "other", label: "Other", met: 5.0 },
+] as const;
+
+type WeightUnit = "kg" | "lbs";
+
+const LBS_TO_KG = 0.453592;
+
+/**
+ * Calculates calories burned per minute using the standard MET formula.
+ * Formula: (MET x weight_kg x 3.5) / 200
+ */
+function calculateCaloriesPerMinute(met: number, weightKg: number): number {
+  return (met * weightKg * 3.5) / 200;
+}
+
+export default function CalculatorPage() {
+  const { data: session, isPending } = useSession();
+
+  const [exerciseType, setExerciseType] = useState<string>("");
+  const [weight, setWeight] = useState<string>("");
+  const [weightUnit, setWeightUnit] = useState<WeightUnit>("lbs");
+  const [duration, setDuration] = useState<string>("");
+  const [showResults, setShowResults] = useState(false);
+
+  const selectedExercise = useMemo(
+    () => EXERCISE_TYPES.find((e) => e.value === exerciseType),
+    [exerciseType]
+  );
+
+  const results = useMemo(() => {
+    const weightNum = parseFloat(weight);
+    const durationNum = parseFloat(duration);
+
+    if (!selectedExercise || isNaN(weightNum) || weightNum <= 0) {
+      return null;
+    }
+
+    const weightKg =
+      weightUnit === "lbs" ? weightNum * LBS_TO_KG : weightNum;
+    const calPerMin = calculateCaloriesPerMinute(
+      selectedExercise.met,
+      weightKg
+    );
+
+    // Only include total if duration is valid
+    const totalCal =
+      !isNaN(durationNum) && durationNum > 0
+        ? calPerMin * durationNum
+        : null;
+
+    return { calPerMin, totalCal, met: selectedExercise.met };
+  }, [selectedExercise, weight, weightUnit, duration]);
+
+  const isFormValid =
+    exerciseType !== "" && weight !== "" && parseFloat(weight) > 0;
+
+  function handleCalculate() {
+    setShowResults(true);
+  }
+
+  function handleReset() {
+    setExerciseType("");
+    setWeight("");
+    setWeightUnit("lbs");
+    setDuration("");
+    setShowResults(false);
+  }
+
+  if (isPending) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="max-w-lg mx-auto space-y-4">
+          <div className="h-8 w-64 rounded bg-muted animate-pulse" />
+          <div className="h-96 rounded bg-muted animate-pulse" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return (
+      <div className="container mx-auto px-4 py-12 text-center">
+        <p className="text-muted-foreground mb-4">
+          Sign in to use the calorie calculator
+        </p>
+        <UserProfile />
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto p-6 space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold">Calorie Calculator</h1>
+        <p className="text-muted-foreground">
+          Estimate calories burned per minute for any exercise
+        </p>
+      </div>
+
+      <div className="max-w-lg mx-auto space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Calculator className="h-5 w-5" />
+              Exercise Details
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Exercise Type */}
+            <div className="space-y-2">
+              <Label htmlFor="exercise-type">Exercise Type</Label>
+              <Select value={exerciseType} onValueChange={setExerciseType}>
+                <SelectTrigger id="exercise-type" className="w-full">
+                  <SelectValue placeholder="Select an exercise" />
+                </SelectTrigger>
+                <SelectContent>
+                  {EXERCISE_TYPES.map((exercise) => (
+                    <SelectItem key={exercise.value} value={exercise.value}>
+                      {exercise.label} (MET: {exercise.met})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Weight */}
+            <div className="space-y-2">
+              <Label htmlFor="weight">Body Weight</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="weight"
+                  type="number"
+                  min="1"
+                  step="0.1"
+                  placeholder="Enter weight"
+                  value={weight}
+                  onChange={(e) => setWeight(e.target.value)}
+                  className="flex-1"
+                />
+                <Select
+                  value={weightUnit}
+                  onValueChange={(v) => setWeightUnit(v as WeightUnit)}
+                >
+                  <SelectTrigger className="w-20">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="lbs">lbs</SelectItem>
+                    <SelectItem value="kg">kg</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Duration */}
+            <div className="space-y-2">
+              <Label htmlFor="duration">
+                Duration (minutes){" "}
+                <span className="text-muted-foreground font-normal">
+                  - optional
+                </span>
+              </Label>
+              <Input
+                id="duration"
+                type="number"
+                min="1"
+                step="1"
+                placeholder="e.g. 30"
+                value={duration}
+                onChange={(e) => setDuration(e.target.value)}
+              />
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-2 pt-2">
+              <Button
+                onClick={handleCalculate}
+                disabled={!isFormValid}
+                className="flex-1"
+              >
+                <Flame className="h-4 w-4" />
+                Calculate
+              </Button>
+              <Button variant="outline" onClick={handleReset}>
+                Reset
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Tip */}
+        <p className="text-sm text-muted-foreground text-center">
+          Tip: Calories are also auto-calculated when you{" "}
+          <Link href="/workouts" className="underline hover:text-foreground">
+            log a workout
+          </Link>
+          .
+        </p>
+
+        {/* Results */}
+        {showResults && results && (
+          <Card className="border-primary/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Flame className="h-5 w-5 text-orange-500" />
+                Results
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 gap-4">
+                {/* Calories per minute */}
+                <div className="rounded-lg bg-orange-500/10 p-4 text-center">
+                  <p className="text-sm font-medium text-muted-foreground mb-1">
+                    Calories Burned Per Minute
+                  </p>
+                  <p className="text-3xl font-bold text-orange-600 dark:text-orange-400">
+                    {results.calPerMin.toFixed(2)}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    kcal/min
+                  </p>
+                </div>
+
+                {/* Total calories (shown only when duration is provided) */}
+                {results.totalCal !== null && (
+                  <div className="rounded-lg bg-green-500/10 p-4 text-center">
+                    <p className="text-sm font-medium text-muted-foreground mb-1">
+                      Total Calories Burned
+                    </p>
+                    <p className="text-3xl font-bold text-green-600 dark:text-green-400">
+                      {Math.round(results.totalCal).toLocaleString()}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      kcal in {duration} minutes
+                    </p>
+                  </div>
+                )}
+
+                {/* MET info */}
+                <p className="text-xs text-muted-foreground text-center">
+                  Based on MET value of {results.met} for{" "}
+                  {selectedExercise?.label}. Formula: (MET x weight in kg x
+                  3.5) / 200.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    </div>
+  );
+}

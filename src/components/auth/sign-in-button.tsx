@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -10,7 +9,6 @@ import { signIn, useSession } from "@/lib/auth-client"
 
 export function SignInButton() {
   const { data: session, isPending: sessionPending } = useSession()
-  const router = useRouter()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
@@ -30,21 +28,17 @@ export function SignInButton() {
     setIsPending(true)
 
     try {
-      const result = await signIn.email({
-        email,
-        password,
-        callbackURL: "/dashboard",
-      })
+      const result = await signIn.email({ email, password })
 
       if (result.error) {
         setError(result.error.message || "Failed to sign in")
-      } else {
-        router.push("/dashboard")
-        router.refresh()
+        setIsPending(false)
+        return
       }
-    } catch {
-      setError("An unexpected error occurred")
-    } finally {
+
+      window.location.href = "/dashboard"
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An unexpected error occurred")
       setIsPending(false)
     }
   }

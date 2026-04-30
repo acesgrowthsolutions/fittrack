@@ -19,11 +19,13 @@ export function ResetPasswordForm() {
   const [formError, setFormError] = useState("")
   const [isPending, setIsPending] = useState(false)
 
-  if (error === "invalid_token" || !token) {
+  const isInvalidToken = error?.toLowerCase() === "invalid_token"
+
+  if (isInvalidToken || !token) {
     return (
       <div className="space-y-4 w-full max-w-sm text-center">
         <p className="text-sm text-destructive">
-          {error === "invalid_token"
+          {isInvalidToken
             ? "This password reset link is invalid or has expired."
             : "No reset token provided."}
         </p>
@@ -60,12 +62,13 @@ export function ResetPasswordForm() {
 
       if (result.error) {
         setFormError(result.error.message || "Failed to reset password")
-      } else {
-        router.push("/login?reset=success")
+        setIsPending(false)
+        return
       }
+
+      router.replace("/login?reset=success")
     } catch {
       setFormError("An unexpected error occurred")
-    } finally {
       setIsPending(false)
     }
   }

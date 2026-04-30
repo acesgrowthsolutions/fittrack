@@ -75,11 +75,9 @@ export function SetupChecklist() {
       label: "Environment variables",
       ok:
         !!data?.env.POSTGRES_URL &&
-        !!data?.env.BETTER_AUTH_SECRET &&
-        !!data?.env.GOOGLE_CLIENT_ID &&
-        !!data?.env.GOOGLE_CLIENT_SECRET,
+        !!data?.env.BETTER_AUTH_SECRET,
       detail:
-        "Requires POSTGRES_URL, BETTER_AUTH_SECRET, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET",
+        "Requires POSTGRES_URL, BETTER_AUTH_SECRET",
     },
     {
       key: "db",

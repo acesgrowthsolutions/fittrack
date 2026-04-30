@@ -4,7 +4,11 @@ const config = [
   {
     ignores: [
       ".next/**",
+      ".next.nosync/**",
       "node_modules/**",
+      "node_modules.nosync/**",
+      "node_modules */**",
+      ".next */**",
       ".cache/**",
       "dist/**",
       "build/**",

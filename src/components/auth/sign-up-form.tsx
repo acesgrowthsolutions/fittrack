@@ -2,14 +2,12 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { signUp } from "@/lib/auth-client"
 
 export function SignUpForm() {
-  const router = useRouter()
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -34,22 +32,17 @@ export function SignUpForm() {
     setIsPending(true)
 
     try {
-      const result = await signUp.email({
-        name,
-        email,
-        password,
-        callbackURL: "/dashboard",
-      })
+      const result = await signUp.email({ name, email, password })
 
       if (result.error) {
         setError(result.error.message || "Failed to create account")
-      } else {
-        router.push("/dashboard")
-        router.refresh()
+        setIsPending(false)
+        return
       }
+
+      window.location.href = "/dashboard"
     } catch {
       setError("An unexpected error occurred")
-    } finally {
       setIsPending(false)
     }
   }

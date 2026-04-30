@@ -18,36 +18,32 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Agentic Coding Boilerplate",
-    template: "%s | Agentic Coding Boilerplate",
+    default: "FitTrack - Fitness Tracker",
+    template: "%s | FitTrack",
   },
   description:
-    "Complete agentic coding boilerplate with authentication, database, AI integration, and modern tooling - perfect for building AI-powered applications and autonomous agents by Leon van Zyl",
+    "Track your fitness journey with FitTrack. Log workouts, monitor steps, set goals, and get AI-powered coaching.",
   keywords: [
-    "Next.js",
-    "React",
-    "TypeScript",
-    "AI",
-    "OpenRouter",
-    "Boilerplate",
-    "Authentication",
-    "PostgreSQL",
+    "Fitness",
+    "Workout Tracker",
+    "Step Counter",
+    "Health",
+    "AI Coach",
+    "Fitness Goals",
   ],
-  authors: [{ name: "Leon van Zyl" }],
-  creator: "Leon van Zyl",
   openGraph: {
     type: "website",
     locale: "en_US",
-    siteName: "Agentic Coding Boilerplate",
-    title: "Agentic Coding Boilerplate",
+    siteName: "FitTrack",
+    title: "FitTrack - Track Your Fitness Journey",
     description:
-      "Complete agentic coding boilerplate with authentication, database, AI integration, and modern tooling",
+      "Steps, workouts, calories, goals, and achievements -- all in one place.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Agentic Coding Boilerplate",
+    title: "FitTrack - Track Your Fitness Journey",
     description:
-      "Complete agentic coding boilerplate with authentication, database, AI integration, and modern tooling",
+      "Steps, workouts, calories, goals, and achievements -- all in one place.",
   },
   robots: {
     index: true,
@@ -59,19 +55,15 @@ export const metadata: Metadata = {
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "WebApplication",
-  name: "Agentic Coding Boilerplate",
+  name: "FitTrack",
   description:
-    "Complete agentic coding boilerplate with authentication, database, AI integration, and modern tooling",
-  applicationCategory: "DeveloperApplication",
+    "Track your fitness journey with workouts, steps, calories, goals, and AI coaching.",
+  applicationCategory: "HealthApplication",
   operatingSystem: "Any",
   offers: {
     "@type": "Offer",
     price: "0",
     priceCurrency: "USD",
-  },
-  author: {
-    "@type": "Person",
-    name: "Leon van Zyl",
   },
 };
 

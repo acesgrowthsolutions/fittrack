@@ -16,7 +16,10 @@
 /.playwright-mcp
 
 # next.js
+/.next
 /.next/
+/.next*
+/.next*/
 /out/
 
 # production
@@ -45,4 +48,5 @@ next-env.d.ts
 # uploads
 public/uploads
 
-nul
+node_modules.nosync
+.next.nosync

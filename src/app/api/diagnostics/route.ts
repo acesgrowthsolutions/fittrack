@@ -118,8 +118,7 @@ export async function GET(req: Request) {
     authRouteResponding = false;
   }
 
-  const authConfigured =
-    env.BETTER_AUTH_SECRET && env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET;
+  const authConfigured = env.BETTER_AUTH_SECRET;
   const aiConfigured = env.OPENROUTER_API_KEY; // We avoid live-calling the AI provider here
 
   // Storage configuration check

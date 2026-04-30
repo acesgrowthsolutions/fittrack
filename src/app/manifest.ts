@@ -2,10 +2,10 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Agentic Coding Boilerplate",
-    short_name: "Agentic",
+    name: "FitTrack",
+    short_name: "FitTrack",
     description:
-      "Complete agentic coding boilerplate with authentication, database, AI integration, and modern tooling",
+      "Your personal fitness tracking companion",
     start_url: "/",
     display: "standalone",
     background_color: "#ffffff",

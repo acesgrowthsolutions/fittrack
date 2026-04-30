@@ -247,7 +247,7 @@ export default function ChatPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-6 pb-4 border-b">
-          <h1 className="text-2xl font-bold">AI Chat</h1>
+          <h1 className="text-2xl font-bold">AI Fitness Coach</h1>
           <div className="flex items-center gap-4">
             <span className="text-sm text-muted-foreground">
               Welcome, {session.user.name}!
@@ -271,7 +271,7 @@ export default function ChatPage() {
         <div className="min-h-[50vh] overflow-y-auto space-y-4 mb-4">
           {messages.length === 0 && (
             <div className="text-center text-muted-foreground py-12">
-              Start a conversation with AI
+              Ask your AI fitness coach about workouts, nutrition, form tips, or motivation
             </div>
           )}
           {messages.map((message) => {
@@ -327,7 +327,7 @@ export default function ChatPage() {
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Type your message..."
+            placeholder="Ask about workouts, nutrition, or fitness tips..."
             className="flex-1 p-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
             disabled={isStreaming}
           />

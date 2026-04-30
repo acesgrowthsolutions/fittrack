@@ -3,6 +3,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle"
 import { db } from "./db"
 
 export const auth = betterAuth({
+  baseURL: process.env.BETTER_AUTH_URL ?? process.env.NEXT_PUBLIC_APP_URL,
   database: drizzleAdapter(db, {
     provider: "pg",
   }),
@@ -15,7 +16,7 @@ export const auth = betterAuth({
     },
   },
   emailVerification: {
-    sendOnSignUp: true,
+    sendOnSignUp: false,
     sendVerificationEmail: async ({ user, url }) => {
       // Log verification URL to terminal (no email integration yet)
       // eslint-disable-next-line no-console

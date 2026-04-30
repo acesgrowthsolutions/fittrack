@@ -24,6 +24,10 @@ type DiagnosticsResponse = {
   ai: {
     configured: boolean;
   };
+  storage: {
+    configured: boolean;
+    type: "local" | "remote";
+  };
   overallStatus: "ok" | "warn" | "error";
 };
 

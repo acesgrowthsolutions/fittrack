@@ -44,5 +44,14 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts"
   ],
-  "exclude": ["node_modules", "create-agentic-app"]
+  "exclude": [
+    "node_modules",
+    "node_modules.nosync",
+    "node_modules */**",
+    "create-agentic-app",
+    ".next */**",
+    "**/* 2.ts",
+    "**/* 2.tsx",
+    "**/* 2.d.ts"
+  ]
 }

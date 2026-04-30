@@ -1,4 +1,16 @@
-import { pgTable, text, timestamp, boolean, index } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  timestamp,
+  boolean,
+  index,
+  integer,
+  numeric,
+  date,
+  pgEnum,
+  uniqueIndex,
+  uuid,
+} from "drizzle-orm/pg-core";
 
 // IMPORTANT! ID fields should ALWAYS use UUID types, EXCEPT the BetterAuth tables.
 
@@ -28,6 +40,7 @@ export const session = pgTable(
     token: text("token").notNull().unique(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
+      .defaultNow()
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
     ipAddress: text("ip_address"),
@@ -60,6 +73,7 @@ export const account = pgTable(
     password: text("password"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
+      .defaultNow()
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
   },
@@ -80,3 +94,149 @@ export const verification = pgTable("verification", {
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
 });
+
+// ── Fitness Tracking Tables ──────────────────────────────────────────────────
+
+export const activityLevelEnum = pgEnum("activity_level", [
+  "sedentary",
+  "light",
+  "moderate",
+  "active",
+  "very_active",
+]);
+
+export const preferredUnitsEnum = pgEnum("preferred_units", [
+  "metric",
+  "imperial",
+]);
+
+export const workoutTypeEnum = pgEnum("workout_type", [
+  "running",
+  "cycling",
+  "strength",
+  "hiit",
+  "yoga",
+  "swimming",
+  "walking",
+  "other",
+]);
+
+export const goalTypeEnum = pgEnum("goal_type", [
+  "daily_steps",
+  "weekly_workouts",
+  "monthly_calories",
+  "weight_target",
+]);
+
+export const userProfile = pgTable(
+  "user_profile",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .unique()
+      .references(() => user.id, { onDelete: "cascade" }),
+    height: numeric("height"),
+    weight: numeric("weight"),
+    age: integer("age"),
+    activityLevel: activityLevelEnum("activity_level").default("moderate"),
+    dailyStepGoal: integer("daily_step_goal").default(10000),
+    dailyCalorieGoal: integer("daily_calorie_goal").default(2000),
+    preferredUnits: preferredUnitsEnum("preferred_units").default("metric"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [index("user_profile_user_id_idx").on(table.userId)]
+);
+
+export const workouts = pgTable(
+  "workouts",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    type: workoutTypeEnum("type").notNull(),
+    name: text("name").notNull(),
+    durationMinutes: integer("duration_minutes").notNull(),
+    caloriesBurned: integer("calories_burned").notNull(),
+    distanceKm: numeric("distance_km"),
+    notes: text("notes"),
+    workoutDate: date("workout_date").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    index("workouts_user_id_idx").on(table.userId),
+    index("workouts_date_idx").on(table.workoutDate),
+  ]
+);
+
+export const dailyStats = pgTable(
+  "daily_stats",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    date: date("date").notNull(),
+    steps: integer("steps").default(0).notNull(),
+    distanceKm: numeric("distance_km").default("0").notNull(),
+    caloriesBurned: integer("calories_burned").default(0).notNull(),
+    activeMinutes: integer("active_minutes").default(0).notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    uniqueIndex("daily_stats_user_date_idx").on(table.userId, table.date),
+    index("daily_stats_date_idx").on(table.date),
+  ]
+);
+
+export const goals = pgTable(
+  "goals",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    type: goalTypeEnum("type").notNull(),
+    targetValue: numeric("target_value").notNull(),
+    currentValue: numeric("current_value").default("0").notNull(),
+    unit: text("unit").notNull(),
+    startDate: date("start_date").notNull(),
+    endDate: date("end_date"),
+    completed: boolean("completed").default(false).notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [index("goals_user_id_idx").on(table.userId)]
+);
+
+export const achievements = pgTable(
+  "achievements",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    badgeType: text("badge_type").notNull(),
+    badgeName: text("badge_name").notNull(),
+    description: text("description").notNull(),
+    earnedAt: timestamp("earned_at").defaultNow().notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [index("achievements_user_id_idx").on(table.userId)]
+);

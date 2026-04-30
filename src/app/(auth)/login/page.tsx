@@ -15,9 +15,14 @@ export default async function LoginPage({
 }: {
   searchParams: Promise<{ reset?: string }>
 }) {
-  const session = await auth.api.getSession({ headers: await headers() })
-
-  if (session) {
+  let isAuthenticated = false
+  try {
+    const session = await auth.api.getSession({ headers: await headers() })
+    isAuthenticated = !!session
+  } catch {
+    // Session check failed (e.g. DB not ready) — continue to show login form
+  }
+  if (isAuthenticated) {
     redirect("/dashboard")
   }
 

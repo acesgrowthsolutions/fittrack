@@ -12,9 +12,14 @@ import {
 import { auth } from "@/lib/auth"
 
 export default async function ResetPasswordPage() {
-  const session = await auth.api.getSession({ headers: await headers() })
-
-  if (session) {
+  let isAuthenticated = false
+  try {
+    const session = await auth.api.getSession({ headers: await headers() })
+    isAuthenticated = !!session
+  } catch {
+    // Session check failed (e.g. DB not ready) — continue to show form
+  }
+  if (isAuthenticated) {
     redirect("/dashboard")
   }
 
