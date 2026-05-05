@@ -1,6 +1,7 @@
 import { betterAuth } from "better-auth"
 import { drizzleAdapter } from "better-auth/adapters/drizzle"
 import { db } from "./db"
+import { passwordResetTemplate, sendEmail, verificationTemplate } from "./email"
 
 export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL ?? process.env.NEXT_PUBLIC_APP_URL,
@@ -25,17 +26,25 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     sendResetPassword: async ({ user, url }) => {
-      // Log password reset URL to terminal (no email integration yet)
-      // eslint-disable-next-line no-console
-      console.log(`\n${"=".repeat(60)}\nPASSWORD RESET REQUEST\nUser: ${user.email}\nReset URL: ${url}\n${"=".repeat(60)}\n`)
+      const { html, text } = passwordResetTemplate(user.email, url)
+      await sendEmail({
+        to: user.email,
+        subject: "Reset your FitTrack password",
+        html,
+        text,
+      })
     },
   },
   emailVerification: {
     sendOnSignUp: false,
     sendVerificationEmail: async ({ user, url }) => {
-      // Log verification URL to terminal (no email integration yet)
-      // eslint-disable-next-line no-console
-      console.log(`\n${"=".repeat(60)}\nEMAIL VERIFICATION\nUser: ${user.email}\nVerification URL: ${url}\n${"=".repeat(60)}\n`)
+      const { html, text } = verificationTemplate(user.email, url)
+      await sendEmail({
+        to: user.email,
+        subject: "Confirm your FitTrack email",
+        html,
+        text,
+      })
     },
   },
 })
