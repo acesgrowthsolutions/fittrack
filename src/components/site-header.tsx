@@ -10,6 +10,7 @@ import {
   Target,
   Trophy,
   Bot,
+  Utensils,
 } from "lucide-react";
 import { UserProfile } from "@/components/auth/user-profile";
 import { useSession } from "@/lib/auth-client";
@@ -19,6 +20,7 @@ import { ModeToggle } from "./ui/mode-toggle";
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: Activity },
   { href: "/workouts", label: "Workouts", icon: Dumbbell },
+  { href: "/meals", label: "Meals", icon: Utensils },
   { href: "/steps", label: "Steps", icon: Footprints },
   { href: "/goals", label: "Goals", icon: Target },
   { href: "/achievements", label: "Achievements", icon: Trophy },

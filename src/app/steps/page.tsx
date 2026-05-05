@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Footprints, Plus } from "lucide-react";
+import { Footprints, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { UserProfile } from "@/components/auth/user-profile";
 import { StepForm } from "@/components/fitness/step-form";
+import { StepTracker } from "@/components/fitness/step-tracker";
 import { WeeklyChart } from "@/components/fitness/weekly-chart";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,6 +44,8 @@ export default function StepsPage() {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [stepGoal, setStepGoal] = useState(10000);
+  const [userHeightCm, setUserHeightCm] = useState<number | null>(null);
+  const [userWeightKg, setUserWeightKg] = useState<number | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -57,6 +60,19 @@ export default function StepsPage() {
       if (profileRes.ok) {
         const profile = await profileRes.json();
         if (profile?.dailyStepGoal) setStepGoal(profile.dailyStepGoal);
+        const imperial = profile?.preferredUnits === "imperial";
+        if (profile?.height) {
+          const h = parseFloat(profile.height);
+          if (!isNaN(h) && h > 0) {
+            setUserHeightCm(imperial ? h * 2.54 : h);
+          }
+        }
+        if (profile?.weight) {
+          const w = parseFloat(profile.weight);
+          if (!isNaN(w) && w > 0) {
+            setUserWeightKg(imperial ? w * 0.453592 : w);
+          }
+        }
       }
     } catch (error) {
       toast.error(
@@ -110,7 +126,7 @@ export default function StepsPage() {
   return (
     <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
           <h1 className="text-2xl font-bold">Step Tracking</h1>
           <p className="text-muted-foreground">
@@ -119,9 +135,9 @@ export default function StepsPage() {
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4" />
-              Log Steps
+            <Button variant="outline" size="sm">
+              <Pencil className="h-4 w-4" />
+              Edit manually
             </Button>
           </DialogTrigger>
           <DialogContent>
@@ -141,6 +157,14 @@ export default function StepsPage() {
           </DialogContent>
         </Dialog>
       </div>
+
+      {/* Auto step tracker */}
+      <StepTracker
+        initialTodaySteps={todayStats?.steps ?? 0}
+        userHeightCm={userHeightCm}
+        userWeightKg={userWeightKg}
+        onSaved={fetchData}
+      />
 
       {/* Today's Progress */}
       <Card>

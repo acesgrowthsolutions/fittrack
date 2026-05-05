@@ -87,6 +87,7 @@ export async function GET() {
       recentWorkouts,
       activeGoals,
       profileResult,
+      weeklyWorkoutCaloriesByDate,
     ] = await Promise.all([
       // Fetch today's stats
       db
@@ -149,6 +150,24 @@ export async function GET() {
 
       // Fetch user profile for step goal
       db.select().from(userProfile).where(eq(userProfile.userId, userId)).limit(1),
+
+      // Aggregate workout calories per day over the last 7 days. Merged into
+      // weeklyStats below so the calorie chart reflects steps + workouts,
+      // matching the "Today" tile which already combines both sources.
+      db
+        .select({
+          date: workouts.workoutDate,
+          calories: sql<number>`COALESCE(SUM(${workouts.caloriesBurned}), 0)::int`,
+        })
+        .from(workouts)
+        .where(
+          and(
+            eq(workouts.userId, userId),
+            gte(workouts.workoutDate, weekAgo),
+            lte(workouts.workoutDate, today)
+          )
+        )
+        .groupBy(workouts.workoutDate),
     ]);
 
     const todayStats = todayStatsResult[0];
@@ -175,6 +194,31 @@ export async function GET() {
       activeMinutes: baseMinutes + workoutTotals.minutes,
     };
 
+    // Merge workout calories into the weekly stats so the calorie chart
+    // shows total daily energy expenditure. Days with only a workout
+    // (no daily_stats row) get a synthetic zero-step entry.
+    const workoutCaloriesByDate = new Map(
+      weeklyWorkoutCaloriesByDate.map((r) => [r.date, r.calories])
+    );
+    const dailyByDate = new Map(weeklyStats.map((s) => [s.date, s]));
+    const allWeekDates = new Set<string>([
+      ...dailyByDate.keys(),
+      ...workoutCaloriesByDate.keys(),
+    ]);
+    const enrichedWeeklyStats = Array.from(allWeekDates)
+      .sort()
+      .map((date) => {
+        const row = dailyByDate.get(date);
+        const workoutCals = workoutCaloriesByDate.get(date) ?? 0;
+        return {
+          date,
+          steps: row?.steps ?? 0,
+          distanceKm: row?.distanceKm ?? "0",
+          caloriesBurned: (row?.caloriesBurned ?? 0) + workoutCals,
+          activeMinutes: row?.activeMinutes ?? 0,
+        };
+      });
+
     // Calculate streak
     const streak = calculateStreak(recentStats);
 
@@ -200,7 +244,7 @@ export async function GET() {
       weeklyWorkoutCount: weekWorkouts.length,
       recentWorkouts,
       activeGoals: goalsWithProgress,
-      weeklyStats,
+      weeklyStats: enrichedWeeklyStats,
       profile: profile ?? null,
     });
   } catch (error) {

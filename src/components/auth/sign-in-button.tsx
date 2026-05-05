@@ -5,22 +5,13 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { signIn, useSession } from "@/lib/auth-client"
+import { signIn } from "@/lib/auth-client"
 
 export function SignInButton() {
-  const { data: session, isPending: sessionPending } = useSession()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
   const [isPending, setIsPending] = useState(false)
-
-  if (sessionPending) {
-    return <Button disabled>Loading...</Button>
-  }
-
-  if (session) {
-    return null
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -31,7 +22,16 @@ export function SignInButton() {
       const result = await signIn.email({ email, password })
 
       if (result.error) {
-        setError(result.error.message || "Failed to sign in")
+        // Better Auth returns specific error codes; surface them more clearly
+        // than the generic message so users know what's wrong.
+        const code = result.error.code
+        const friendly =
+          code === "INVALID_EMAIL_OR_PASSWORD"
+            ? "Invalid email or password"
+            : code === "EMAIL_NOT_VERIFIED"
+              ? "Please verify your email before signing in"
+              : result.error.message || "Failed to sign in"
+        setError(friendly)
         setIsPending(false)
         return
       }

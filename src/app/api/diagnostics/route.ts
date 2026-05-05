@@ -52,14 +52,28 @@ export async function GET(req: Request) {
     try {
       // Add timeout to prevent hanging on unreachable database
       const dbCheckPromise = (async () => {
-        const [{ db }, { sql }, schema] = await Promise.all([
+        const [{ db, resetDb }, { sql }, schema] = await Promise.all([
           import("@/lib/db"),
           import("drizzle-orm"),
           import("@/lib/schema"),
         ]);
 
         // Ping DB - this will actually attempt to connect
-        const result = await db.execute(sql`SELECT 1 as ping`);
+        let result;
+        try {
+          result = await db.execute(sql`SELECT 1 as ping`);
+        } catch (firstErr) {
+          // If the cached postgres client is in a broken state, tear it
+          // down and retry once. Subsequent queries (including the ones
+          // better-auth runs through the shared `db` proxy) will then go
+          // against the freshly rebuilt client.
+          resetDb();
+          try {
+            result = await db.execute(sql`SELECT 1 as ping`);
+          } catch {
+            throw firstErr;
+          }
+        }
         if (!result) {
           throw new Error("Database query returned no result");
         }
@@ -71,9 +85,8 @@ export async function GET(req: Request) {
           schemaApplied = true;
         } catch {
           schemaApplied = false;
-          // If we can't query the user table, it's likely migrations haven't run
           if (!dbError) {
-            dbError = "Schema not applied. Run: npm run db:migrate";
+            dbError = "Schema not applied. Run: pnpm run db:migrate";
           }
         }
       })();
@@ -83,12 +96,13 @@ export async function GET(req: Request) {
       );
 
       await Promise.race([dbCheckPromise, timeoutPromise]);
-    } catch {
+    } catch (e) {
       dbConnected = false;
       schemaApplied = false;
-
-      // Provide user-friendly error messages
-      dbError = "Database not connected. Please start your PostgreSQL database and verify your POSTGRES_URL in .env";
+      const err = e as Error & { cause?: { message?: string; code?: string } };
+      // Surface the actual cause so we can diagnose connection issues
+      // (refused, auth failed, wrong db name, broken cached client, etc.)
+      dbError = `${err.message}${err.cause?.message ? ` | cause: ${err.cause.message}` : ""}${err.cause?.code ? ` (${err.cause.code})` : ""}`;
     }
   } else {
     dbConnected = false;

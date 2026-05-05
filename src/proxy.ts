@@ -32,6 +32,8 @@ export const config = {
     "/workouts/:path*",
     "/steps",
     "/steps/:path*",
+    "/meals",
+    "/meals/:path*",
     "/goals",
     "/goals/:path*",
     "/achievements",

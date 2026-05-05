@@ -10,6 +10,7 @@ import {
   pgEnum,
   uniqueIndex,
   uuid,
+  jsonb,
 } from "drizzle-orm/pg-core";
 
 // IMPORTANT! ID fields should ALWAYS use UUID types, EXCEPT the BetterAuth tables.
@@ -128,6 +129,13 @@ export const goalTypeEnum = pgEnum("goal_type", [
   "weight_target",
 ]);
 
+export const mealTypeEnum = pgEnum("meal_type", [
+  "breakfast",
+  "lunch",
+  "dinner",
+  "snack",
+]);
+
 export const userProfile = pgTable(
   "user_profile",
   {
@@ -223,6 +231,45 @@ export const goals = pgTable(
       .notNull(),
   },
   (table) => [index("goals_user_id_idx").on(table.userId)]
+);
+
+export interface MealFoodItem {
+  name: string;
+  portion: string;
+  calories: number;
+  protein_g?: number;
+  carbs_g?: number;
+  fat_g?: number;
+}
+
+export const meals = pgTable(
+  "meals",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    mealType: mealTypeEnum("meal_type").notNull(),
+    mealDate: date("meal_date").notNull(),
+    description: text("description").notNull(),
+    totalCalories: integer("total_calories").notNull(),
+    proteinG: numeric("protein_g"),
+    carbsG: numeric("carbs_g"),
+    fatG: numeric("fat_g"),
+    foodItems: jsonb("food_items").$type<MealFoodItem[]>().notNull(),
+    imageUrl: text("image_url"),
+    confidence: text("confidence"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    index("meals_user_id_idx").on(table.userId),
+    index("meals_date_idx").on(table.mealDate),
+    index("meals_user_date_idx").on(table.userId, table.mealDate),
+  ]
 );
 
 export const achievements = pgTable(
