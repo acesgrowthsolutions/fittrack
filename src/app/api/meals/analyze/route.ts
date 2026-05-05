@@ -4,10 +4,23 @@ import { generateObject } from "ai";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import {
+  checkRateLimit,
+  rateLimitResponse,
+  type RateLimitWindow,
+} from "@/lib/rate-limit";
 import { meals, type MealFoodItem } from "@/lib/schema";
 import { deleteFile, upload } from "@/lib/storage";
 
 export const maxDuration = 60;
+
+// Each call to this endpoint hits OpenRouter's vision API and costs real
+// money, so we gate it behind a sliding-window per-user rate limit. Two
+// tiers prevent both bursts and marathon scraping.
+const RATE_LIMITS: RateLimitWindow[] = [
+  { max: 10, windowMs: 60 * 60 * 1000, label: "hour" },
+  { max: 30, windowMs: 24 * 60 * 60 * 1000, label: "day" },
+];
 
 const VALID_MEAL_TYPES = ["breakfast", "lunch", "dinner", "snack"] as const;
 type MealType = (typeof VALID_MEAL_TYPES)[number];
@@ -69,6 +82,17 @@ export async function POST(req: Request) {
       { error: "OpenRouter API key not configured" },
       { status: 500 }
     );
+  }
+
+  // Reject before parsing the form / calling the model so abusers can't
+  // burn AI credits. Limit applies even to malformed requests.
+  const rl = await checkRateLimit(
+    session.user.id,
+    "meals.analyze",
+    RATE_LIMITS
+  );
+  if (!rl.ok) {
+    return rateLimitResponse(rl);
   }
 
   let formData: FormData;

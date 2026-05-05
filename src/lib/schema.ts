@@ -287,3 +287,25 @@ export const achievements = pgTable(
   },
   (table) => [index("achievements_user_id_idx").on(table.userId)]
 );
+
+// Tracks gateable actions (e.g. paid AI calls) so we can enforce per-user
+// sliding-window rate limits. Rows are append-only; old rows are pruned by
+// checkRateLimit() on each call.
+export const rateLimitEvent = pgTable(
+  "rate_limit_event",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    action: text("action").notNull(),
+    occurredAt: timestamp("occurred_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("rate_limit_user_action_time_idx").on(
+      table.userId,
+      table.action,
+      table.occurredAt
+    ),
+  ]
+);

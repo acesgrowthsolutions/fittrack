@@ -5,7 +5,18 @@ import { and, desc, eq, gte } from "drizzle-orm";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import {
+  checkRateLimit,
+  rateLimitResponse,
+  type RateLimitWindow,
+} from "@/lib/rate-limit";
 import { dailyStats, goals, userProfile, workouts } from "@/lib/schema";
+
+// Each /api/chat call hits OpenRouter and costs money. Cap per user.
+const CHAT_RATE_LIMITS: RateLimitWindow[] = [
+  { max: 30, windowMs: 60 * 60 * 1000, label: "hour" },
+  { max: 100, windowMs: 24 * 60 * 60 * 1000, label: "day" },
+];
 
 // Zod schema for message validation
 const messagePartSchema = z.object({
@@ -150,6 +161,17 @@ export async function POST(req: Request) {
       status: 401,
       headers: { "Content-Type": "application/json" },
     });
+  }
+
+  // Reject before parsing the body / building context / streaming the model
+  // so abusers can't burn AI credits past the configured cap.
+  const rl = await checkRateLimit(
+    session.user.id,
+    "chat",
+    CHAT_RATE_LIMITS
+  );
+  if (!rl.ok) {
+    return rateLimitResponse(rl);
   }
 
   // Parse and validate request body
