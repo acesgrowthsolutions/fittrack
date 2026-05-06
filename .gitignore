@@ -50,3 +50,4 @@ public/uploads
 
 node_modules.nosync
 .next.nosync
+.env*.local
