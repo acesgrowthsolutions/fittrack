@@ -13,6 +13,8 @@ type DiagnosticsResponse = {
     GOOGLE_CLIENT_SECRET: boolean;
     OPENROUTER_API_KEY: boolean;
     NEXT_PUBLIC_APP_URL: boolean;
+    RESEND_API_KEY: boolean;
+    EMAIL_FROM: boolean;
   };
   database: {
     connected: boolean;
@@ -25,6 +27,10 @@ type DiagnosticsResponse = {
   };
   ai: {
     configured: boolean;
+  };
+  email: {
+    configured: boolean;
+    deliveryMode: "resend" | "console-fallback";
   };
   storage: {
     configured: boolean;
@@ -102,6 +108,14 @@ export function SetupChecklist() {
       ok: !!data?.ai.configured,
       detail: !data?.ai.configured
         ? "Set OPENROUTER_API_KEY for AI chat"
+        : undefined,
+    },
+    {
+      key: "email",
+      label: "Email delivery (password reset & verification)",
+      ok: !!data?.email.configured,
+      detail: !data?.email.configured
+        ? "Set RESEND_API_KEY and EMAIL_FROM. Without these, auth emails are only logged to the server console — real users will never receive them."
         : undefined,
     },
     {

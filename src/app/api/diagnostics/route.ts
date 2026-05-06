@@ -11,6 +11,8 @@ interface DiagnosticsResponse {
     GOOGLE_CLIENT_SECRET: boolean;
     OPENROUTER_API_KEY: boolean;
     NEXT_PUBLIC_APP_URL: boolean;
+    RESEND_API_KEY: boolean;
+    EMAIL_FROM: boolean;
   };
   database: {
     connected: boolean;
@@ -23,6 +25,10 @@ interface DiagnosticsResponse {
   };
   ai: {
     configured: boolean;
+  };
+  email: {
+    configured: boolean;
+    deliveryMode: "resend" | "console-fallback";
   };
   storage: {
     configured: boolean;
@@ -42,6 +48,8 @@ export async function GET(req: Request) {
     GOOGLE_CLIENT_SECRET: Boolean(process.env.GOOGLE_CLIENT_SECRET),
     OPENROUTER_API_KEY: Boolean(process.env.OPENROUTER_API_KEY),
     NEXT_PUBLIC_APP_URL: Boolean(process.env.NEXT_PUBLIC_APP_URL),
+    RESEND_API_KEY: Boolean(process.env.RESEND_API_KEY),
+    EMAIL_FROM: Boolean(process.env.EMAIL_FROM),
   } as const;
 
   // Database checks with timeout
@@ -135,6 +143,14 @@ export async function GET(req: Request) {
   const authConfigured = env.BETTER_AUTH_SECRET;
   const aiConfigured = env.OPENROUTER_API_KEY; // We avoid live-calling the AI provider here
 
+  // Email config: in production, missing RESEND_API_KEY means password-reset
+  // and verification emails are silently dropped (we fall back to console
+  // logging, which Vercel logs but real users can't see).
+  const emailConfigured = env.RESEND_API_KEY;
+  const emailDeliveryMode: "resend" | "console-fallback" = emailConfigured
+    ? "resend"
+    : "console-fallback";
+
   // Storage configuration check
   const storageConfigured = Boolean(process.env.BLOB_READ_WRITE_TOKEN);
   const storageType: "local" | "remote" = storageConfigured ? "remote" : "local";
@@ -142,6 +158,8 @@ export async function GET(req: Request) {
   const overallStatus: StatusLevel = (() => {
     if (!env.POSTGRES_URL || !dbConnected || !schemaApplied) return "error";
     if (!authConfigured) return "error";
+    // In production, no email provider means broken password reset.
+    if (process.env.NODE_ENV === "production" && !emailConfigured) return "warn";
     // AI is optional; warn if not configured
     if (!aiConfigured) return "warn";
     return "ok";
@@ -161,6 +179,10 @@ export async function GET(req: Request) {
     },
     ai: {
       configured: aiConfigured,
+    },
+    email: {
+      configured: emailConfigured,
+      deliveryMode: emailDeliveryMode,
     },
     storage: {
       configured: storageConfigured,

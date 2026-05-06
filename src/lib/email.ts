@@ -27,9 +27,15 @@ export async function sendEmail({
   const from = process.env.EMAIL_FROM || "onboarding@resend.dev";
 
   if (!apiKey) {
+    if (process.env.NODE_ENV === "production") {
+      console.error(
+        "RESEND_API_KEY is not set in production — auth emails (password reset, verification) will NOT be delivered. Set RESEND_API_KEY and EMAIL_FROM in your Vercel environment."
+      );
+    }
+    const link = extractFirstUrl(text);
     // eslint-disable-next-line no-console
     console.log(
-      `\n${"=".repeat(60)}\nEMAIL (no RESEND_API_KEY — logging only)\nTo: ${to}\nFrom: ${from}\nSubject: ${subject}\n\n${text}\n${"=".repeat(60)}\n`
+      `\n${"=".repeat(72)}\n📧 EMAIL (no RESEND_API_KEY — printing to terminal)\n${"-".repeat(72)}\nTo:      ${to}\nFrom:    ${from}\nSubject: ${subject}\n${link ? `\n🔗 Link:  ${link}\n` : ""}${"-".repeat(72)}\n${text}\n${"=".repeat(72)}\n`
     );
     return null;
   }
@@ -124,6 +130,11 @@ export function verificationTemplate(
       </div>
     `,
   };
+}
+
+function extractFirstUrl(s: string): string | null {
+  const match = s.match(/https?:\/\/\S+/);
+  return match ? match[0] : null;
 }
 
 function escapeHtml(s: string): string {

@@ -25,12 +25,18 @@ export function ForgotPasswordForm() {
       })
 
       if (result.error) {
-        setError(result.error.message || "Failed to send reset email")
+        const status = result.error.status
+        const code = result.error.code
+        const friendly =
+          status === 429 || code === "TOO_MANY_REQUESTS"
+            ? "Too many reset requests. Please try again in a few minutes."
+            : result.error.message || "Failed to send reset email"
+        setError(friendly)
       } else {
         setSuccess(true)
       }
-    } catch {
-      setError("An unexpected error occurred")
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An unexpected error occurred")
     } finally {
       setIsPending(false)
     }
@@ -40,9 +46,15 @@ export function ForgotPasswordForm() {
     return (
       <div className="space-y-4 w-full max-w-sm text-center">
         <p className="text-sm text-muted-foreground">
-          If an account exists with that email, a password reset link has been sent.
-          Check your terminal for the reset URL.
+          If an account exists with that email, a password reset link has been
+          sent. Check your inbox (and spam folder).
         </p>
+        {process.env.NODE_ENV !== "production" && (
+          <p className="text-xs text-muted-foreground">
+            In development, the reset link is printed to the dev-server
+            terminal if no email provider is configured.
+          </p>
+        )}
         <Link href="/login">
           <Button variant="outline" className="w-full">
             Back to sign in

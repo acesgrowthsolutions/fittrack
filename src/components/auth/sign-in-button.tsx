@@ -24,13 +24,16 @@ export function SignInButton() {
       if (result.error) {
         // Better Auth returns specific error codes; surface them more clearly
         // than the generic message so users know what's wrong.
+        const status = result.error.status
         const code = result.error.code
         const friendly =
-          code === "INVALID_EMAIL_OR_PASSWORD"
-            ? "Invalid email or password"
-            : code === "EMAIL_NOT_VERIFIED"
-              ? "Please verify your email before signing in"
-              : result.error.message || "Failed to sign in"
+          status === 429 || code === "TOO_MANY_REQUESTS"
+            ? "Too many sign-in attempts. Please wait a minute and try again."
+            : code === "INVALID_EMAIL_OR_PASSWORD"
+              ? "Invalid email or password"
+              : code === "EMAIL_NOT_VERIFIED"
+                ? "Please verify your email before signing in"
+                : result.error.message || "Failed to sign in"
         setError(friendly)
         setIsPending(false)
         return

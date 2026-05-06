@@ -139,10 +139,10 @@ The project includes technical documentation in `docs/`:
    npm run lint && npm run typecheck
    ```
 
-2. **NEVER start the dev server yourself**
+2. **Dev server: prefer asking, but you may manage it when explicitly told to**
 
-   - If you need dev server output, ask the user to provide it
-   - Don't run `npm run dev` or `pnpm dev`
+   - Default: ask the user to run `pnpm dev` and share output
+   - When the user explicitly asks you to start/restart it (e.g. "restart the dev server"), you may run it in the background, kill stale processes/lock files, and read the output
 
 3. **Use OpenRouter, NOT OpenAI directly**
 
