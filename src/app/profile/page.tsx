@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Mail, Calendar, User, Shield, ArrowLeft, Lock, Smartphone } from "lucide-react";
 import { toast } from "sonner";
+import { ChangePasswordForm } from "@/components/auth/change-password-form";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,7 @@ export default function ProfilePage() {
   const router = useRouter();
   const [editProfileOpen, setEditProfileOpen] = useState(false);
   const [securityOpen, setSecurityOpen] = useState(false);
+  const [changePasswordOpen, setChangePasswordOpen] = useState(false);
   const [emailPrefsOpen, setEmailPrefsOpen] = useState(false);
 
   useEffect(() => {
@@ -332,7 +334,16 @@ export default function ProfilePage() {
                   </p>
                 </div>
               </div>
-              <Badge variant="outline">Password</Badge>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setSecurityOpen(false);
+                  setChangePasswordOpen(true);
+                }}
+              >
+                Change
+              </Button>
             </div>
 
             <div className="flex items-center justify-between p-4 border rounded-lg">
@@ -368,6 +379,25 @@ export default function ProfilePage() {
               Close
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Change Password Dialog */}
+      <Dialog open={changePasswordOpen} onOpenChange={setChangePasswordOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Change Password</DialogTitle>
+            <DialogDescription>
+              Enter your current password and choose a new one.
+            </DialogDescription>
+          </DialogHeader>
+          <ChangePasswordForm
+            onSuccess={() => {
+              toast.success("Password changed");
+              setTimeout(() => setChangePasswordOpen(false), 800);
+            }}
+            onCancel={() => setChangePasswordOpen(false)}
+          />
         </DialogContent>
       </Dialog>
 
