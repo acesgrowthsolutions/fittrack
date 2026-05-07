@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Mail, Calendar, User, Shield, ArrowLeft, Lock, Smartphone } from "lucide-react";
 import { toast } from "sonner";
 import { ChangePasswordForm } from "@/components/auth/change-password-form";
+import { SessionsList } from "@/components/auth/sessions-list";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -428,17 +429,17 @@ export default function ProfilePage() {
               </Button>
             </div>
 
-            <div className="flex items-center justify-between p-4 border rounded-lg">
+            <div className="space-y-3 p-4 border rounded-lg">
               <div className="flex items-center gap-3">
                 <Shield className="h-5 w-5 text-muted-foreground" />
                 <div>
                   <p className="font-medium">Active Sessions</p>
                   <p className="text-sm text-muted-foreground">
-                    Manage devices logged into your account
+                    Devices currently signed into your account
                   </p>
                 </div>
               </div>
-              <Badge variant="default">1 Active</Badge>
+              {securityOpen && <SessionsList />}
             </div>
           </div>
           <div className="flex justify-end pt-4">
