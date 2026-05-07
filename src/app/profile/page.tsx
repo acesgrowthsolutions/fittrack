@@ -25,15 +25,17 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { useSession } from "@/lib/auth-client";
+import { sendVerificationEmail, updateUser, useSession } from "@/lib/auth-client";
 
 export default function ProfilePage() {
   const { data: session, isPending } = useSession();
   const router = useRouter();
   const [editProfileOpen, setEditProfileOpen] = useState(false);
+  const [editProfileSaving, setEditProfileSaving] = useState(false);
   const [securityOpen, setSecurityOpen] = useState(false);
   const [changePasswordOpen, setChangePasswordOpen] = useState(false);
   const [emailPrefsOpen, setEmailPrefsOpen] = useState(false);
+  const [verificationSending, setVerificationSending] = useState(false);
 
   useEffect(() => {
     if (!isPending && !session) {
@@ -58,11 +60,58 @@ export default function ProfilePage() {
       })
     : null;
 
-  const handleEditProfileSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleEditProfileSubmit = async (
+    e: React.FormEvent<HTMLFormElement>,
+  ) => {
     e.preventDefault();
-    // In a real app, this would call an API to update the user profile
-    toast.info("Profile updates require backend implementation");
-    setEditProfileOpen(false);
+    const form = e.currentTarget;
+    const nameInput = form.elements.namedItem("name") as HTMLInputElement | null;
+    const newName = nameInput?.value.trim() ?? "";
+
+    if (!newName) {
+      toast.error("Name cannot be empty");
+      return;
+    }
+    if (newName === user.name) {
+      setEditProfileOpen(false);
+      return;
+    }
+
+    setEditProfileSaving(true);
+    try {
+      const result = await updateUser({ name: newName });
+      if (result.error) {
+        toast.error(result.error.message || "Failed to update profile");
+        return;
+      }
+      toast.success("Profile updated");
+      setEditProfileOpen(false);
+      router.refresh();
+    } catch {
+      toast.error("An unexpected error occurred");
+    } finally {
+      setEditProfileSaving(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    if (!user.email) return;
+    setVerificationSending(true);
+    try {
+      const result = await sendVerificationEmail({
+        email: user.email,
+        callbackURL: "/profile",
+      });
+      if (result.error) {
+        toast.error(result.error.message || "Failed to send verification email");
+        return;
+      }
+      toast.success("Verification email sent. Check your inbox.");
+    } catch {
+      toast.error("An unexpected error occurred");
+    } finally {
+      setVerificationSending(false);
+    }
   };
 
   return (
@@ -167,9 +216,21 @@ export default function ProfilePage() {
                       Email address verification status
                     </p>
                   </div>
-                  <Badge variant={user.emailVerified ? "default" : "secondary"}>
-                    {user.emailVerified ? "Verified" : "Unverified"}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={user.emailVerified ? "default" : "secondary"}>
+                      {user.emailVerified ? "Verified" : "Unverified"}
+                    </Badge>
+                    {!user.emailVerified && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={handleResendVerification}
+                        disabled={verificationSending}
+                      >
+                        {verificationSending ? "Sending..." : "Verify"}
+                      </Button>
+                    )}
+                  </div>
                 </div>
                 <div className="flex items-center justify-between p-4 border rounded-lg">
                   <div className="space-y-1">
@@ -283,8 +344,11 @@ export default function ProfilePage() {
               <Label htmlFor="name">Full Name</Label>
               <Input
                 id="name"
+                name="name"
                 defaultValue={user.name || ""}
                 placeholder="Enter your name"
+                required
+                disabled={editProfileSaving}
               />
             </div>
             <div className="space-y-2">
@@ -297,7 +361,7 @@ export default function ProfilePage() {
                 className="bg-muted"
               />
               <p className="text-xs text-muted-foreground">
-                Email cannot be changed for OAuth accounts
+                Email changes aren&apos;t supported here yet
               </p>
             </div>
             <div className="flex justify-end gap-2 pt-4">
@@ -305,10 +369,13 @@ export default function ProfilePage() {
                 type="button"
                 variant="outline"
                 onClick={() => setEditProfileOpen(false)}
+                disabled={editProfileSaving}
               >
                 Cancel
               </Button>
-              <Button type="submit">Save Changes</Button>
+              <Button type="submit" disabled={editProfileSaving}>
+                {editProfileSaving ? "Saving..." : "Save Changes"}
+              </Button>
             </div>
           </form>
         </DialogContent>
