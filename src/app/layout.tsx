@@ -4,7 +4,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
-import { UserTzCookie } from "@/components/user-tz-cookie";
+import { USER_TZ_COOKIE } from "@/lib/user-tz-constants";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata } from "next";
@@ -82,6 +82,16 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
+        {/*
+          Set the user-tz cookie synchronously, before React hydrates and
+          before any client useEffect fires. This avoids a one-request UTC
+          fallback on the first page load of a fresh session.
+        */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{var t=Intl.DateTimeFormat().resolvedOptions().timeZone;if(t)document.cookie=${JSON.stringify(USER_TZ_COOKIE)}+"="+encodeURIComponent(t)+"; Path=/; Max-Age=63072000; SameSite=Lax"}catch(_){}`,
+          }}
+        />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
@@ -92,7 +102,6 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <UserTzCookie />
           <SiteHeader />
           <main id="main-content">{children}</main>
           <SiteFooter />
