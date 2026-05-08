@@ -3,32 +3,10 @@ import { and, eq, gte, lte } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { workouts } from "@/lib/schema";
+import { calculateWorkoutStreak } from "@/lib/workout-streak";
 
 function toDateStr(d: Date): string {
   return d.toISOString().split("T")[0] as string;
-}
-
-function calculateStreak(workoutDateSet: Set<string>): number {
-  const today = new Date();
-  const cursor = new Date(today);
-
-  // Lenient: streak can start from today or yesterday so the day's progress
-  // isn't lost before the user logs an evening workout.
-  if (!workoutDateSet.has(toDateStr(cursor))) {
-    cursor.setDate(cursor.getDate() - 1);
-    if (!workoutDateSet.has(toDateStr(cursor))) {
-      return 0;
-    }
-  }
-
-  let streak = 0;
-  // Cap at 365 — the underlying query only spans the last ~366 days.
-  for (let i = 0; i < 365; i += 1) {
-    if (!workoutDateSet.has(toDateStr(cursor))) break;
-    streak += 1;
-    cursor.setDate(cursor.getDate() - 1);
-  }
-  return streak;
 }
 
 export async function GET() {
@@ -103,7 +81,7 @@ export async function GET() {
       }
     }
 
-    const streak = calculateStreak(dateSet);
+    const streak = calculateWorkoutStreak(dateSet, now);
 
     return Response.json({
       streak,
