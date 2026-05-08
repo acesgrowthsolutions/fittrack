@@ -1,10 +1,37 @@
 import { betterAuth } from "better-auth"
 import { drizzleAdapter } from "better-auth/adapters/drizzle"
+import { oAuthProxy } from "better-auth/plugins"
 import { db } from "./db"
 import { passwordResetTemplate, sendEmail, verificationTemplate } from "./email"
 
+const googleClientId = process.env.GOOGLE_CLIENT_ID
+const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET
+
+// Stable production URL anchoring OAuth callbacks. Preview deployments
+// proxy through this domain via the oAuthProxy plugin so we don't have to
+// add every preview URL to the Google authorized redirect list.
+const PRODUCTION_URL = "https://fitness-one-rust.vercel.app"
+
+const vercelEnv = process.env.VERCEL_ENV
+const vercelURL = process.env.VERCEL_URL
+
+// On preview deploys VERCEL_URL is the unique deploy host (e.g.
+// fitness-abc123-jennas-projects-...vercel.app). Use it as baseURL so
+// Better Auth's cookies and redirects target the actual host the user is
+// on, not the production alias inherited from BETTER_AUTH_URL.
+const baseURL =
+  vercelEnv === "preview" && vercelURL
+    ? `https://${vercelURL}`
+    : process.env.BETTER_AUTH_URL ?? process.env.NEXT_PUBLIC_APP_URL
+
+// Only run the OAuth proxy on Vercel-hosted deployments. Locally we use
+// a direct redirect URI to localhost — proxying would needlessly bounce
+// the flow through production.
+const enableOAuthProxy =
+  vercelEnv === "production" || vercelEnv === "preview"
+
 export const auth = betterAuth({
-  baseURL: process.env.BETTER_AUTH_URL ?? process.env.NEXT_PUBLIC_APP_URL,
+  baseURL,
   database: drizzleAdapter(db, {
     provider: "pg",
   }),
@@ -50,4 +77,25 @@ export const auth = betterAuth({
       })
     },
   },
+  socialProviders:
+    googleClientId && googleClientSecret
+      ? {
+          google: {
+            clientId: googleClientId,
+            clientSecret: googleClientSecret,
+          },
+        }
+      : undefined,
+  account: {
+    accountLinking: {
+      // Google's id_token already proves email ownership, so it's safe to
+      // link a Google sign-in to an existing email/password user with the
+      // same address instead of creating a duplicate account.
+      enabled: true,
+      trustedProviders: ["google"],
+    },
+  },
+  plugins: enableOAuthProxy
+    ? [oAuthProxy({ productionURL: PRODUCTION_URL })]
+    : undefined,
 })
