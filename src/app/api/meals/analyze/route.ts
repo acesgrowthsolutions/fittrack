@@ -4,6 +4,7 @@ import * as Sentry from "@sentry/nextjs";
 import { generateObject } from "ai";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
+import { todayInTz } from "@/lib/date-tz";
 import { db } from "@/lib/db";
 import {
   checkRateLimit,
@@ -12,6 +13,7 @@ import {
 } from "@/lib/rate-limit";
 import { meals, type MealFoodItem } from "@/lib/schema";
 import { deleteFile, upload } from "@/lib/storage";
+import { getUserTz } from "@/lib/user-tz";
 
 export const maxDuration = 60;
 
@@ -67,9 +69,6 @@ const ALLOWED_IMAGE_MIMES = new Set([
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024; // 8MB
 
-function todayStr(): string {
-  return new Date().toISOString().split("T")[0] as string;
-}
 
 export async function POST(req: Request) {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -105,7 +104,9 @@ export async function POST(req: Request) {
 
   const image = formData.get("image");
   const mealTypeRaw = (formData.get("mealType") as string | null) ?? "snack";
-  const mealDate = (formData.get("mealDate") as string | null) ?? todayStr();
+  const mealDate =
+    (formData.get("mealDate") as string | null) ??
+    todayInTz(await getUserTz());
   const userNote = (formData.get("note") as string | null) ?? "";
 
   if (!(image instanceof File)) {

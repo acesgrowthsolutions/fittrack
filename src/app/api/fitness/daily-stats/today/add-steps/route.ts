@@ -3,12 +3,10 @@ import { sql } from "drizzle-orm";
 import { z } from "zod";
 import { checkAchievements } from "@/lib/achievements";
 import { auth } from "@/lib/auth";
+import { todayInTz } from "@/lib/date-tz";
 import { db } from "@/lib/db";
 import { dailyStats } from "@/lib/schema";
-
-function getTodayDateStr(): string {
-  return new Date().toISOString().split("T")[0] as string;
-}
+import { getUserTz } from "@/lib/user-tz";
 
 const bodySchema = z.object({
   steps: z.number().int().min(0).max(100_000),
@@ -50,7 +48,7 @@ export async function POST(req: Request) {
       return Response.json({ error: "Nothing to add" }, { status: 400 });
     }
 
-    const today = getTodayDateStr();
+    const today = todayInTz(await getUserTz());
 
     // Atomic upsert: insert new row with deltas, or add deltas to existing row.
     // Using SQL increments avoids the read-modify-write race when the user has

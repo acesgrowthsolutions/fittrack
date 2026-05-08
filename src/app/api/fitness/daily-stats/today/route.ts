@@ -2,12 +2,10 @@ import { headers } from "next/headers";
 import { eq, and } from "drizzle-orm";
 import { checkAchievements } from "@/lib/achievements";
 import { auth } from "@/lib/auth";
+import { todayInTz } from "@/lib/date-tz";
 import { db } from "@/lib/db";
 import { dailyStats } from "@/lib/schema";
-
-function getTodayDateStr(): string {
-  return new Date().toISOString().split("T")[0] as string;
-}
+import { getUserTz } from "@/lib/user-tz";
 
 export async function GET() {
   try {
@@ -16,7 +14,7 @@ export async function GET() {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const today = getTodayDateStr();
+    const today = todayInTz(await getUserTz());
 
     const [stats] = await db
       .select()
@@ -61,7 +59,7 @@ export async function POST(req: Request) {
       return Response.json({ error: "At least one field is required" }, { status: 400 });
     }
 
-    const today = getTodayDateStr();
+    const today = todayInTz(await getUserTz());
 
     // Build the update set, always include updatedAt to guarantee non-empty set
     const updateSet: Record<string, unknown> = { updatedAt: new Date() };

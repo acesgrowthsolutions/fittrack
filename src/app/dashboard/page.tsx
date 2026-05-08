@@ -25,6 +25,8 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSession } from "@/lib/auth-client";
+import { addDays } from "@/lib/date-tz";
+import { getLocalDateStr } from "@/lib/local-date";
 
 interface SummaryData {
   today: {
@@ -405,10 +407,9 @@ function buildWeeklyChartData(
   const result: Array<{ date: string; steps: number }> = [];
   const statsMap = new Map(stats.map((s) => [s.date, s.steps]));
 
+  const today = getLocalDateStr();
   for (let i = 6; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    const dateStr = d.toISOString().split("T")[0] as string;
+    const dateStr = addDays(today, -i);
     result.push({
       date: dateStr,
       steps: statsMap.get(dateStr) ?? 0,

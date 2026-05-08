@@ -28,6 +28,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { useSession } from "@/lib/auth-client";
+import { getLocalDateStr } from "@/lib/local-date";
 
 interface FoodItem {
   name: string;
@@ -67,16 +68,12 @@ const MEAL_TYPE_COLORS: Record<string, string> = {
   snack: "bg-pink-500/10 text-pink-600 dark:text-pink-400",
 };
 
-function todayStr(): string {
-  return new Date().toISOString().split("T")[0] as string;
-}
-
 export default function MealsPage() {
   const { data: session, isPending } = useSession();
   const [meals, setMeals] = useState<Meal[]>([]);
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(todayStr());
+  const [selectedDate, setSelectedDate] = useState(getLocalDateStr());
   const [mealType, setMealType] = useState<(typeof MEAL_TYPES)[number]["value"]>(
     "lunch"
   );
@@ -243,7 +240,7 @@ export default function MealsPage() {
             id="meal-date"
             type="date"
             value={selectedDate}
-            max={todayStr()}
+            max={getLocalDateStr()}
             onChange={(e) => setSelectedDate(e.target.value)}
             className="w-44"
           />
@@ -254,7 +251,7 @@ export default function MealsPage() {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base font-medium">
-            {selectedDate === todayStr() ? "Today" : selectedDate}
+            {selectedDate === getLocalDateStr() ? "Today" : selectedDate}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
@@ -349,7 +346,7 @@ export default function MealsPage() {
                   <Input
                     type="date"
                     value={selectedDate}
-                    max={todayStr()}
+                    max={getLocalDateStr()}
                     onChange={(e) => setSelectedDate(e.target.value)}
                   />
                 </div>

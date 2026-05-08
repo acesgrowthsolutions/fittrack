@@ -1,37 +1,33 @@
-function toDateStr(d: Date): string {
-  return d.toISOString().split("T")[0] as string;
-}
+import { addDays } from "@/lib/date-tz";
 
 /**
  * Compute the user's current consecutive-day workout streak.
  *
- * Lenient at the front edge: if today has no workout yet but yesterday does,
- * the streak still counts — so logging an evening workout doesn't reset things
- * mid-day.
+ * Lenient at the front edge: if `todayStr` has no workout yet but the day
+ * before does, the streak still counts — so logging an evening workout
+ * doesn't reset things mid-day.
  *
- * `dateSet` should contain workout dates as YYYY-MM-DD strings.
- * `now` defaults to the current time; tests override it for determinism.
+ * `dateSet` should contain workout dates as YYYY-MM-DD strings in the same
+ * timezone as `todayStr` (typically the user's local tz).
  * `maxDays` caps the walk and protects against runaway loops on bad data.
  */
 export function calculateWorkoutStreak(
   dateSet: Set<string>,
-  now: Date = new Date(),
+  todayStr: string,
   maxDays = 365
 ): number {
-  const cursor = new Date(now);
+  let cursor = todayStr;
 
-  if (!dateSet.has(toDateStr(cursor))) {
-    cursor.setDate(cursor.getDate() - 1);
-    if (!dateSet.has(toDateStr(cursor))) {
-      return 0;
-    }
+  if (!dateSet.has(cursor)) {
+    cursor = addDays(cursor, -1);
+    if (!dateSet.has(cursor)) return 0;
   }
 
   let streak = 0;
   for (let i = 0; i < maxDays; i += 1) {
-    if (!dateSet.has(toDateStr(cursor))) break;
+    if (!dateSet.has(cursor)) break;
     streak += 1;
-    cursor.setDate(cursor.getDate() - 1);
+    cursor = addDays(cursor, -1);
   }
   return streak;
 }

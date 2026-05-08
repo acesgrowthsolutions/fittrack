@@ -25,6 +25,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSession } from "@/lib/auth-client";
+import { getLocalDateStr } from "@/lib/local-date";
 
 interface Goal {
   id: string;
@@ -68,7 +69,7 @@ function GoalForm({ onSuccess }: { onSuccess: () => void }) {
           type,
           targetValue: parseFloat(targetValue),
           unit: selectedGoalType?.unit ?? "units",
-          startDate: new Date().toISOString().split("T")[0],
+          startDate: getLocalDateStr(),
           endDate: endDate || null,
         }),
       });

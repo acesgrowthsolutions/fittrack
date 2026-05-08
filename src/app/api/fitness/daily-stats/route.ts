@@ -1,8 +1,10 @@
 import { headers } from "next/headers";
 import { eq, and, gte, desc } from "drizzle-orm";
 import { auth } from "@/lib/auth";
+import { addDays, todayInTz } from "@/lib/date-tz";
 import { db } from "@/lib/db";
 import { dailyStats } from "@/lib/schema";
+import { getUserTz } from "@/lib/user-tz";
 
 export async function GET(req: Request) {
   try {
@@ -14,9 +16,8 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const days = Math.min(parseInt(searchParams.get("days") || "30") || 30, 365);
 
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
-    const startDateStr = startDate.toISOString().split("T")[0] as string;
+    const tz = await getUserTz();
+    const startDateStr = addDays(todayInTz(tz), -days);
 
     const results = await db
       .select()

@@ -27,6 +27,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useSession } from "@/lib/auth-client";
+import { addDays } from "@/lib/date-tz";
+import { getLocalDateStr } from "@/lib/local-date";
 
 interface DailyStat {
   id?: string;
@@ -277,10 +279,9 @@ function buildWeeklyData(
   const map = new Map(history.map((h) => [h.date, h.steps]));
   const result: Array<{ date: string; steps: number }> = [];
 
+  const today = getLocalDateStr();
   for (let i = 6; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    const dateStr = d.toISOString().split("T")[0] as string;
+    const dateStr = addDays(today, -i);
     result.push({ date: dateStr, steps: map.get(dateStr) ?? 0 });
   }
 

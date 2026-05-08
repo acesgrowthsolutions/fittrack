@@ -5,6 +5,7 @@ import { streamText, UIMessage, convertToModelMessages } from "ai";
 import { and, desc, eq, gte } from "drizzle-orm";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
+import { addDays, todayInTz } from "@/lib/date-tz";
 import { db } from "@/lib/db";
 import {
   checkRateLimit,
@@ -12,6 +13,7 @@ import {
   type RateLimitWindow,
 } from "@/lib/rate-limit";
 import { dailyStats, goals, userProfile, workouts } from "@/lib/schema";
+import { getUserTz } from "@/lib/user-tz";
 
 // Each /api/chat call hits OpenRouter and costs money. Cap per user.
 const CHAT_RATE_LIMITS: RateLimitWindow[] = [
@@ -36,14 +38,8 @@ const chatRequestSchema = z.object({
   messages: z.array(messageSchema).max(100, "Too many messages"),
 });
 
-function getDateStr(daysAgo: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() - daysAgo);
-  return d.toISOString().split("T")[0] as string;
-}
-
-async function buildUserContext(userId: string): Promise<string> {
-  const weekAgo = getDateStr(7);
+async function buildUserContext(userId: string, tz: string): Promise<string> {
+  const weekAgo = addDays(todayInTz(tz), -7);
 
   const [profileResult, recentStats, recentWorkouts, activeGoals] =
     await Promise.all([
@@ -215,7 +211,7 @@ export async function POST(req: Request) {
 
   let userContext = "";
   try {
-    userContext = await buildUserContext(session.user.id);
+    userContext = await buildUserContext(session.user.id, await getUserTz());
   } catch (err) {
     console.error("Failed to build user context for chat:", err);
     Sentry.captureException(err, { tags: { route: "api/chat", phase: "user-context" } });

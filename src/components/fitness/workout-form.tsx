@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { getLocalDateStr } from "@/lib/local-date";
 
 /**
  * MET (Metabolic Equivalent of Task) values for common exercises.
@@ -69,7 +70,7 @@ export function WorkoutForm({
   const [type, setType] = useState(initialData?.type ?? "");
   const [name, setName] = useState(initialData?.name ?? "");
   const [workoutDate, setWorkoutDate] = useState(
-    initialData?.workoutDate ?? new Date().toISOString().split("T")[0]
+    initialData?.workoutDate ?? getLocalDateStr()
   );
   const [durationMinutes, setDurationMinutes] = useState(
     initialData?.durationMinutes?.toString() ?? ""

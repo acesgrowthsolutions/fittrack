@@ -1,32 +1,25 @@
 import { headers } from "next/headers";
 import { eq, and, gte, desc, lte, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
+import { addDays, mondayOf, todayInTz } from "@/lib/date-tz";
 import { db } from "@/lib/db";
 import { dailyStats, workouts, goals, userProfile } from "@/lib/schema";
-
-function getTodayDateStr(): string {
-  return new Date().toISOString().split("T")[0] as string;
-}
-
-function getDateStr(daysAgo: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() - daysAgo);
-  return d.toISOString().split("T")[0] as string;
-}
+import { getUserTz } from "@/lib/user-tz";
 
 /**
- * Calculate the user's current streak -- consecutive days (ending today or
- * yesterday) that have step data > 0.
+ * Calculate the user's current step streak: consecutive days (ending today
+ * or yesterday in the user's timezone) that have step data > 0.
  */
-function calculateStreak(stats: { date: string; steps: number }[]): number {
+function calculateStreak(
+  stats: { date: string; steps: number }[],
+  today: string
+): number {
   if (stats.length === 0) return 0;
 
   // Sort by date descending so the most recent day is first
-  const sorted = [...stats].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const sorted = [...stats].sort((a, b) => (a.date < b.date ? 1 : -1));
 
-  const today = getTodayDateStr();
-  const yesterday = getDateStr(1);
-
+  const yesterday = addDays(today, -1);
   const first = sorted[0];
   if (!first) return 0;
 
@@ -36,22 +29,13 @@ function calculateStreak(stats: { date: string; steps: number }[]): number {
   }
 
   let streak = 0;
-  const expectedDate = new Date(first.date);
+  let expected = first.date;
 
   for (const stat of sorted) {
-    const statDate = new Date(stat.date);
-    // Check if this date matches the expected date in the streak
-    const statDateStr = statDate.toISOString().split("T")[0] as string;
-    const expectedDateStr = expectedDate.toISOString().split("T")[0] as string;
-    if (statDateStr !== expectedDateStr) {
-      break;
-    }
-    if (stat.steps > 0) {
-      streak++;
-      expectedDate.setDate(expectedDate.getDate() - 1);
-    } else {
-      break;
-    }
+    if (stat.date !== expected) break;
+    if (stat.steps <= 0) break;
+    streak += 1;
+    expected = addDays(expected, -1);
   }
 
   return streak;
@@ -65,17 +49,11 @@ export async function GET() {
     }
 
     const userId = session.user.id;
-    const today = getTodayDateStr();
-    const weekAgo = getDateStr(7);
-    const monthAgo = getDateStr(30);
-
-    // Compute Monday of current week for the workouts query
-    const now = new Date();
-    const dayOfWeek = now.getDay();
-    const mondayOffset = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-    const monday = new Date(now);
-    monday.setDate(monday.getDate() - mondayOffset);
-    const mondayStr = monday.toISOString().split("T")[0] as string;
+    const tz = await getUserTz();
+    const today = todayInTz(tz);
+    const weekAgo = addDays(today, -7);
+    const monthAgo = addDays(today, -30);
+    const mondayStr = mondayOf(today);
 
     // Run all independent queries in parallel
     const [
@@ -220,7 +198,7 @@ export async function GET() {
       });
 
     // Calculate streak
-    const streak = calculateStreak(recentStats);
+    const streak = calculateStreak(recentStats, today);
 
     // Calculate goal progress percentages
     const goalsWithProgress = activeGoals.map((goal) => {
