@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Activity } from "lucide-react";
 
 export function SiteFooter() {
@@ -10,6 +11,17 @@ export function SiteFooter() {
             <span className="font-medium text-foreground">FitTrack</span>
           </div>
           <p>Your personal fitness tracking companion</p>
+          <nav
+            className="flex items-center gap-4 text-xs"
+            aria-label="Legal"
+          >
+            <Link href="/privacy" className="hover:text-foreground hover:underline">
+              Privacy
+            </Link>
+            <Link href="/terms" className="hover:text-foreground hover:underline">
+              Terms
+            </Link>
+          </nav>
         </div>
       </div>
     </footer>
