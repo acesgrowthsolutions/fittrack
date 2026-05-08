@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+import * as Sentry from "@sentry/nextjs";
 import { streamText, UIMessage, convertToModelMessages } from "ai";
 import { and, desc, eq, gte } from "drizzle-orm";
 import { z } from "zod";
@@ -217,6 +218,7 @@ export async function POST(req: Request) {
     userContext = await buildUserContext(session.user.id);
   } catch (err) {
     console.error("Failed to build user context for chat:", err);
+    Sentry.captureException(err, { tags: { route: "api/chat", phase: "user-context" } });
   }
 
   const baseSystem =
@@ -238,6 +240,12 @@ export async function POST(req: Request) {
     system,
     messages: convertToModelMessages(messages),
     maxOutputTokens: 4096,
+    onError({ error }) {
+      console.error("OpenRouter stream error:", error);
+      Sentry.captureException(error, {
+        tags: { route: "api/chat", phase: "stream", provider: "openrouter" },
+      });
+    },
   });
 
   return result.toUIMessageStreamResponse();

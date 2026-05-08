@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
+import * as Sentry from "@sentry/nextjs";
 import { generateObject } from "ai";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
@@ -203,6 +204,14 @@ export async function POST(req: Request) {
       data: errAny.data,
       model: visionModel,
     });
+    Sentry.captureException(err, {
+      tags: {
+        route: "api/meals/analyze",
+        phase: "vision",
+        provider: "openrouter",
+        model: visionModel,
+      },
+    });
     cleanupImage();
     return Response.json(
       {
@@ -256,6 +265,9 @@ export async function POST(req: Request) {
     return Response.json(created, { status: 201 });
   } catch (err) {
     console.error("Failed to save meal:", err);
+    Sentry.captureException(err, {
+      tags: { route: "api/meals/analyze", phase: "persist" },
+    });
     cleanupImage();
     return Response.json({ error: "Failed to save meal" }, { status: 500 });
   }

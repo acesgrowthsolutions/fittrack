@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import * as Sentry from "@sentry/nextjs";
 
 type StatusLevel = "ok" | "warn" | "error";
 
@@ -190,6 +191,32 @@ export async function GET(req: Request) {
     },
     overallStatus,
   };
+
+  // Alert on real outages only. Sentry dedupes by fingerprint, so a sustained
+  // outage produces one issue (with mounting event count) rather than spam.
+  if (overallStatus === "error" && process.env.VERCEL_ENV === "production") {
+    const fingerprint: string[] = ["diagnostics"];
+    if (!env.POSTGRES_URL) fingerprint.push("postgres-url-missing");
+    else if (!dbConnected) fingerprint.push("db-disconnected");
+    else if (!schemaApplied) fingerprint.push("schema-missing");
+    if (!authConfigured) fingerprint.push("auth-misconfigured");
+
+    Sentry.captureMessage(
+      `Diagnostics failed: ${fingerprint.slice(1).join(",") || "unknown"}`,
+      {
+        level: "error",
+        fingerprint,
+        tags: { route: "api/diagnostics" },
+        extra: {
+          dbConnected,
+          schemaApplied,
+          dbError,
+          authConfigured,
+          authRouteResponding,
+        },
+      }
+    );
+  }
 
   return NextResponse.json(body, {
     status: 200,

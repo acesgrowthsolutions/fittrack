@@ -1,3 +1,4 @@
+import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
@@ -49,4 +50,18 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+// Wrap with Sentry. Source-map upload only runs when SENTRY_AUTH_TOKEN +
+// SENTRY_ORG + SENTRY_PROJECT are present (auto-provisioned by the Vercel
+// Marketplace integration). Without them this is effectively a no-op wrapper.
+const sentryOptions = {
+  silent: !process.env.CI,
+  widenClientFileUpload: true,
+  disableLogger: true,
+  ...(process.env.SENTRY_ORG ? { org: process.env.SENTRY_ORG } : {}),
+  ...(process.env.SENTRY_PROJECT ? { project: process.env.SENTRY_PROJECT } : {}),
+  ...(process.env.SENTRY_AUTH_TOKEN
+    ? { authToken: process.env.SENTRY_AUTH_TOKEN }
+    : {}),
+};
+
+export default withSentryConfig(nextConfig, sentryOptions);
