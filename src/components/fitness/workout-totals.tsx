@@ -1,10 +1,11 @@
 "use client";
 
-import { CalendarDays, CalendarRange, Trophy } from "lucide-react";
+import { CalendarCheck, CalendarDays, CalendarRange, Trophy } from "lucide-react";
 import { StatCard } from "@/components/fitness/stat-card";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export interface WorkoutTotalsData {
+  day: number;
   week: number;
   month: number;
   year: number;
@@ -18,8 +19,8 @@ interface WorkoutTotalsProps {
 export function WorkoutTotals({ totals, loading }: WorkoutTotalsProps) {
   if (loading || !totals) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {Array.from({ length: 3 }).map((_, i) => (
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        {Array.from({ length: 4 }).map((_, i) => (
           <Skeleton key={i} className="h-24" />
         ))}
       </div>
@@ -29,7 +30,14 @@ export function WorkoutTotals({ totals, loading }: WorkoutTotalsProps) {
   const unit = (n: number) => (n === 1 ? "workout" : "workouts");
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <StatCard
+        title="Today"
+        value={totals.day}
+        unit={unit(totals.day)}
+        icon={CalendarCheck}
+        color="bg-emerald-500/10 text-emerald-500"
+      />
       <StatCard
         title="This Week"
         value={totals.week}

@@ -42,6 +42,7 @@ export async function GET() {
         )
       );
 
+    let day = 0;
     let week = 0;
     let month = 0;
     const year = rows.length;
@@ -49,9 +50,10 @@ export async function GET() {
     for (const row of rows) {
       if (row.workoutDate >= monthStart) month += 1;
       if (row.workoutDate >= weekStart) week += 1;
+      if (row.workoutDate === today) day += 1;
     }
 
-    return Response.json({ week, month, year });
+    return Response.json({ day, week, month, year });
   } catch (error) {
     console.error("Error fetching workout totals:", error);
     return Response.json(
