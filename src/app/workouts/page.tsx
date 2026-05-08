@@ -8,6 +8,10 @@ import { UserProfile } from "@/components/auth/user-profile";
 import { WorkoutCard } from "@/components/fitness/workout-card";
 import { WorkoutForm } from "@/components/fitness/workout-form";
 import { WorkoutTimer } from "@/components/fitness/workout-timer";
+import {
+  WorkoutTotals,
+  type WorkoutTotalsData,
+} from "@/components/fitness/workout-totals";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -63,6 +67,8 @@ export default function WorkoutsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [timerOpen, setTimerOpen] = useState(false);
   const [userWeightKg, setUserWeightKg] = useState<number | null>(null);
+  const [totals, setTotals] = useState<WorkoutTotalsData | null>(null);
+  const [totalsLoading, setTotalsLoading] = useState(true);
 
   const fetchWorkouts = useCallback(
     async (newOffset = 0, append = false, type = "all") => {
@@ -101,6 +107,22 @@ export default function WorkoutsPage() {
     []
   );
 
+  const fetchTotals = useCallback(async () => {
+    try {
+      setTotalsLoading(true);
+      const res = await fetch("/api/fitness/workouts/totals");
+      if (!res.ok) throw new Error("Failed to fetch workout totals");
+      const data: WorkoutTotalsData = await res.json();
+      setTotals(data);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to load workout totals"
+      );
+    } finally {
+      setTotalsLoading(false);
+    }
+  }, []);
+
   const fetchProfile = useCallback(async () => {
     try {
       const res = await fetch("/api/fitness/profile");
@@ -126,8 +148,9 @@ export default function WorkoutsPage() {
     if (session) {
       fetchWorkouts(0, false, typeFilter);
       fetchProfile();
+      fetchTotals();
     }
-  }, [session, fetchWorkouts, fetchProfile, typeFilter]);
+  }, [session, fetchWorkouts, fetchProfile, fetchTotals, typeFilter]);
 
   if (isPending) {
     return (
@@ -180,6 +203,7 @@ export default function WorkoutsPage() {
                 onSaved={() => {
                   setTimerOpen(false);
                   fetchWorkouts(0);
+                  fetchTotals();
                 }}
               />
             </DialogContent>
@@ -200,12 +224,16 @@ export default function WorkoutsPage() {
                 onSuccess={() => {
                   setDialogOpen(false);
                   fetchWorkouts(0);
+                  fetchTotals();
                 }}
               />
             </DialogContent>
           </Dialog>
         </div>
       </div>
+
+      {/* Totals */}
+      <WorkoutTotals totals={totals} loading={totalsLoading} />
 
       {/* Filters */}
       <div className="flex items-center gap-4">
@@ -256,6 +284,7 @@ export default function WorkoutsPage() {
                 onSuccess={() => {
                   setDialogOpen(false);
                   fetchWorkouts(0);
+                  fetchTotals();
                 }}
               />
             </DialogContent>
