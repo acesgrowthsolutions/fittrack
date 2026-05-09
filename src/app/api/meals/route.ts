@@ -25,13 +25,15 @@ export async function GET(req: Request) {
     }
 
     const limit = Math.min(parseInt(searchParams.get("limit") || "50") || 50, 200);
+    const offset = Math.max(parseInt(searchParams.get("offset") || "0") || 0, 0);
 
     const results = await db
       .select()
       .from(meals)
       .where(whereClause)
       .orderBy(desc(meals.mealDate), desc(meals.createdAt))
-      .limit(limit);
+      .limit(limit)
+      .offset(offset);
 
     return Response.json(results);
   } catch (error) {

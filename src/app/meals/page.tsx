@@ -1,18 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import Image from "next/image";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Apple,
   Camera,
   Loader2,
-  Trash2,
   Upload,
   Utensils,
 } from "lucide-react";
 import { toast } from "sonner";
 import { UserProfile } from "@/components/auth/user-profile";
-import { Badge } from "@/components/ui/badge";
+import { MealCard, type Meal } from "@/components/fitness/meal-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -26,33 +24,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useSession } from "@/lib/auth-client";
 import { getLocalDateStr } from "@/lib/local-date";
-
-interface FoodItem {
-  name: string;
-  portion: string;
-  calories: number;
-  protein_g?: number;
-  carbs_g?: number;
-  fat_g?: number;
-}
-
-interface Meal {
-  id: string;
-  mealType: "breakfast" | "lunch" | "dinner" | "snack";
-  mealDate: string;
-  description: string;
-  totalCalories: number;
-  proteinG: string | null;
-  carbsG: string | null;
-  fatG: string | null;
-  foodItems: FoodItem[];
-  imageUrl: string | null;
-  confidence: string | null;
-  createdAt: string;
-}
 
 const MEAL_TYPES = [
   { value: "breakfast", label: "Breakfast" },
@@ -61,42 +36,93 @@ const MEAL_TYPES = [
   { value: "snack", label: "Snack" },
 ] as const;
 
-const MEAL_TYPE_COLORS: Record<string, string> = {
-  breakfast: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
-  lunch: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-  dinner: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400",
-  snack: "bg-pink-500/10 text-pink-600 dark:text-pink-400",
-};
+const ALL_PAGE_SIZE = 20;
+
+function formatDateLabel(dateStr: string): string {
+  const today = getLocalDateStr();
+  if (dateStr === today) return "Today";
+  // Yesterday computed via simple string math (works in any tz since both
+  // strings are user-local)
+  const [y, m, d] = dateStr.split("-").map(Number) as [number, number, number];
+  const ms = Date.UTC(y, m - 1, d);
+  const dt = new Date(ms);
+  const opts: Intl.DateTimeFormatOptions = {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    timeZone: "UTC",
+  };
+  return new Intl.DateTimeFormat(undefined, opts).format(dt);
+}
 
 export default function MealsPage() {
   const { data: session, isPending } = useSession();
-  const [meals, setMeals] = useState<Meal[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [analyzing, setAnalyzing] = useState(false);
+
+  // Day view state
+  const [dayMeals, setDayMeals] = useState<Meal[]>([]);
+  const [dayLoading, setDayLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState(getLocalDateStr());
+  const [calorieGoal, setCalorieGoal] = useState<number | null>(null);
+
+  // All-history view state
+  const [allMeals, setAllMeals] = useState<Meal[]>([]);
+  const [allLoading, setAllLoading] = useState(false);
+  const [allLoadingMore, setAllLoadingMore] = useState(false);
+  const [allOffset, setAllOffset] = useState(0);
+  const [allHasMore, setAllHasMore] = useState(true);
+  const [allLoaded, setAllLoaded] = useState(false);
+
+  // Upload state
+  const [analyzing, setAnalyzing] = useState(false);
   const [mealType, setMealType] = useState<(typeof MEAL_TYPES)[number]["value"]>(
     "lunch"
   );
   const [note, setNote] = useState("");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
-  const [calorieGoal, setCalorieGoal] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
-  const fetchMeals = useCallback(async (date: string) => {
+  const [activeTab, setActiveTab] = useState<"day" | "all">("day");
+
+  const fetchDayMeals = useCallback(async (date: string) => {
     try {
-      setLoading(true);
+      setDayLoading(true);
       const res = await fetch(`/api/meals?date=${date}`);
       if (!res.ok) throw new Error("Failed to fetch meals");
       const data: Meal[] = await res.json();
-      setMeals(data);
+      setDayMeals(data);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to load meals");
     } finally {
-      setLoading(false);
+      setDayLoading(false);
     }
   }, []);
+
+  const fetchAllMeals = useCallback(
+    async (offset = 0, append = false) => {
+      try {
+        if (offset === 0) setAllLoading(true);
+        else setAllLoadingMore(true);
+        const res = await fetch(
+          `/api/meals?limit=${ALL_PAGE_SIZE}&offset=${offset}`
+        );
+        if (!res.ok) throw new Error("Failed to fetch meals");
+        const data: Meal[] = await res.json();
+        setAllMeals((prev) => (append ? [...prev, ...data] : data));
+        setAllHasMore(data.length === ALL_PAGE_SIZE);
+        setAllOffset(offset + data.length);
+        setAllLoaded(true);
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Failed to load meals");
+      } finally {
+        setAllLoading(false);
+        setAllLoadingMore(false);
+      }
+    },
+    []
+  );
 
   const fetchProfile = useCallback(async () => {
     try {
@@ -113,10 +139,17 @@ export default function MealsPage() {
 
   useEffect(() => {
     if (session) {
-      fetchMeals(selectedDate);
+      fetchDayMeals(selectedDate);
       fetchProfile();
     }
-  }, [session, selectedDate, fetchMeals, fetchProfile]);
+  }, [session, selectedDate, fetchDayMeals, fetchProfile]);
+
+  // Lazy-load all-history on first tab activation
+  useEffect(() => {
+    if (session && activeTab === "all" && !allLoaded) {
+      fetchAllMeals(0);
+    }
+  }, [session, activeTab, allLoaded, fetchAllMeals]);
 
   function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -143,6 +176,16 @@ export default function MealsPage() {
     if (cameraInputRef.current) cameraInputRef.current.value = "";
   }
 
+  function refreshAll() {
+    fetchDayMeals(selectedDate);
+    if (allLoaded) {
+      // Refetch from offset 0 so the all-history view stays in sync.
+      setAllLoaded(false);
+      setAllOffset(0);
+      fetchAllMeals(0);
+    }
+  }
+
   async function analyze() {
     if (!pendingFile) return;
     setAnalyzing(true);
@@ -160,12 +203,14 @@ export default function MealsPage() {
       const data = await res.json();
       if (!res.ok) {
         const msg = data.error || "Analysis failed";
-        const detail = data.detail ? ` — ${String(data.detail).slice(0, 200)}` : "";
+        const detail = data.detail
+          ? ` — ${String(data.detail).slice(0, 200)}`
+          : "";
         throw new Error(msg + detail);
       }
       toast.success(`Logged ${data.totalCalories} kcal`);
       clearPending();
-      fetchMeals(selectedDate);
+      refreshAll();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Analysis failed", {
         duration: 8000,
@@ -183,12 +228,29 @@ export default function MealsPage() {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || "Failed to delete");
       }
-      setMeals((prev) => prev.filter((m) => m.id !== id));
+      setDayMeals((prev) => prev.filter((m) => m.id !== id));
+      setAllMeals((prev) => prev.filter((m) => m.id !== id));
       toast.success("Meal deleted");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to delete");
     }
   }
+
+  // Group all-history meals by date for the All tab
+  const allMealsByDate = useMemo(() => {
+    const groups = new Map<string, Meal[]>();
+    for (const m of allMeals) {
+      const list = groups.get(m.mealDate) ?? [];
+      list.push(m);
+      groups.set(m.mealDate, list);
+    }
+    return Array.from(groups.entries()); // already date-desc from API
+  }, [allMeals]);
+
+  const totalAllCalories = useMemo(
+    () => allMeals.reduce((s, m) => s + m.totalCalories, 0),
+    [allMeals]
+  );
 
   if (isPending) {
     return (
@@ -213,10 +275,10 @@ export default function MealsPage() {
     );
   }
 
-  const totalCalories = meals.reduce((sum, m) => sum + m.totalCalories, 0);
+  const dayCalories = dayMeals.reduce((sum, m) => sum + m.totalCalories, 0);
   const goalPct =
     calorieGoal && calorieGoal > 0
-      ? Math.min(Math.round((totalCalories / calorieGoal) * 100), 100)
+      ? Math.min(Math.round((dayCalories / calorieGoal) * 100), 100)
       : null;
 
   return (
@@ -246,27 +308,6 @@ export default function MealsPage() {
           />
         </div>
       </div>
-
-      {/* Daily summary */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base font-medium">
-            {selectedDate === getLocalDateStr() ? "Today" : selectedDate}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          <div className="flex items-baseline justify-between">
-            <span className="text-3xl font-bold">{totalCalories}</span>
-            <span className="text-sm text-muted-foreground">
-              {calorieGoal ? `of ${calorieGoal} kcal goal` : "kcal consumed"}
-            </span>
-          </div>
-          {goalPct !== null && <Progress value={goalPct} />}
-          <p className="text-xs text-muted-foreground">
-            {meals.length} meal{meals.length === 1 ? "" : "s"} logged
-          </p>
-        </CardContent>
-      </Card>
 
       {/* Upload card */}
       <Card>
@@ -325,9 +366,7 @@ export default function MealsPage() {
                   <Label>Meal type</Label>
                   <Select
                     value={mealType}
-                    onValueChange={(v) =>
-                      setMealType(v as typeof mealType)
-                    }
+                    onValueChange={(v) => setMealType(v as typeof mealType)}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -363,7 +402,11 @@ export default function MealsPage() {
                 />
               </div>
               <div className="flex gap-2">
-                <Button onClick={analyze} disabled={analyzing} className="flex-1">
+                <Button
+                  onClick={analyze}
+                  disabled={analyzing}
+                  className="flex-1"
+                >
                   {analyzing ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -389,116 +432,145 @@ export default function MealsPage() {
         </CardContent>
       </Card>
 
-      {/* Meal list */}
-      <div className="space-y-3">
-        <h2 className="text-lg font-semibold">Meals on {selectedDate}</h2>
-        {loading ? (
-          <div className="space-y-3">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <Skeleton key={i} className="h-32" />
-            ))}
-          </div>
-        ) : meals.length === 0 ? (
+      {/* Tabs: Day vs All history */}
+      <Tabs
+        value={activeTab}
+        onValueChange={(v) => setActiveTab(v as "day" | "all")}
+      >
+        <TabsList>
+          <TabsTrigger value="day">Day</TabsTrigger>
+          <TabsTrigger value="all">All meals</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="day" className="space-y-4 pt-2">
+          {/* Daily summary */}
           <Card>
-            <CardContent className="py-12 text-center text-muted-foreground">
-              No meals logged for this day yet.
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base font-medium">
+                {selectedDate === getLocalDateStr() ? "Today" : selectedDate}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <div className="flex items-baseline justify-between">
+                <span className="text-3xl font-bold">{dayCalories}</span>
+                <span className="text-sm text-muted-foreground">
+                  {calorieGoal ? `of ${calorieGoal} kcal goal` : "kcal consumed"}
+                </span>
+              </div>
+              {goalPct !== null && <Progress value={goalPct} />}
+              <p className="text-xs text-muted-foreground">
+                {dayMeals.length} meal{dayMeals.length === 1 ? "" : "s"} logged
+              </p>
             </CardContent>
           </Card>
-        ) : (
-          meals.map((meal) => (
-            <Card key={meal.id}>
-              <CardContent className="p-4">
-                <div className="flex gap-4">
-                  {meal.imageUrl && (
-                    <div className="relative w-24 h-24 sm:w-32 sm:h-32 rounded-md overflow-hidden bg-muted shrink-0">
-                      <Image
-                        src={meal.imageUrl}
-                        alt={meal.description}
-                        fill
-                        sizes="128px"
-                        className="object-cover"
-                        unoptimized
-                      />
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0 space-y-2">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="space-y-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <Badge
-                            variant="secondary"
-                            className={MEAL_TYPE_COLORS[meal.mealType] ?? ""}
-                          >
-                            {meal.mealType}
-                          </Badge>
-                          {meal.confidence && (
-                            <span className="text-xs text-muted-foreground">
-                              {meal.confidence} confidence
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-sm font-medium leading-snug">
-                          {meal.description}
-                        </p>
-                      </div>
-                      <div className="flex items-start gap-2 shrink-0">
-                        <div className="text-right">
-                          <div className="text-xl font-bold">
-                            {meal.totalCalories}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            kcal
-                          </div>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => deleteMeal(meal.id)}
-                          aria-label="Delete meal"
-                        >
-                          <Trash2 className="h-4 w-4 text-muted-foreground" />
-                        </Button>
-                      </div>
-                    </div>
 
-                    {(meal.proteinG || meal.carbsG || meal.fatG) && (
-                      <div className="flex gap-3 text-xs text-muted-foreground">
-                        {meal.proteinG && <span>P {meal.proteinG}g</span>}
-                        {meal.carbsG && <span>C {meal.carbsG}g</span>}
-                        {meal.fatG && <span>F {meal.fatG}g</span>}
-                      </div>
-                    )}
+          {/* Day meal list */}
+          <div className="space-y-3">
+            {dayLoading ? (
+              <div className="space-y-3">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <Skeleton key={i} className="h-32" />
+                ))}
+              </div>
+            ) : dayMeals.length === 0 ? (
+              <Card>
+                <CardContent className="py-12 text-center text-muted-foreground">
+                  No meals logged for this day yet.
+                </CardContent>
+              </Card>
+            ) : (
+              dayMeals.map((meal) => (
+                <MealCard key={meal.id} meal={meal} onDelete={deleteMeal} />
+              ))
+            )}
+          </div>
+        </TabsContent>
 
-                    {meal.foodItems.length > 0 && (
-                      <details className="text-xs text-muted-foreground">
-                        <summary className="cursor-pointer hover:text-foreground">
-                          {meal.foodItems.length} item
-                          {meal.foodItems.length === 1 ? "" : "s"}
-                        </summary>
-                        <ul className="mt-2 space-y-1 pl-1">
-                          {meal.foodItems.map((item, i) => (
-                            <li key={i} className="flex justify-between gap-2">
-                              <span>
-                                {item.name}{" "}
-                                <span className="opacity-70">
-                                  ({item.portion})
-                                </span>
-                              </span>
-                              <span className="tabular-nums">
-                                {item.calories} kcal
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      </details>
-                    )}
-                  </div>
+        <TabsContent value="all" className="space-y-4 pt-2">
+          {/* All-history summary */}
+          {allLoaded && allMeals.length > 0 && (
+            <Card>
+              <CardContent className="py-4 flex items-baseline justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    {allMeals.length} meal{allMeals.length === 1 ? "" : "s"}
+                    {allHasMore ? "+ shown" : " total"}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <span className="text-2xl font-bold">{totalAllCalories}</span>{" "}
+                  <span className="text-sm text-muted-foreground">kcal</span>
                 </div>
               </CardContent>
             </Card>
-          ))
-        )}
-      </div>
+          )}
+
+          {/* All-history grouped list */}
+          {allLoading ? (
+            <div className="space-y-3">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-32" />
+              ))}
+            </div>
+          ) : allMeals.length === 0 ? (
+            <Card>
+              <CardContent className="py-12 text-center text-muted-foreground">
+                You haven&apos;t logged any meals yet.
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-6">
+              {allMealsByDate.map(([date, items]) => {
+                const dayKcal = items.reduce(
+                  (s, m) => s + m.totalCalories,
+                  0
+                );
+                return (
+                  <section key={date} className="space-y-2">
+                    <div className="flex items-baseline justify-between">
+                      <h3 className="text-sm font-semibold text-muted-foreground">
+                        {formatDateLabel(date)}
+                      </h3>
+                      <span className="text-xs text-muted-foreground">
+                        {items.length} meal{items.length === 1 ? "" : "s"} ·{" "}
+                        {dayKcal} kcal
+                      </span>
+                    </div>
+                    <div className="space-y-3">
+                      {items.map((meal) => (
+                        <MealCard
+                          key={meal.id}
+                          meal={meal}
+                          onDelete={deleteMeal}
+                        />
+                      ))}
+                    </div>
+                  </section>
+                );
+              })}
+
+              {allHasMore && (
+                <div className="flex justify-center pt-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => fetchAllMeals(allOffset, true)}
+                    disabled={allLoadingMore}
+                  >
+                    {allLoadingMore ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Loading…
+                      </>
+                    ) : (
+                      "Load more"
+                    )}
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
