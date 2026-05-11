@@ -85,3 +85,18 @@ export function startOfYear(dateStr: string): string {
   const { y } = parseDate(dateStr);
   return `${y}-01-01`;
 }
+
+/**
+ * Whole calendar days from `fromStr` to `toStr` (signed: positive when `to`
+ * is later). Both arguments are YYYY-MM-DD calendar dates in the same tz, so
+ * the result is unaffected by DST or wall-clock hours. Used for things like
+ * "days remaining" countdowns, where mixing a date column with `Date.now()`
+ * would let UTC midnight skew the answer relative to the user's local day.
+ */
+export function daysBetween(fromStr: string, toStr: string): number {
+  const a = parseDate(fromStr);
+  const b = parseDate(toStr);
+  const fromMs = Date.UTC(a.y, a.m - 1, a.d);
+  const toMs = Date.UTC(b.y, b.m - 1, b.d);
+  return Math.round((toMs - fromMs) / 86_400_000);
+}

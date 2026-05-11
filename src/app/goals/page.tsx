@@ -25,6 +25,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSession } from "@/lib/auth-client";
+import { daysBetween } from "@/lib/date-tz";
 import { getLocalDateStr } from "@/lib/local-date";
 
 interface Goal {
@@ -277,13 +278,10 @@ export default function GoalsPage() {
               </p>
             ) : (
               activeGoals.map((g) => {
+                // Both dates are YYYY-MM-DD calendar strings in the user's
+                // local tz, so this is independent of wall-clock hours.
                 const daysRemaining = g.endDate
-                  ? Math.max(
-                      0,
-                      Math.ceil(
-                        (new Date(g.endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
-                      )
-                    )
+                  ? Math.max(0, daysBetween(getLocalDateStr(), g.endDate))
                   : null;
                 return (
                   <div key={g.id} className="relative">

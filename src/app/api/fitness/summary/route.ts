@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import { eq, and, gte, desc, lte, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
-import { addDays, mondayOf, todayInTz } from "@/lib/date-tz";
+import { addDays, daysBetween, mondayOf, todayInTz } from "@/lib/date-tz";
 import { db } from "@/lib/db";
 import { dailyStats, workouts, goals, userProfile } from "@/lib/schema";
 import { getUserTz } from "@/lib/user-tz";
@@ -200,12 +200,11 @@ export async function GET() {
       const current = parseFloat(goal.currentValue);
       const progress = target > 0 ? Math.min((current / target) * 100, 100) : 0;
 
-      let daysRemaining: number | null = null;
-      if (goal.endDate) {
-        const end = new Date(goal.endDate);
-        const diffMs = end.getTime() - new Date().getTime();
-        daysRemaining = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
-      }
+      // Compute in the user's tz: parsing endDate via `new Date(...)` treats
+      // it as UTC midnight, so a PT user with an endDate of "today" would see
+      // "1 day remaining" until 5pm local. Both dates are now YYYY-MM-DD
+      // calendar strings in the same tz.
+      const daysRemaining = goal.endDate ? Math.max(0, daysBetween(today, goal.endDate)) : null;
 
       return { ...goal, progress, daysRemaining };
     });

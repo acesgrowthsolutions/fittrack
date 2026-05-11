@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   addDays,
+  daysBetween,
   formatDateInTz,
   isValidIanaTz,
   mondayOf,
@@ -111,6 +112,37 @@ describe("mondayOf", () => {
   it("crosses month/year boundaries", () => {
     // 2026-01-04 is a Sunday → Monday is 2025-12-29
     expect(mondayOf("2026-01-04")).toBe("2025-12-29");
+  });
+});
+
+describe("daysBetween", () => {
+  it("returns 0 when both dates are the same", () => {
+    expect(daysBetween("2026-05-11", "2026-05-11")).toBe(0);
+  });
+
+  it("returns positive when `to` is later", () => {
+    expect(daysBetween("2026-05-11", "2026-05-12")).toBe(1);
+    expect(daysBetween("2026-05-11", "2026-05-18")).toBe(7);
+  });
+
+  it("returns negative when `to` is earlier", () => {
+    expect(daysBetween("2026-05-11", "2026-05-10")).toBe(-1);
+    expect(daysBetween("2026-05-11", "2026-05-04")).toBe(-7);
+  });
+
+  it("crosses month and year boundaries", () => {
+    expect(daysBetween("2026-04-30", "2026-05-01")).toBe(1);
+    expect(daysBetween("2025-12-31", "2026-01-01")).toBe(1);
+  });
+
+  it("handles leap-day spans", () => {
+    expect(daysBetween("2024-02-28", "2024-03-01")).toBe(2); // includes Feb 29
+    expect(daysBetween("2025-02-28", "2025-03-01")).toBe(1);
+  });
+
+  it("rejects malformed inputs", () => {
+    expect(() => daysBetween("not-a-date", "2026-05-11")).toThrow(RangeError);
+    expect(() => daysBetween("2026-05-11", "2026/05/12")).toThrow(RangeError);
   });
 });
 
