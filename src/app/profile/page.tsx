@@ -2,7 +2,17 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Mail, Calendar, User, Shield, ArrowLeft, Lock, Smartphone } from "lucide-react";
+import {
+  Mail,
+  Calendar,
+  User,
+  Shield,
+  ArrowLeft,
+  Lock,
+  Smartphone,
+  Download,
+  Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { ChangePasswordForm } from "@/components/auth/change-password-form";
 import { SessionsList } from "@/components/auth/sessions-list";
@@ -20,7 +30,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { sendVerificationEmail, updateUser, useSession } from "@/lib/auth-client";
+import { sendVerificationEmail, signOut, updateUser, useSession } from "@/lib/auth-client";
 
 export default function ProfilePage() {
   const { data: session, isPending } = useSession();
@@ -31,6 +41,10 @@ export default function ProfilePage() {
   const [changePasswordOpen, setChangePasswordOpen] = useState(false);
   const [emailPrefsOpen, setEmailPrefsOpen] = useState(false);
   const [verificationSending, setVerificationSending] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteConfirmEmail, setDeleteConfirmEmail] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (!isPending && !session) {
@@ -84,6 +98,62 @@ export default function ProfilePage() {
       toast.error("An unexpected error occurred");
     } finally {
       setEditProfileSaving(false);
+    }
+  };
+
+  const handleExportData = async () => {
+    setExporting(true);
+    try {
+      const res = await fetch("/api/account/export", { cache: "no-store" });
+      if (!res.ok) {
+        toast.error("Failed to export data");
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `fittrack-export-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      toast.success("Export downloaded");
+    } catch {
+      toast.error("An unexpected error occurred");
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmEmail.trim().toLowerCase() !== (user.email ?? "").toLowerCase()) {
+      toast.error("Email does not match");
+      return;
+    }
+    setDeleting(true);
+    try {
+      const res = await fetch("/api/account/delete", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ email: deleteConfirmEmail.trim() }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        toast.error(body?.error ?? "Failed to delete account");
+        return;
+      }
+      // The user row (and its sessions) are gone — there's no session to sign
+      // out of any more, but call signOut() to clear the client cookie/state
+      // before routing home.
+      await signOut().catch(() => {});
+      toast.success("Account deleted");
+      router.push("/");
+      router.refresh();
+    } catch {
+      toast.error("An unexpected error occurred");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -295,7 +365,96 @@ export default function ProfilePage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Privacy & Data */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Privacy & Data</CardTitle>
+            <CardDescription>
+              Download a copy of your data or permanently delete your account
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between rounded-lg border p-4">
+              <div className="flex items-center gap-3">
+                <Download className="text-muted-foreground h-5 w-5" />
+                <div>
+                  <p className="font-medium">Export your data</p>
+                  <p className="text-muted-foreground text-sm">
+                    Download workouts, meals, goals, achievements, and stats as JSON
+                  </p>
+                </div>
+              </div>
+              <Button variant="outline" size="sm" onClick={handleExportData} disabled={exporting}>
+                {exporting ? "Preparing..." : "Download"}
+              </Button>
+            </div>
+
+            <div className="border-destructive/30 bg-destructive/5 flex items-center justify-between rounded-lg border p-4">
+              <div className="flex items-center gap-3">
+                <Trash2 className="text-destructive h-5 w-5" />
+                <div>
+                  <p className="font-medium">Delete account</p>
+                  <p className="text-muted-foreground text-sm">
+                    Permanently delete your account and all associated data. This cannot be undone.
+                  </p>
+                </div>
+              </div>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => {
+                  setDeleteConfirmEmail("");
+                  setDeleteOpen(true);
+                }}
+              >
+                Delete
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Delete Account Confirmation Dialog */}
+      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Delete your account?</DialogTitle>
+            <DialogDescription>
+              This will permanently delete your account and every workout, meal, goal, daily stat,
+              and achievement attached to it. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Label htmlFor="delete-confirm-email">
+              Type <span className="font-mono font-medium">{user.email}</span> to confirm
+            </Label>
+            <Input
+              id="delete-confirm-email"
+              value={deleteConfirmEmail}
+              onChange={(e) => setDeleteConfirmEmail(e.target.value)}
+              placeholder={user.email ?? ""}
+              autoComplete="off"
+              disabled={deleting}
+            />
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={() => setDeleteOpen(false)} disabled={deleting}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteAccount}
+              disabled={
+                deleting ||
+                deleteConfirmEmail.trim().toLowerCase() !== (user.email ?? "").toLowerCase()
+              }
+            >
+              {deleting ? "Deleting..." : "Permanently delete"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Edit Profile Dialog */}
       <Dialog open={editProfileOpen} onOpenChange={setEditProfileOpen}>
