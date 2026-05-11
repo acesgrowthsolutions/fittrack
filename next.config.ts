@@ -53,10 +53,15 @@ const nextConfig: NextConfig = {
 // Wrap with Sentry. Source-map upload only runs when SENTRY_AUTH_TOKEN +
 // SENTRY_ORG + SENTRY_PROJECT are present (auto-provisioned by the Vercel
 // Marketplace integration). Without them this is effectively a no-op wrapper.
+//
+// `disableLogger` was removed: Sentry deprecated it in favor of
+// `webpack.treeshake.removeDebugLogging`, but that option is not supported
+// under Turbopack (Next.js 16's default bundler). The small bundle-size
+// increase from the leftover logger code is acceptable until Sentry ships a
+// Turbopack-compatible replacement.
 const sentryOptions = {
   silent: !process.env.CI,
   widenClientFileUpload: true,
-  disableLogger: true,
   ...(process.env.SENTRY_ORG ? { org: process.env.SENTRY_ORG } : {}),
   ...(process.env.SENTRY_PROJECT ? { project: process.env.SENTRY_PROJECT } : {}),
   ...(process.env.SENTRY_AUTH_TOKEN ? { authToken: process.env.SENTRY_AUTH_TOKEN } : {}),
