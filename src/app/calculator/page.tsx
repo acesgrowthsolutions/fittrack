@@ -16,33 +16,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useSession } from "@/lib/auth-client";
-
-/**
- * MET (Metabolic Equivalent of Task) values for common exercises.
- * Source: Compendium of Physical Activities.
- */
-const EXERCISE_TYPES = [
-  { value: "running", label: "Running", met: 9.8 },
-  { value: "cycling", label: "Cycling", met: 7.5 },
-  { value: "strength", label: "Strength Training", met: 6.0 },
-  { value: "hiit", label: "HIIT", met: 8.0 },
-  { value: "yoga", label: "Yoga", met: 3.0 },
-  { value: "swimming", label: "Swimming", met: 8.0 },
-  { value: "walking", label: "Walking", met: 3.8 },
-  { value: "other", label: "Other", met: 5.0 },
-] as const;
+import { caloriesPerMinute, WORKOUT_MET_VALUES } from "@/lib/met-values";
 
 type WeightUnit = "kg" | "lbs";
 
 const LBS_TO_KG = 0.453592;
-
-/**
- * Calculates calories burned per minute using the standard MET formula.
- * Formula: (MET x weight_kg x 3.5) / 200
- */
-function calculateCaloriesPerMinute(met: number, weightKg: number): number {
-  return (met * weightKg * 3.5) / 200;
-}
 
 export default function CalculatorPage() {
   const { data: session, isPending } = useSession();
@@ -54,7 +32,7 @@ export default function CalculatorPage() {
   const [showResults, setShowResults] = useState(false);
 
   const selectedExercise = useMemo(
-    () => EXERCISE_TYPES.find((e) => e.value === exerciseType),
+    () => WORKOUT_MET_VALUES.find((e) => e.value === exerciseType),
     [exerciseType]
   );
 
@@ -67,7 +45,7 @@ export default function CalculatorPage() {
     }
 
     const weightKg = weightUnit === "lbs" ? weightNum * LBS_TO_KG : weightNum;
-    const calPerMin = calculateCaloriesPerMinute(selectedExercise.met, weightKg);
+    const calPerMin = caloriesPerMinute(selectedExercise.met, weightKg);
 
     // Only include total if duration is valid
     const totalCal = !isNaN(durationNum) && durationNum > 0 ? calPerMin * durationNum : null;
@@ -135,7 +113,7 @@ export default function CalculatorPage() {
                   <SelectValue placeholder="Select an exercise" />
                 </SelectTrigger>
                 <SelectContent>
-                  {EXERCISE_TYPES.map((exercise) => (
+                  {WORKOUT_MET_VALUES.map((exercise) => (
                     <SelectItem key={exercise.value} value={exercise.value}>
                       {exercise.label} (MET: {exercise.met})
                     </SelectItem>

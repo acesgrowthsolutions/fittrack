@@ -25,24 +25,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { calculateCalories, WORKOUT_MET_VALUES } from "@/lib/met-values";
 import type { LucideIcon } from "lucide-react";
 
 type Phase = "idle" | "running" | "paused" | "stopped";
-
-/**
- * MET (Metabolic Equivalent of Task) values for common exercises.
- * Mirrors the values in WorkoutForm to keep calorie calculations consistent.
- */
-const WORKOUT_TYPES = [
-  { value: "running", label: "Running", met: 9.8 },
-  { value: "cycling", label: "Cycling", met: 7.5 },
-  { value: "strength", label: "Strength", met: 6.0 },
-  { value: "hiit", label: "HIIT", met: 8.0 },
-  { value: "yoga", label: "Yoga", met: 3.0 },
-  { value: "swimming", label: "Swimming", met: 8.0 },
-  { value: "walking", label: "Walking", met: 3.8 },
-  { value: "other", label: "Other", met: 5.0 },
-] as const;
 
 const WORKOUT_ICONS: Record<string, LucideIcon> = {
   running: Footprints,
@@ -71,14 +57,6 @@ function formatTime(totalMs: number): string {
 }
 
 /**
- * Calculates estimated calories burned using the standard MET formula.
- * Formula: (MET x weightKg x 3.5) / 200 x durationMinutes
- */
-function calculateCalories(met: number, weightKg: number, durationMinutes: number): number {
-  return ((met * weightKg * 3.5) / 200) * durationMinutes;
-}
-
-/**
  * Returns a motivational message based on total calories burned.
  */
 function getMotivationalMessage(calories: number): string {
@@ -96,7 +74,7 @@ export function WorkoutTimer({ onSaved, userWeightKg }: WorkoutTimerProps) {
   const accumulatedRef = useRef(0);
   const rafRef = useRef<number | null>(null);
 
-  const selectedWorkout = WORKOUT_TYPES.find((wt) => wt.value === exerciseType);
+  const selectedWorkout = WORKOUT_MET_VALUES.find((wt) => wt.value === exerciseType);
   const canTrackCalories = !!userWeightKg && userWeightKg > 0 && !!selectedWorkout;
 
   useEffect(() => {
@@ -279,7 +257,7 @@ export function WorkoutTimer({ onSaved, userWeightKg }: WorkoutTimerProps) {
               <SelectValue placeholder="Select exercise type" />
             </SelectTrigger>
             <SelectContent>
-              {WORKOUT_TYPES.map((wt) => {
+              {WORKOUT_MET_VALUES.map((wt) => {
                 const Icon = WORKOUT_ICONS[wt.value] ?? Activity;
                 return (
                   <SelectItem key={wt.value} value={wt.value}>

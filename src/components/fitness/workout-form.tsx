@@ -15,21 +15,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { getLocalDateStr } from "@/lib/local-date";
-
-/**
- * MET (Metabolic Equivalent of Task) values for common exercises.
- * Source: Compendium of Physical Activities.
- */
-const WORKOUT_TYPES = [
-  { value: "running", label: "Running", met: 9.8 },
-  { value: "cycling", label: "Cycling", met: 7.5 },
-  { value: "strength", label: "Strength", met: 6.0 },
-  { value: "hiit", label: "HIIT", met: 8.0 },
-  { value: "yoga", label: "Yoga", met: 3.0 },
-  { value: "swimming", label: "Swimming", met: 8.0 },
-  { value: "walking", label: "Walking", met: 3.8 },
-  { value: "other", label: "Other", met: 5.0 },
-] as const;
+import { calculateCalories, WORKOUT_MET_VALUES } from "@/lib/met-values";
 
 interface WorkoutFormProps {
   onSuccess?: () => void;
@@ -46,14 +32,6 @@ interface WorkoutFormProps {
     distanceKm?: string | null;
     notes?: string | null;
   };
-}
-
-/**
- * Calculates estimated calories burned using the standard MET formula.
- * Formula: (MET x weightKg x 3.5) / 200 x durationMinutes
- */
-function calculateCalories(met: number, weightKg: number, durationMinutes: number): number {
-  return Math.round(((met * weightKg * 3.5) / 200) * durationMinutes);
 }
 
 export function WorkoutForm({ onSuccess, userWeightKg, initialData }: WorkoutFormProps) {
@@ -93,7 +71,7 @@ export function WorkoutForm({ onSuccess, userWeightKg, initialData }: WorkoutFor
     const weightKg = userWeightKg;
     if (!weightKg || weightKg <= 0) return;
 
-    const selectedType = WORKOUT_TYPES.find((wt) => wt.value === type);
+    const selectedType = WORKOUT_MET_VALUES.find((wt) => wt.value === type);
     const duration = parseInt(durationMinutes, 10);
 
     if (!selectedType || isNaN(duration) || duration <= 0) {
@@ -103,7 +81,7 @@ export function WorkoutForm({ onSuccess, userWeightKg, initialData }: WorkoutFor
       return;
     }
 
-    const estimated = calculateCalories(selectedType.met, weightKg, duration);
+    const estimated = Math.round(calculateCalories(selectedType.met, weightKg, duration));
     const estimatedStr = estimated.toString();
     lastAutoValueRef.current = estimatedStr;
     setCaloriesBurned(estimatedStr);
@@ -197,7 +175,7 @@ export function WorkoutForm({ onSuccess, userWeightKg, initialData }: WorkoutFor
               <SelectValue placeholder="Select type" />
             </SelectTrigger>
             <SelectContent>
-              {WORKOUT_TYPES.map((wt) => (
+              {WORKOUT_MET_VALUES.map((wt) => (
                 <SelectItem key={wt.value} value={wt.value}>
                   {wt.label}
                 </SelectItem>
