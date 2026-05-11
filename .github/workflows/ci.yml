@@ -13,6 +13,29 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-latest
+
+    # Spin up Postgres as a service so db-integrity.test.ts can assert
+    # schema invariants (unique indexes, etc.) in CI instead of skipping.
+    # Credentials match the local docker-compose dev DB so POSTGRES_URL
+    # works without per-environment substitution.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: dev_user
+          POSTGRES_PASSWORD: dev_password
+          POSTGRES_DB: postgres_ss
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      POSTGRES_URL: postgresql://dev_user:dev_password@localhost:5432/postgres_ss
+
     steps:
       - uses: actions/checkout@v4
 
@@ -30,5 +53,9 @@ jobs:
       - run: pnpm lint
 
       - run: pnpm typecheck
+
+      # Apply migrations so the schema is in the state db-integrity.test.ts
+      # expects (e.g. the achievements_user_badge_idx unique index from 0003).
+      - run: pnpm db:migrate
 
       - run: pnpm test
