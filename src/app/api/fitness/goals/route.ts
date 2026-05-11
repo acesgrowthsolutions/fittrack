@@ -3,6 +3,7 @@ import { eq, desc } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { goals } from "@/lib/schema";
+import { goalCreateSchema, parseJsonBody } from "@/lib/validators/fitness";
 
 export async function GET() {
   try {
@@ -31,15 +32,9 @@ export async function POST(req: Request) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await req.json();
-    const { type, targetValue, unit, startDate, endDate } = body;
-
-    if (!type || targetValue == null || !unit || !startDate) {
-      return Response.json(
-        { error: "Missing required fields: type, targetValue, unit, startDate" },
-        { status: 400 }
-      );
-    }
+    const body = await parseJsonBody(req, goalCreateSchema);
+    if (!body.ok) return body.response;
+    const { type, targetValue, unit, startDate, endDate } = body.data;
 
     const [created] = await db
       .insert(goals)

@@ -3,6 +3,7 @@ import { eq, and } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { workouts } from "@/lib/schema";
+import { parseJsonBody, workoutUpdateSchema } from "@/lib/validators/fitness";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -51,18 +52,21 @@ export async function PUT(req: Request, { params }: Params) {
       return Response.json({ error: "Invalid workout ID" }, { status: 400 });
     }
 
-    const body = await req.json();
-    const { type, name, durationMinutes, caloriesBurned, distanceKm, notes, workoutDate } = body;
+    const body = await parseJsonBody(req, workoutUpdateSchema);
+    if (!body.ok) return body.response;
+    const { type, name, durationMinutes, caloriesBurned, distanceKm, notes, workoutDate } =
+      body.data;
 
     // Build update set, always include updatedAt to guarantee non-empty set
     const updateSet: Record<string, unknown> = { updatedAt: new Date() };
-    if (type) updateSet.type = type;
-    if (name) updateSet.name = name;
-    if (durationMinutes != null) updateSet.durationMinutes = durationMinutes;
-    if (caloriesBurned != null) updateSet.caloriesBurned = caloriesBurned;
-    if (distanceKm !== undefined) updateSet.distanceKm = distanceKm?.toString() ?? null;
+    if (type !== undefined) updateSet.type = type;
+    if (name !== undefined) updateSet.name = name;
+    if (durationMinutes !== undefined) updateSet.durationMinutes = durationMinutes;
+    if (caloriesBurned !== undefined) updateSet.caloriesBurned = caloriesBurned;
+    if (distanceKm !== undefined)
+      updateSet.distanceKm = distanceKm != null ? distanceKm.toString() : null;
     if (notes !== undefined) updateSet.notes = notes;
-    if (workoutDate) updateSet.workoutDate = workoutDate;
+    if (workoutDate !== undefined) updateSet.workoutDate = workoutDate;
 
     const [updated] = await db
       .update(workouts)

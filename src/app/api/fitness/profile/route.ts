@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { userProfile } from "@/lib/schema";
+import { parseJsonBody, profileUpsertSchema } from "@/lib/validators/fitness";
 
 export async function GET() {
   try {
@@ -35,28 +36,29 @@ export async function POST(req: Request) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await req.json();
+    const body = await parseJsonBody(req, profileUpsertSchema);
+    if (!body.ok) return body.response;
     const { height, weight, age, activityLevel, dailyStepGoal, dailyCalorieGoal, preferredUnits } =
-      body;
+      body.data;
 
     // Build update set, always include updatedAt to guarantee non-empty set
     const updateSet: Record<string, unknown> = { updatedAt: new Date() };
-    if (height != null) updateSet.height = height.toString();
-    if (weight != null) updateSet.weight = weight.toString();
-    if (age != null) updateSet.age = age;
-    if (activityLevel != null) updateSet.activityLevel = activityLevel;
-    if (dailyStepGoal != null) updateSet.dailyStepGoal = dailyStepGoal;
-    if (dailyCalorieGoal != null) updateSet.dailyCalorieGoal = dailyCalorieGoal;
-    if (preferredUnits != null) updateSet.preferredUnits = preferredUnits;
+    if (height !== undefined) updateSet.height = height != null ? height.toString() : null;
+    if (weight !== undefined) updateSet.weight = weight != null ? weight.toString() : null;
+    if (age !== undefined) updateSet.age = age;
+    if (activityLevel !== undefined) updateSet.activityLevel = activityLevel;
+    if (dailyStepGoal !== undefined) updateSet.dailyStepGoal = dailyStepGoal;
+    if (dailyCalorieGoal !== undefined) updateSet.dailyCalorieGoal = dailyCalorieGoal;
+    if (preferredUnits !== undefined) updateSet.preferredUnits = preferredUnits;
 
     // Upsert using ON CONFLICT on the unique userId column
     const [result] = await db
       .insert(userProfile)
       .values({
         userId: session.user.id,
-        height: height?.toString(),
-        weight: weight?.toString(),
-        age,
+        height: height != null ? height.toString() : undefined,
+        weight: weight != null ? weight.toString() : undefined,
+        age: age ?? undefined,
         activityLevel: activityLevel ?? "moderate",
         dailyStepGoal: dailyStepGoal ?? 10000,
         dailyCalorieGoal: dailyCalorieGoal ?? 2000,

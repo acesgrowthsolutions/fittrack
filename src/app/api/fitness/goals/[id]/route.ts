@@ -3,6 +3,7 @@ import { eq, and } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { goals } from "@/lib/schema";
+import { goalUpdateSchema, parseJsonBody } from "@/lib/validators/fitness";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -21,14 +22,15 @@ export async function PUT(req: Request, { params }: Params) {
       return Response.json({ error: "Invalid goal ID" }, { status: 400 });
     }
 
-    const body = await req.json();
-    const { currentValue, completed, targetValue, endDate } = body;
+    const body = await parseJsonBody(req, goalUpdateSchema);
+    if (!body.ok) return body.response;
+    const { currentValue, completed, targetValue, endDate } = body.data;
 
     // Build update set, always include updatedAt to guarantee non-empty set
     const updateSet: Record<string, unknown> = { updatedAt: new Date() };
-    if (currentValue != null) updateSet.currentValue = currentValue.toString();
-    if (completed != null) updateSet.completed = completed;
-    if (targetValue != null) updateSet.targetValue = targetValue.toString();
+    if (currentValue !== undefined) updateSet.currentValue = currentValue.toString();
+    if (completed !== undefined) updateSet.completed = completed;
+    if (targetValue !== undefined) updateSet.targetValue = targetValue.toString();
     if (endDate !== undefined) updateSet.endDate = endDate;
 
     const [updated] = await db

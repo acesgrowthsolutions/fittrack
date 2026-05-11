@@ -4,6 +4,7 @@ import { checkAchievements } from "@/lib/achievements";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { workouts } from "@/lib/schema";
+import { parseJsonBody, workoutCreateSchema } from "@/lib/validators/fitness";
 
 export async function GET(req: Request) {
   try {
@@ -44,18 +45,10 @@ export async function POST(req: Request) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await req.json();
-    const { type, name, durationMinutes, caloriesBurned, distanceKm, notes, workoutDate } = body;
-
-    if (!type || !name || !durationMinutes || caloriesBurned == null || !workoutDate) {
-      return Response.json(
-        {
-          error:
-            "Missing required fields: type, name, durationMinutes, caloriesBurned, workoutDate",
-        },
-        { status: 400 }
-      );
-    }
+    const body = await parseJsonBody(req, workoutCreateSchema);
+    if (!body.ok) return body.response;
+    const { type, name, durationMinutes, caloriesBurned, distanceKm, notes, workoutDate } =
+      body.data;
 
     const [created] = await db
       .insert(workouts)
@@ -65,7 +58,7 @@ export async function POST(req: Request) {
         name,
         durationMinutes,
         caloriesBurned,
-        distanceKm: distanceKm?.toString() ?? null,
+        distanceKm: distanceKm != null ? distanceKm.toString() : null,
         notes: notes ?? null,
         workoutDate,
       })

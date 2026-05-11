@@ -6,6 +6,7 @@ import { todayInTz } from "@/lib/date-tz";
 import { db } from "@/lib/db";
 import { dailyStats } from "@/lib/schema";
 import { getUserTz } from "@/lib/user-tz";
+import { dailyStatsSetSchema, parseJsonBody } from "@/lib/validators/fitness";
 
 export async function GET() {
   try {
@@ -47,8 +48,9 @@ export async function POST(req: Request) {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await req.json();
-    const { steps, distanceKm, caloriesBurned, activeMinutes } = body;
+    const body = await parseJsonBody(req, dailyStatsSetSchema);
+    if (!body.ok) return body.response;
+    const { steps, distanceKm, caloriesBurned, activeMinutes } = body.data;
 
     if (steps == null && distanceKm == null && caloriesBurned == null && activeMinutes == null) {
       return Response.json({ error: "At least one field is required" }, { status: 400 });
