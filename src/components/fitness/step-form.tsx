@@ -23,9 +23,7 @@ export function StepForm({
   initialCaloriesBurned = 0,
 }: StepFormProps) {
   const [steps, setSteps] = useState(initialSteps.toString());
-  const [activeMinutes, setActiveMinutes] = useState(
-    initialActiveMinutes.toString()
-  );
+  const [activeMinutes, setActiveMinutes] = useState(initialActiveMinutes.toString());
   const [distanceKm, setDistanceKm] = useState(
     initialDistanceKm ? initialDistanceKm.toString() : ""
   );
@@ -74,9 +72,7 @@ export function StepForm({
       toast.success("Steps logged!");
       onSuccess?.();
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to save steps"
-      );
+      toast.error(error instanceof Error ? error.message : "Failed to save steps");
     } finally {
       setIsSubmitting(false);
     }

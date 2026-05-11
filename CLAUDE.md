@@ -140,39 +140,33 @@ The project includes technical documentation in `docs/`:
    ```
 
 2. **Dev server: prefer asking, but you may manage it when explicitly told to**
-
    - Default: ask the user to run `pnpm dev` and share output
    - When the user explicitly asks you to start/restart it (e.g. "restart the dev server"), you may run it in the background, kill stale processes/lock files, and read the output
 
 3. **Use OpenRouter, NOT OpenAI directly**
-
    - Import from `@openrouter/ai-sdk-provider`
    - Use `openrouter()` function, not `openai()`
    - Model names follow OpenRouter format: `provider/model-name`
 
 4. **Styling Guidelines**
-
    - Stick to standard Tailwind CSS utility classes
    - Use shadcn/ui color tokens (e.g., `bg-background`, `text-foreground`)
    - Avoid custom colors unless explicitly requested
    - Support dark mode with appropriate Tailwind classes
 
 5. **Authentication**
-
    - Server-side: Import from `@/lib/auth` (Better Auth instance)
    - Client-side: Import hooks from `@/lib/auth-client`
    - Protected routes should check session in Server Components
    - Use existing auth components from `src/components/auth/`
 
 6. **Database Operations**
-
    - Use Drizzle ORM (imported from `@/lib/db`)
    - Schema is defined in `@/lib/schema`
    - Always run migrations after schema changes
    - PostgreSQL is the database (not SQLite, MySQL, etc.)
 
 7. **File Storage**
-
    - Use the storage abstraction from `@/lib/storage`
    - Automatically uses local storage (dev) or Vercel Blob (production)
    - Import: `import { upload, deleteFile } from "@/lib/storage"`
@@ -180,7 +174,6 @@ The project includes technical documentation in `docs/`:
    - Storage switches based on `BLOB_READ_WRITE_TOKEN` environment variable
 
 8. **Component Creation**
-
    - Use existing shadcn/ui components when possible
    - Follow the established patterns in `src/components/ui/`
    - Support both light and dark modes

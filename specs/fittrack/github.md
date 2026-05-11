@@ -25,11 +25,11 @@ This feature has been published to GitHub.
 
 ## Phase Issues
 
-| # | Title | Tasks | Status |
-|---|-------|-------|--------|
-| #2 | Phase 1: Database & API Foundation | 16 | Open |
-| #3 | Phase 2: UI Components | 10 | Open |
-| #4 | Phase 3: Pages & Navigation | 12 | Open |
+| #   | Title                              | Tasks | Status |
+| --- | ---------------------------------- | ----- | ------ |
+| #2  | Phase 1: Database & API Foundation | 16    | Open   |
+| #3  | Phase 2: UI Components             | 10    | Open   |
+| #4  | Phase 3: Pages & Navigation        | 12    | Open   |
 
 ## Labels
 

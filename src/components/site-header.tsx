@@ -37,29 +37,29 @@ export function SiteHeader() {
       {/* Skip to main content link for accessibility */}
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-background focus:text-foreground focus:border focus:rounded-md"
+        className="focus:bg-background focus:text-foreground sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:rounded-md focus:border focus:px-4 focus:py-2"
       >
         Skip to main content
       </a>
       <header className="border-b" role="banner">
         <nav
-          className="container mx-auto px-4 py-4 flex justify-between items-center"
+          className="container mx-auto flex items-center justify-between px-4 py-4"
           aria-label="Main navigation"
         >
           <div className="flex items-center gap-6">
             <h1 className="text-2xl font-bold">
               <Link
                 href="/"
-                className="flex items-center gap-2 text-primary hover:text-primary/80 transition-colors"
+                className="text-primary hover:text-primary/80 flex items-center gap-2 transition-colors"
                 aria-label="FitTrack - Go to homepage"
               >
                 <div
-                  className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10"
+                  className="bg-primary/10 flex h-8 w-8 items-center justify-center rounded-lg"
                   aria-hidden="true"
                 >
                   <Activity className="h-5 w-5" />
                 </div>
-                <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                <span className="from-primary to-primary/70 bg-gradient-to-r bg-clip-text text-transparent">
                   FitTrack
                 </span>
               </Link>
@@ -67,7 +67,7 @@ export function SiteHeader() {
 
             {/* Nav links for authenticated users */}
             {session && (
-              <div className="hidden md:flex items-center gap-1">
+              <div className="hidden items-center gap-1 md:flex">
                 {NAV_ITEMS.map((item) => {
                   const isActive = pathname === item.href;
                   return (
@@ -75,7 +75,7 @@ export function SiteHeader() {
                       key={item.href}
                       href={item.href}
                       className={cn(
-                        "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
+                        "flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
                         isActive
                           ? "bg-primary/10 text-primary"
                           : "text-muted-foreground hover:text-foreground hover:bg-accent"
@@ -90,11 +90,7 @@ export function SiteHeader() {
             )}
           </div>
 
-          <div
-            className="flex items-center gap-4"
-            role="group"
-            aria-label="User actions"
-          >
+          <div className="flex items-center gap-4" role="group" aria-label="User actions">
             <UserProfile />
             <ModeToggle />
           </div>
@@ -102,8 +98,8 @@ export function SiteHeader() {
 
         {/* Mobile nav for authenticated users */}
         {session && (
-          <div className="md:hidden border-t">
-            <div className="container mx-auto px-4 py-2 flex gap-1 overflow-x-auto">
+          <div className="border-t md:hidden">
+            <div className="container mx-auto flex gap-1 overflow-x-auto px-4 py-2">
               {NAV_ITEMS.map((item) => {
                 const isActive = pathname === item.href;
                 return (
@@ -111,7 +107,7 @@ export function SiteHeader() {
                     key={item.href}
                     href={item.href}
                     className={cn(
-                      "flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors",
+                      "flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors",
                       isActive
                         ? "bg-primary/10 text-primary"
                         : "text-muted-foreground hover:text-foreground"

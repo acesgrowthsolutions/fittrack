@@ -1,26 +1,20 @@
-import { Suspense } from "react"
-import { headers } from "next/headers"
-import { redirect } from "next/navigation"
-import { ResetPasswordForm } from "@/components/auth/reset-password-form"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { auth } from "@/lib/auth"
+import { Suspense } from "react";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import { ResetPasswordForm } from "@/components/auth/reset-password-form";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { auth } from "@/lib/auth";
 
 export default async function ResetPasswordPage() {
-  let isAuthenticated = false
+  let isAuthenticated = false;
   try {
-    const session = await auth.api.getSession({ headers: await headers() })
-    isAuthenticated = !!session
+    const session = await auth.api.getSession({ headers: await headers() });
+    isAuthenticated = !!session;
   } catch {
     // Session check failed (e.g. DB not ready) — continue to show form
   }
   if (isAuthenticated) {
-    redirect("/dashboard")
+    redirect("/dashboard");
   }
 
   return (
@@ -37,5 +31,5 @@ export default async function ResetPasswordPage() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

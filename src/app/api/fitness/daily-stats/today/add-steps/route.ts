@@ -39,12 +39,7 @@ export async function POST(req: Request) {
 
     const { steps, distanceKm, caloriesBurned, activeMinutes } = parsed.data;
 
-    if (
-      steps === 0 &&
-      !distanceKm &&
-      !caloriesBurned &&
-      !activeMinutes
-    ) {
+    if (steps === 0 && !distanceKm && !caloriesBurned && !activeMinutes) {
       return Response.json({ error: "Nothing to add" }, { status: 400 });
     }
 

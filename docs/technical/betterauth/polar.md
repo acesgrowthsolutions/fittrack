@@ -117,13 +117,7 @@ export const authClient = createAuthClient({
 
 ```typescript
 import { betterAuth } from "better-auth";
-import {
-  polar,
-  checkout,
-  portal,
-  usage,
-  webhooks,
-} from "@polar-sh/better-auth";
+import { polar, checkout, portal, usage, webhooks } from "@polar-sh/better-auth";
 import { Polar } from "@polar-sh/sdk";
 
 const polarClient = new Polar({

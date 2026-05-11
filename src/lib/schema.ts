@@ -15,7 +15,6 @@ import {
 
 // IMPORTANT! ID fields should ALWAYS use UUID types, EXCEPT the BetterAuth tables.
 
-
 export const user = pgTable(
   "user",
   {
@@ -106,10 +105,7 @@ export const activityLevelEnum = pgEnum("activity_level", [
   "very_active",
 ]);
 
-export const preferredUnitsEnum = pgEnum("preferred_units", [
-  "metric",
-  "imperial",
-]);
+export const preferredUnitsEnum = pgEnum("preferred_units", ["metric", "imperial"]);
 
 export const workoutTypeEnum = pgEnum("workout_type", [
   "running",
@@ -129,12 +125,7 @@ export const goalTypeEnum = pgEnum("goal_type", [
   "weight_target",
 ]);
 
-export const mealTypeEnum = pgEnum("meal_type", [
-  "breakfast",
-  "lunch",
-  "dinner",
-  "snack",
-]);
+export const mealTypeEnum = pgEnum("meal_type", ["breakfast", "lunch", "dinner", "snack"]);
 
 export const userProfile = pgTable(
   "user_profile",
@@ -302,10 +293,6 @@ export const rateLimitEvent = pgTable(
     occurredAt: timestamp("occurred_at").defaultNow().notNull(),
   },
   (table) => [
-    index("rate_limit_user_action_time_idx").on(
-      table.userId,
-      table.action,
-      table.occurredAt
-    ),
+    index("rate_limit_user_action_time_idx").on(table.userId, table.action, table.occurredAt),
   ]
 );

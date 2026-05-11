@@ -15,7 +15,7 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const limit = Math.min(parseInt(searchParams.get("limit") || "20") || 20, 100);
     const offset = parseInt(searchParams.get("offset") || "0") || 0;
-    const type = searchParams.get("type") as typeof workouts.type.enumValues[number] | null;
+    const type = searchParams.get("type") as (typeof workouts.type.enumValues)[number] | null;
 
     // Build WHERE clause: always filter by userId, optionally by type
     const whereClause = type
@@ -33,10 +33,7 @@ export async function GET(req: Request) {
     return Response.json(results);
   } catch (error) {
     console.error("Error fetching workouts:", error);
-    return Response.json(
-      { error: "Failed to fetch workouts" },
-      { status: 500 }
-    );
+    return Response.json({ error: "Failed to fetch workouts" }, { status: 500 });
   }
 }
 
@@ -52,7 +49,10 @@ export async function POST(req: Request) {
 
     if (!type || !name || !durationMinutes || caloriesBurned == null || !workoutDate) {
       return Response.json(
-        { error: "Missing required fields: type, name, durationMinutes, caloriesBurned, workoutDate" },
+        {
+          error:
+            "Missing required fields: type, name, durationMinutes, caloriesBurned, workoutDate",
+        },
         { status: 400 }
       );
     }
@@ -78,9 +78,6 @@ export async function POST(req: Request) {
     return Response.json(created, { status: 201 });
   } catch (error) {
     console.error("Error creating workout:", error);
-    return Response.json(
-      { error: "Failed to create workout" },
-      { status: 500 }
-    );
+    return Response.json({ error: "Failed to create workout" }, { status: 500 });
   }
 }

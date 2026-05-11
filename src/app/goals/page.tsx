@@ -82,9 +82,7 @@ function GoalForm({ onSuccess }: { onSuccess: () => void }) {
       toast.success("Goal created!");
       onSuccess();
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to create goal"
-      );
+      toast.error(error instanceof Error ? error.message : "Failed to create goal");
     } finally {
       setIsSubmitting(false);
     }
@@ -160,9 +158,7 @@ export default function GoalsPage() {
       if (!res.ok) throw new Error("Failed to fetch goals");
       setGoals(await res.json());
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to load goals"
-      );
+      toast.error(error instanceof Error ? error.message : "Failed to load goals");
     } finally {
       setLoading(false);
     }
@@ -182,9 +178,7 @@ export default function GoalsPage() {
       toast.success("Goal deleted");
       fetchGoals();
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to delete goal"
-      );
+      toast.error(error instanceof Error ? error.message : "Failed to delete goal");
     }
   };
 
@@ -199,16 +193,14 @@ export default function GoalsPage() {
       toast.success("Goal marked as completed!");
       fetchGoals();
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to update goal"
-      );
+      toast.error(error instanceof Error ? error.message : "Failed to update goal");
     }
   };
 
   if (isPending) {
     return (
       <div className="container mx-auto p-6">
-        <Skeleton className="h-8 w-48 mb-6" />
+        <Skeleton className="mb-6 h-8 w-48" />
         <Skeleton className="h-48" />
       </div>
     );
@@ -217,9 +209,7 @@ export default function GoalsPage() {
   if (!session) {
     return (
       <div className="container mx-auto px-4 py-12 text-center">
-        <p className="text-muted-foreground mb-4">
-          Sign in to manage your goals
-        </p>
+        <p className="text-muted-foreground mb-4">Sign in to manage your goals</p>
         <UserProfile />
       </div>
     );
@@ -229,14 +219,12 @@ export default function GoalsPage() {
   const completedGoals = goals.filter((g) => g.completed);
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="container mx-auto space-y-6 p-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Goals</h1>
-          <p className="text-muted-foreground">
-            Set and track your fitness goals
-          </p>
+          <p className="text-muted-foreground">Set and track your fitness goals</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
@@ -266,69 +254,69 @@ export default function GoalsPage() {
           ))}
         </div>
       ) : goals.length === 0 ? (
-        <div className="text-center py-16 space-y-4">
-          <div className="mx-auto bg-yellow-500/10 rounded-full p-4 w-fit">
+        <div className="space-y-4 py-16 text-center">
+          <div className="mx-auto w-fit rounded-full bg-yellow-500/10 p-4">
             <Target className="h-8 w-8 text-yellow-500" />
           </div>
           <h2 className="text-xl font-semibold">No goals yet</h2>
-          <p className="text-muted-foreground max-w-md mx-auto">
-            Setting clear fitness goals keeps you motivated. Create your first
-            goal to get started!
+          <p className="text-muted-foreground mx-auto max-w-md">
+            Setting clear fitness goals keeps you motivated. Create your first goal to get started!
           </p>
         </div>
       ) : (
         <Tabs defaultValue="active">
           <TabsList>
-            <TabsTrigger value="active">
-              Active ({activeGoals.length})
-            </TabsTrigger>
-            <TabsTrigger value="completed">
-              Completed ({completedGoals.length})
-            </TabsTrigger>
+            <TabsTrigger value="active">Active ({activeGoals.length})</TabsTrigger>
+            <TabsTrigger value="completed">Completed ({completedGoals.length})</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="active" className="space-y-3 mt-4">
+          <TabsContent value="active" className="mt-4 space-y-3">
             {activeGoals.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">
+              <p className="text-muted-foreground py-8 text-center text-sm">
                 No active goals. Create one to get started!
               </p>
             ) : (
               activeGoals.map((g) => {
                 const daysRemaining = g.endDate
-                  ? Math.max(0, Math.ceil((new Date(g.endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+                  ? Math.max(
+                      0,
+                      Math.ceil(
+                        (new Date(g.endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+                      )
+                    )
                   : null;
                 return (
-                <div key={g.id} className="relative">
-                  <GoalCard goal={{ ...g, daysRemaining }} />
-                  <div className="absolute top-3 right-3 flex gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7"
-                      onClick={() => handleComplete(g.id)}
-                      title="Mark as completed"
-                    >
-                      <CheckCircle className="h-3.5 w-3.5 text-green-500" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7"
-                      onClick={() => handleDelete(g.id)}
-                      title="Delete goal"
-                    >
-                      <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                    </Button>
+                  <div key={g.id} className="relative">
+                    <GoalCard goal={{ ...g, daysRemaining }} />
+                    <div className="absolute top-3 right-3 flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={() => handleComplete(g.id)}
+                        title="Mark as completed"
+                      >
+                        <CheckCircle className="h-3.5 w-3.5 text-green-500" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={() => handleDelete(g.id)}
+                        title="Delete goal"
+                      >
+                        <Trash2 className="text-destructive h-3.5 w-3.5" />
+                      </Button>
+                    </div>
                   </div>
-                </div>
                 );
               })
             )}
           </TabsContent>
 
-          <TabsContent value="completed" className="space-y-3 mt-4">
+          <TabsContent value="completed" className="mt-4 space-y-3">
             {completedGoals.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">
+              <p className="text-muted-foreground py-8 text-center text-sm">
                 No completed goals yet. Keep pushing!
               </p>
             ) : (

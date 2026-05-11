@@ -1,32 +1,26 @@
-import { headers } from "next/headers"
-import { redirect } from "next/navigation"
-import { SignInButton } from "@/components/auth/sign-in-button"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { auth } from "@/lib/auth"
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import { SignInButton } from "@/components/auth/sign-in-button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { auth } from "@/lib/auth";
 
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ reset?: string }>
+  searchParams: Promise<{ reset?: string }>;
 }) {
-  let isAuthenticated = false
+  let isAuthenticated = false;
   try {
-    const session = await auth.api.getSession({ headers: await headers() })
-    isAuthenticated = !!session
+    const session = await auth.api.getSession({ headers: await headers() });
+    isAuthenticated = !!session;
   } catch {
     // Session check failed (e.g. DB not ready) — continue to show login form
   }
   if (isAuthenticated) {
-    redirect("/dashboard")
+    redirect("/dashboard");
   }
 
-  const { reset } = await searchParams
+  const { reset } = await searchParams;
 
   return (
     <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center p-4">
@@ -45,5 +39,5 @@ export default async function LoginPage({
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

@@ -72,22 +72,21 @@ export default function Home() {
     <main className="flex-1">
       {/* Hero */}
       <section className="container mx-auto px-4 py-20 text-center">
-        <div className="max-w-3xl mx-auto space-y-6">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10">
-              <Activity className="h-8 w-8 text-primary" />
+        <div className="mx-auto max-w-3xl space-y-6">
+          <div className="mb-4 flex items-center justify-center gap-3">
+            <div className="bg-primary/10 flex h-14 w-14 items-center justify-center rounded-2xl">
+              <Activity className="text-primary h-8 w-8" />
             </div>
           </div>
-          <h1 className="text-5xl md:text-6xl font-bold tracking-tight">
+          <h1 className="text-5xl font-bold tracking-tight md:text-6xl">
             Track Your{" "}
             <span className="bg-gradient-to-r from-blue-500 via-purple-500 to-orange-500 bg-clip-text text-transparent">
               Fitness Journey
             </span>
           </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Steps, workouts, calories, goals, and achievements -- all in one
-            place. FitTrack helps you build healthy habits and reach your
-            fitness potential.
+          <p className="text-muted-foreground mx-auto max-w-2xl text-xl">
+            Steps, workouts, calories, goals, and achievements -- all in one place. FitTrack helps
+            you build healthy habits and reach your fitness potential.
           </p>
           <div className="flex items-center justify-center gap-4 pt-4">
             {session ? (
@@ -116,25 +115,23 @@ export default function Home() {
 
       {/* Features */}
       <section className="container mx-auto px-4 py-16">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-3">Everything You Need</h2>
+        <div className="mb-12 text-center">
+          <h2 className="mb-3 text-3xl font-bold">Everything You Need</h2>
           <p className="text-muted-foreground text-lg">
             Comprehensive fitness tracking with AI-powered coaching
           </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+        <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           {FEATURES.map((feature) => (
             <div
               key={feature.title}
-              className="p-6 border rounded-lg hover:shadow-md transition-shadow"
+              className="rounded-lg border p-6 transition-shadow hover:shadow-md"
             >
-              <div className={`${feature.bgColor} rounded-lg p-3 w-fit mb-4`}>
+              <div className={`${feature.bgColor} mb-4 w-fit rounded-lg p-3`}>
                 <feature.icon className={`h-6 w-6 ${feature.color}`} />
               </div>
-              <h3 className="font-semibold text-lg mb-2">{feature.title}</h3>
-              <p className="text-sm text-muted-foreground">
-                {feature.description}
-              </p>
+              <h3 className="mb-2 text-lg font-semibold">{feature.title}</h3>
+              <p className="text-muted-foreground text-sm">{feature.description}</p>
             </div>
           ))}
         </div>
@@ -143,13 +140,11 @@ export default function Home() {
       {/* CTA */}
       {!session && (
         <section className="container mx-auto px-4 py-16">
-          <div className="bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-orange-500/10 rounded-2xl p-12 text-center">
-            <h2 className="text-3xl font-bold mb-4">
-              Ready to Start Your Fitness Journey?
-            </h2>
-            <p className="text-muted-foreground mb-6 max-w-lg mx-auto">
-              Join FitTrack today and take the first step towards a healthier,
-              more active lifestyle.
+          <div className="rounded-2xl bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-orange-500/10 p-12 text-center">
+            <h2 className="mb-4 text-3xl font-bold">Ready to Start Your Fitness Journey?</h2>
+            <p className="text-muted-foreground mx-auto mb-6 max-w-lg">
+              Join FitTrack today and take the first step towards a healthier, more active
+              lifestyle.
             </p>
             <Button asChild size="lg">
               <Link href="/register">

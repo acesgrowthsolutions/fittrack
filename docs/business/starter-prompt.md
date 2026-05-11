@@ -80,7 +80,6 @@ Please help me transform this boilerplate into my actual application. **You MUST
 After completing the implementation, you MUST document any new features or significant changes in the `/docs/features/` directory:
 
 1. **Create Feature Documentation**: For each major feature implemented, create a markdown file in `/docs/features/` that explains:
-
    - What the feature does
    - How it works
    - Key components and files involved

@@ -8,10 +8,7 @@ import { UserProfile } from "@/components/auth/user-profile";
 import { WorkoutCard } from "@/components/fitness/workout-card";
 import { WorkoutForm } from "@/components/fitness/workout-form";
 import { WorkoutTimer } from "@/components/fitness/workout-timer";
-import {
-  WorkoutTotals,
-  type WorkoutTotalsData,
-} from "@/components/fitness/workout-totals";
+import { WorkoutTotals, type WorkoutTotalsData } from "@/components/fitness/workout-totals";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -70,42 +67,37 @@ export default function WorkoutsPage() {
   const [totals, setTotals] = useState<WorkoutTotalsData | null>(null);
   const [totalsLoading, setTotalsLoading] = useState(true);
 
-  const fetchWorkouts = useCallback(
-    async (newOffset = 0, append = false, type = "all") => {
-      try {
-        if (newOffset === 0) setLoading(true);
-        else setLoadingMore(true);
+  const fetchWorkouts = useCallback(async (newOffset = 0, append = false, type = "all") => {
+    try {
+      if (newOffset === 0) setLoading(true);
+      else setLoadingMore(true);
 
-        const params = new URLSearchParams({
-          limit: PAGE_SIZE.toString(),
-          offset: newOffset.toString(),
-        });
-        if (type !== "all") {
-          params.set("type", type);
-        }
-
-        const res = await fetch(`/api/fitness/workouts?${params.toString()}`);
-        if (!res.ok) throw new Error("Failed to fetch workouts");
-        const data: Workout[] = await res.json();
-
-        if (append) {
-          setWorkouts((prev) => [...prev, ...data]);
-        } else {
-          setWorkouts(data);
-        }
-        setHasMore(data.length === PAGE_SIZE);
-        setOffset(newOffset + data.length);
-      } catch (error) {
-        toast.error(
-          error instanceof Error ? error.message : "Failed to load workouts"
-        );
-      } finally {
-        setLoading(false);
-        setLoadingMore(false);
+      const params = new URLSearchParams({
+        limit: PAGE_SIZE.toString(),
+        offset: newOffset.toString(),
+      });
+      if (type !== "all") {
+        params.set("type", type);
       }
-    },
-    []
-  );
+
+      const res = await fetch(`/api/fitness/workouts?${params.toString()}`);
+      if (!res.ok) throw new Error("Failed to fetch workouts");
+      const data: Workout[] = await res.json();
+
+      if (append) {
+        setWorkouts((prev) => [...prev, ...data]);
+      } else {
+        setWorkouts(data);
+      }
+      setHasMore(data.length === PAGE_SIZE);
+      setOffset(newOffset + data.length);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to load workouts");
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  }, []);
 
   const fetchTotals = useCallback(async () => {
     try {
@@ -115,9 +107,7 @@ export default function WorkoutsPage() {
       const data: WorkoutTotalsData = await res.json();
       setTotals(data);
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to load workout totals"
-      );
+      toast.error(error instanceof Error ? error.message : "Failed to load workout totals");
     } finally {
       setTotalsLoading(false);
     }
@@ -132,10 +122,7 @@ export default function WorkoutsPage() {
         const raw = parseFloat(profile.weight);
         if (!isNaN(raw) && raw > 0) {
           // Convert to kg if the user stores weight in imperial (lbs)
-          const kg =
-            profile.preferredUnits === "imperial"
-              ? raw * 0.453592
-              : raw;
+          const kg = profile.preferredUnits === "imperial" ? raw * 0.453592 : raw;
           setUserWeightKg(kg);
         }
       }
@@ -155,7 +142,7 @@ export default function WorkoutsPage() {
   if (isPending) {
     return (
       <div className="container mx-auto p-6">
-        <Skeleton className="h-8 w-48 mb-6" />
+        <Skeleton className="mb-6 h-8 w-48" />
         <div className="space-y-3">
           {Array.from({ length: 5 }).map((_, i) => (
             <Skeleton key={i} className="h-20" />
@@ -168,23 +155,19 @@ export default function WorkoutsPage() {
   if (!session) {
     return (
       <div className="container mx-auto px-4 py-12 text-center">
-        <p className="text-muted-foreground mb-4">
-          Sign in to view your workouts
-        </p>
+        <p className="text-muted-foreground mb-4">Sign in to view your workouts</p>
         <UserProfile />
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="container mx-auto space-y-6 p-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Workouts</h1>
-          <p className="text-muted-foreground">
-            Your workout history and logging
-          </p>
+          <p className="text-muted-foreground">Your workout history and logging</p>
         </div>
         <div className="flex gap-2">
           <Dialog open={timerOpen} onOpenChange={setTimerOpen}>
@@ -259,14 +242,14 @@ export default function WorkoutsPage() {
           ))}
         </div>
       ) : workouts.length === 0 ? (
-        <div className="text-center py-16 space-y-4">
-          <div className="mx-auto bg-purple-500/10 rounded-full p-4 w-fit">
+        <div className="space-y-4 py-16 text-center">
+          <div className="mx-auto w-fit rounded-full bg-purple-500/10 p-4">
             <Dumbbell className="h-8 w-8 text-purple-500" />
           </div>
           <h2 className="text-xl font-semibold">No workouts yet</h2>
-          <p className="text-muted-foreground max-w-md mx-auto">
-            Every journey starts with a single step. Log your first workout to
-            begin tracking your progress!
+          <p className="text-muted-foreground mx-auto max-w-md">
+            Every journey starts with a single step. Log your first workout to begin tracking your
+            progress!
           </p>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
@@ -293,11 +276,7 @@ export default function WorkoutsPage() {
       ) : (
         <div className="space-y-3">
           {workouts.map((w) => (
-            <WorkoutCard
-              key={w.id}
-              workout={w}
-              onClick={() => router.push(`/workouts/${w.id}`)}
-            />
+            <WorkoutCard key={w.id} workout={w} onClick={() => router.push(`/workouts/${w.id}`)} />
           ))}
 
           {hasMore && (

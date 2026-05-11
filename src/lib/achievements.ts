@@ -54,11 +54,7 @@ type BadgeType = (typeof BADGE_DEFINITIONS)[number]["type"];
 type Workout = typeof workouts.$inferSelect;
 type DailyStat = typeof dailyStats.$inferSelect;
 
-export function qualifies(
-  type: BadgeType,
-  w: Workout[],
-  s: DailyStat[]
-): boolean {
+export function qualifies(type: BadgeType, w: Workout[], s: DailyStat[]): boolean {
   switch (type) {
     case "first_workout":
       return w.length >= 1;
@@ -67,17 +63,11 @@ export function qualifies(
     case "10k_steps":
       return s.some((d) => d.steps >= 10000);
     case "half_marathon": {
-      const total = w.reduce(
-        (sum, x) => sum + (x.distanceKm ? parseFloat(x.distanceKm) : 0),
-        0
-      );
+      const total = w.reduce((sum, x) => sum + (x.distanceKm ? parseFloat(x.distanceKm) : 0), 0);
       return total >= 21.1;
     }
     case "marathon": {
-      const total = w.reduce(
-        (sum, x) => sum + (x.distanceKm ? parseFloat(x.distanceKm) : 0),
-        0
-      );
+      const total = w.reduce((sum, x) => sum + (x.distanceKm ? parseFloat(x.distanceKm) : 0), 0);
       return total >= 42.2;
     }
     case "speed_demon":
@@ -104,9 +94,7 @@ export function qualifies(
       const dates = Array.from(
         new Set(
           s
-            .filter(
-              (d) => d.steps > 0 || d.activeMinutes > 0 || d.caloriesBurned > 0
-            )
+            .filter((d) => d.steps > 0 || d.activeMinutes > 0 || d.caloriesBurned > 0)
             .map((d) => d.date)
         )
       ).sort();
@@ -143,9 +131,7 @@ export async function checkAchievements(userId: string): Promise<BadgeType[]> {
     db.select().from(dailyStats).where(eq(dailyStats.userId, userId)),
   ]);
 
-  const toAward = pending.filter((b) =>
-    qualifies(b.type, userWorkouts, userStats)
-  );
+  const toAward = pending.filter((b) => qualifies(b.type, userWorkouts, userStats));
   if (toAward.length === 0) return [];
 
   await db.insert(achievements).values(

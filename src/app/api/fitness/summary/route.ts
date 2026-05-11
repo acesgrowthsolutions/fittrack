@@ -10,10 +10,7 @@ import { getUserTz } from "@/lib/user-tz";
  * Calculate the user's current step streak: consecutive days (ending today
  * or yesterday in the user's timezone) that have step data > 0.
  */
-function calculateStreak(
-  stats: { date: string; steps: number }[],
-  today: string
-): number {
+function calculateStreak(stats: { date: string; steps: number }[], today: string): number {
   if (stats.length === 0) return 0;
 
   // Sort by date descending so the most recent day is first
@@ -179,10 +176,7 @@ export async function GET() {
       weeklyWorkoutCaloriesByDate.map((r) => [r.date, r.calories])
     );
     const dailyByDate = new Map(weeklyStats.map((s) => [s.date, s]));
-    const allWeekDates = new Set<string>([
-      ...dailyByDate.keys(),
-      ...workoutCaloriesByDate.keys(),
-    ]);
+    const allWeekDates = new Set<string>([...dailyByDate.keys(), ...workoutCaloriesByDate.keys()]);
     const enrichedWeeklyStats = Array.from(allWeekDates)
       .sort()
       .map((date) => {

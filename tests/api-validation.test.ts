@@ -1,4 +1,3 @@
-
 /**
  * Reproduces BUG H1 (missing input validation) by hitting the live API routes.
  * These endpoints require auth, so unauthenticated requests should return 401.
@@ -29,10 +28,7 @@ describe("BUG H1: no Zod/input validation on fitness API routes", () => {
   }
 
   it("chat route DOES use zod (the pattern every route should follow)", () => {
-    const src = readFileSync(
-      path.resolve("src/app/api/chat/route.ts"),
-      "utf8"
-    );
+    const src = readFileSync(path.resolve("src/app/api/chat/route.ts"), "utf8");
     expect(src).toMatch(/from\s+['"]zod['"]/);
   });
 });

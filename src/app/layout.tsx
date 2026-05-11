@@ -26,27 +26,18 @@ export const metadata: Metadata = {
   },
   description:
     "Track your fitness journey with FitTrack. Log workouts, monitor steps, set goals, and get AI-powered coaching.",
-  keywords: [
-    "Fitness",
-    "Workout Tracker",
-    "Step Counter",
-    "Health",
-    "AI Coach",
-    "Fitness Goals",
-  ],
+  keywords: ["Fitness", "Workout Tracker", "Step Counter", "Health", "AI Coach", "Fitness Goals"],
   openGraph: {
     type: "website",
     locale: "en_US",
     siteName: "FitTrack",
     title: "FitTrack - Track Your Fitness Journey",
-    description:
-      "Steps, workouts, calories, goals, and achievements -- all in one place.",
+    description: "Steps, workouts, calories, goals, and achievements -- all in one place.",
   },
   twitter: {
     card: "summary_large_image",
     title: "FitTrack - Track Your Fitness Journey",
-    description:
-      "Steps, workouts, calories, goals, and achievements -- all in one place.",
+    description: "Steps, workouts, calories, goals, and achievements -- all in one place.",
   },
   robots: {
     index: true,
@@ -59,8 +50,7 @@ const jsonLd = {
   "@context": "https://schema.org",
   "@type": "WebApplication",
   name: "FitTrack",
-  description:
-    "Track your fitness journey with workouts, steps, calories, goals, and AI coaching.",
+  description: "Track your fitness journey with workouts, steps, calories, goals, and AI coaching.",
   applicationCategory: "HealthApplication",
   operatingSystem: "Any",
   offers: {
@@ -93,9 +83,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

@@ -74,12 +74,8 @@ function formatTime(totalMs: number): string {
  * Calculates estimated calories burned using the standard MET formula.
  * Formula: (MET x weightKg x 3.5) / 200 x durationMinutes
  */
-function calculateCalories(
-  met: number,
-  weightKg: number,
-  durationMinutes: number
-): number {
-  return (met * weightKg * 3.5) / 200 * durationMinutes;
+function calculateCalories(met: number, weightKg: number, durationMinutes: number): number {
+  return ((met * weightKg * 3.5) / 200) * durationMinutes;
 }
 
 /**
@@ -124,9 +120,7 @@ export function WorkoutTimer({ onSaved, userWeightKg }: WorkoutTimerProps) {
   const liveCalories = canTrackCalories
     ? calculateCalories(selectedWorkout.met, userWeightKg, durationMinutesLive)
     : 0;
-  const calPerMin = canTrackCalories
-    ? (selectedWorkout.met * userWeightKg * 3.5) / 200
-    : 0;
+  const calPerMin = canTrackCalories ? (selectedWorkout.met * userWeightKg * 3.5) / 200 : 0;
 
   const handleStart = () => {
     accumulatedRef.current = 0;
@@ -176,27 +170,23 @@ export function WorkoutTimer({ onSaved, userWeightKg }: WorkoutTimerProps) {
     return (
       <div className="space-y-4">
         {/* Recorded time */}
-        <div className="rounded-lg border bg-muted/30 p-4 text-center">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">
-            Recorded time
-          </p>
-          <p className="font-mono text-3xl font-bold tabular-nums">
-            {formatTime(elapsedMs)}
-          </p>
-          <p className="mt-1 text-xs text-muted-foreground">
+        <div className="bg-muted/30 rounded-lg border p-4 text-center">
+          <p className="text-muted-foreground text-xs tracking-wide uppercase">Recorded time</p>
+          <p className="font-mono text-3xl font-bold tabular-nums">{formatTime(elapsedMs)}</p>
+          <p className="text-muted-foreground mt-1 text-xs">
             Rounded to {durationMinutes} min for logging
           </p>
         </div>
 
         {/* Post-workout summary card */}
-        <div className="rounded-lg border bg-muted/10 p-5 space-y-4">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground text-center">
+        <div className="bg-muted/10 space-y-4 rounded-lg border p-5">
+          <p className="text-muted-foreground text-center text-xs tracking-wide uppercase">
             Workout Summary
           </p>
 
           {/* Exercise type */}
           <div className="flex items-center justify-center gap-2">
-            <ExerciseIcon className="h-5 w-5 text-muted-foreground" />
+            <ExerciseIcon className="text-muted-foreground h-5 w-5" />
             <span className="text-sm font-medium">{exerciseLabel}</span>
           </div>
 
@@ -206,23 +196,21 @@ export function WorkoutTimer({ onSaved, userWeightKg }: WorkoutTimerProps) {
               <div className="flex flex-col items-center gap-1">
                 <div className="flex items-center gap-2">
                   <Flame className="h-7 w-7 text-orange-500" />
-                  <span className="text-4xl font-bold tabular-nums text-orange-500">
+                  <span className="text-4xl font-bold text-orange-500 tabular-nums">
                     {totalCalories}
                   </span>
-                  <span className="text-lg text-muted-foreground">kcal</span>
+                  <span className="text-muted-foreground text-lg">kcal</span>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  {calPerMin.toFixed(1)} cal/min
-                </p>
+                <p className="text-muted-foreground text-xs">{calPerMin.toFixed(1)} cal/min</p>
               </div>
 
               {/* Motivational message */}
-              <p className="text-center text-sm font-medium text-muted-foreground">
+              <p className="text-muted-foreground text-center text-sm font-medium">
                 {getMotivationalMessage(totalCalories)}
               </p>
             </>
           ) : (
-            <p className="text-center text-xs text-muted-foreground">
+            <p className="text-muted-foreground text-center text-xs">
               Set your weight in Profile to see calorie tracking
             </p>
           )}
@@ -255,44 +243,37 @@ export function WorkoutTimer({ onSaved, userWeightKg }: WorkoutTimerProps) {
         <div className="rounded-full bg-purple-500/10 p-4">
           <Timer className="h-8 w-8 text-purple-500" />
         </div>
-        <p className="font-mono text-5xl font-bold tabular-nums">
-          {formatTime(elapsedMs)}
-        </p>
-        <p className="text-sm text-muted-foreground">
+        <p className="font-mono text-5xl font-bold tabular-nums">{formatTime(elapsedMs)}</p>
+        <p className="text-muted-foreground text-sm">
           {phase === "idle" && "Ready to start"}
           {phase === "running" && "Workout in progress"}
           {phase === "paused" && "Paused"}
         </p>
 
         {/* Live calorie counter while running or paused */}
-        {(phase === "running" || phase === "paused") && (
-          canTrackCalories ? (
+        {(phase === "running" || phase === "paused") &&
+          (canTrackCalories ? (
             <div className="flex flex-col items-center gap-0.5">
               <div className="flex items-center gap-1.5">
                 <Flame className="h-5 w-5 text-orange-500" />
-                <span className="text-2xl font-bold tabular-nums text-orange-500">
+                <span className="text-2xl font-bold text-orange-500 tabular-nums">
                   {Math.round(liveCalories)}
                 </span>
-                <span className="text-sm text-muted-foreground">kcal</span>
+                <span className="text-muted-foreground text-sm">kcal</span>
               </div>
-              <p className="text-xs text-muted-foreground">
-                {calPerMin.toFixed(1)} cal/min
-              </p>
+              <p className="text-muted-foreground text-xs">{calPerMin.toFixed(1)} cal/min</p>
             </div>
           ) : !userWeightKg ? (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground text-xs">
               Set your weight in Profile to see live calorie tracking
             </p>
-          ) : null
-        )}
+          ) : null)}
       </div>
 
       {/* Exercise type selector — shown only in idle phase */}
       {phase === "idle" && (
         <div className="space-y-2">
-          <label className="text-sm font-medium text-muted-foreground">
-            Exercise type
-          </label>
+          <label className="text-muted-foreground text-sm font-medium">Exercise type</label>
           <Select value={exerciseType} onValueChange={setExerciseType}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Select exercise type" />
@@ -314,11 +295,7 @@ export function WorkoutTimer({ onSaved, userWeightKg }: WorkoutTimerProps) {
 
       <div className="flex gap-2">
         {phase === "idle" && (
-          <Button
-            className="flex-1"
-            onClick={handleStart}
-            disabled={!exerciseType}
-          >
+          <Button className="flex-1" onClick={handleStart} disabled={!exerciseType}>
             <Play className="h-4 w-4" />
             Start
           </Button>

@@ -66,24 +66,16 @@ export default function CalculatorPage() {
       return null;
     }
 
-    const weightKg =
-      weightUnit === "lbs" ? weightNum * LBS_TO_KG : weightNum;
-    const calPerMin = calculateCaloriesPerMinute(
-      selectedExercise.met,
-      weightKg
-    );
+    const weightKg = weightUnit === "lbs" ? weightNum * LBS_TO_KG : weightNum;
+    const calPerMin = calculateCaloriesPerMinute(selectedExercise.met, weightKg);
 
     // Only include total if duration is valid
-    const totalCal =
-      !isNaN(durationNum) && durationNum > 0
-        ? calPerMin * durationNum
-        : null;
+    const totalCal = !isNaN(durationNum) && durationNum > 0 ? calPerMin * durationNum : null;
 
     return { calPerMin, totalCal, met: selectedExercise.met };
   }, [selectedExercise, weight, weightUnit, duration]);
 
-  const isFormValid =
-    exerciseType !== "" && weight !== "" && parseFloat(weight) > 0;
+  const isFormValid = exerciseType !== "" && weight !== "" && parseFloat(weight) > 0;
 
   function handleCalculate() {
     setShowResults(true);
@@ -100,9 +92,9 @@ export default function CalculatorPage() {
   if (isPending) {
     return (
       <div className="container mx-auto p-6">
-        <div className="max-w-lg mx-auto space-y-4">
-          <div className="h-8 w-64 rounded bg-muted animate-pulse" />
-          <div className="h-96 rounded bg-muted animate-pulse" />
+        <div className="mx-auto max-w-lg space-y-4">
+          <div className="bg-muted h-8 w-64 animate-pulse rounded" />
+          <div className="bg-muted h-96 animate-pulse rounded" />
         </div>
       </div>
     );
@@ -111,16 +103,14 @@ export default function CalculatorPage() {
   if (!session) {
     return (
       <div className="container mx-auto px-4 py-12 text-center">
-        <p className="text-muted-foreground mb-4">
-          Sign in to use the calorie calculator
-        </p>
+        <p className="text-muted-foreground mb-4">Sign in to use the calorie calculator</p>
         <UserProfile />
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="container mx-auto space-y-6 p-6">
       <div>
         <h1 className="text-2xl font-bold">Calorie Calculator</h1>
         <p className="text-muted-foreground">
@@ -128,7 +118,7 @@ export default function CalculatorPage() {
         </p>
       </div>
 
-      <div className="max-w-lg mx-auto space-y-6">
+      <div className="mx-auto max-w-lg space-y-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
@@ -168,10 +158,7 @@ export default function CalculatorPage() {
                   onChange={(e) => setWeight(e.target.value)}
                   className="flex-1"
                 />
-                <Select
-                  value={weightUnit}
-                  onValueChange={(v) => setWeightUnit(v as WeightUnit)}
-                >
+                <Select value={weightUnit} onValueChange={(v) => setWeightUnit(v as WeightUnit)}>
                   <SelectTrigger className="w-20">
                     <SelectValue />
                   </SelectTrigger>
@@ -187,9 +174,7 @@ export default function CalculatorPage() {
             <div className="space-y-2">
               <Label htmlFor="duration">
                 Duration (minutes){" "}
-                <span className="text-muted-foreground font-normal">
-                  - optional
-                </span>
+                <span className="text-muted-foreground font-normal">- optional</span>
               </Label>
               <Input
                 id="duration"
@@ -204,11 +189,7 @@ export default function CalculatorPage() {
 
             {/* Actions */}
             <div className="flex gap-2 pt-2">
-              <Button
-                onClick={handleCalculate}
-                disabled={!isFormValid}
-                className="flex-1"
-              >
+              <Button onClick={handleCalculate} disabled={!isFormValid} className="flex-1">
                 <Flame className="h-4 w-4" />
                 Calculate
               </Button>
@@ -220,9 +201,9 @@ export default function CalculatorPage() {
         </Card>
 
         {/* Tip */}
-        <p className="text-sm text-muted-foreground text-center">
+        <p className="text-muted-foreground text-center text-sm">
           Tip: Calories are also auto-calculated when you{" "}
-          <Link href="/workouts" className="underline hover:text-foreground">
+          <Link href="/workouts" className="hover:text-foreground underline">
             log a workout
           </Link>
           .
@@ -241,37 +222,32 @@ export default function CalculatorPage() {
               <div className="grid grid-cols-1 gap-4">
                 {/* Calories per minute */}
                 <div className="rounded-lg bg-orange-500/10 p-4 text-center">
-                  <p className="text-sm font-medium text-muted-foreground mb-1">
+                  <p className="text-muted-foreground mb-1 text-sm font-medium">
                     Calories Burned Per Minute
                   </p>
                   <p className="text-3xl font-bold text-orange-600 dark:text-orange-400">
                     {results.calPerMin.toFixed(2)}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    kcal/min
-                  </p>
+                  <p className="text-muted-foreground mt-1 text-xs">kcal/min</p>
                 </div>
 
                 {/* Total calories (shown only when duration is provided) */}
                 {results.totalCal !== null && (
                   <div className="rounded-lg bg-green-500/10 p-4 text-center">
-                    <p className="text-sm font-medium text-muted-foreground mb-1">
+                    <p className="text-muted-foreground mb-1 text-sm font-medium">
                       Total Calories Burned
                     </p>
                     <p className="text-3xl font-bold text-green-600 dark:text-green-400">
                       {Math.round(results.totalCal).toLocaleString()}
                     </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      kcal in {duration} minutes
-                    </p>
+                    <p className="text-muted-foreground mt-1 text-xs">kcal in {duration} minutes</p>
                   </div>
                 )}
 
                 {/* MET info */}
-                <p className="text-xs text-muted-foreground text-center">
-                  Based on MET value of {results.met} for{" "}
-                  {selectedExercise?.label}. Formula: (MET x weight in kg x
-                  3.5) / 200.
+                <p className="text-muted-foreground text-center text-xs">
+                  Based on MET value of {results.met} for {selectedExercise?.label}. Formula: (MET x
+                  weight in kg x 3.5) / 200.
                 </p>
               </div>
             </CardContent>

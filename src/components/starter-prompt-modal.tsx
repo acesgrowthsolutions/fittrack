@@ -118,10 +118,7 @@ export function StarterPromptModal() {
 
   const handleCopy = async () => {
     const finalPrompt = projectDescription.trim()
-      ? STARTER_PROMPT.replace(
-          "[PROJECT_DESCRIPTION]",
-          projectDescription.trim()
-        )
+      ? STARTER_PROMPT.replace("[PROJECT_DESCRIPTION]", projectDescription.trim())
       : STARTER_PROMPT.replace("\n[PROJECT_DESCRIPTION]\n", "");
 
     try {
@@ -137,7 +134,7 @@ export function StarterPromptModal() {
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button size="sm" className="w-full">
-          <Copy className="w-4 h-4 mr-2" />
+          <Copy className="mr-2 h-4 w-4" />
           Get AI Starter Prompt
         </Button>
       </DialogTrigger>
@@ -145,17 +142,13 @@ export function StarterPromptModal() {
         <DialogHeader>
           <DialogTitle>Generate AI Starter Prompt</DialogTitle>
           <DialogDescription>
-            Create a comprehensive prompt to help AI agents create your project
-            for you.
+            Create a comprehensive prompt to help AI agents create your project for you.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           <div>
-            <label
-              htmlFor="project-description"
-              className="text-sm font-medium mb-2 block"
-            >
+            <label htmlFor="project-description" className="mb-2 block text-sm font-medium">
               Describe your project (optional)
             </label>
             <textarea
@@ -163,11 +156,10 @@ export function StarterPromptModal() {
               placeholder="e.g., A task management app for teams with real-time collaboration, project timelines, and AI-powered task prioritization..."
               value={projectDescription}
               onChange={(e) => setProjectDescription(e.target.value)}
-              className="w-full h-24 px-3 py-2 border rounded-md resize-none text-sm"
+              className="h-24 w-full resize-none rounded-md border px-3 py-2 text-sm"
             />
-            <p className="text-xs text-muted-foreground mt-1">
-              Optional: Add details about your project to get a more tailored
-              prompt
+            <p className="text-muted-foreground mt-1 text-xs">
+              Optional: Add details about your project to get a more tailored prompt
             </p>
           </div>
 
@@ -175,12 +167,12 @@ export function StarterPromptModal() {
             <Button onClick={handleCopy} className="flex-1">
               {copied ? (
                 <>
-                  <Check className="w-4 h-4 mr-2" />
+                  <Check className="mr-2 h-4 w-4" />
                   Copied!
                 </>
               ) : (
                 <>
-                  <Copy className="w-4 h-4 mr-2" />
+                  <Copy className="mr-2 h-4 w-4" />
                   Copy Starter Prompt
                 </>
               )}
@@ -190,10 +182,9 @@ export function StarterPromptModal() {
             </Button>
           </div>
 
-          <div className="text-xs text-muted-foreground border-t pt-3">
-            <strong>How to use:</strong> Copy this prompt and paste it into
-            Claude Code, Cursor, or any AI coding assistant to get started with
-            your project.
+          <div className="text-muted-foreground border-t pt-3 text-xs">
+            <strong>How to use:</strong> Copy this prompt and paste it into Claude Code, Cursor, or
+            any AI coding assistant to get started with your project.
           </div>
         </div>
       </DialogContent>

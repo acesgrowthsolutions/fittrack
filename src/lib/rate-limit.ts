@@ -87,9 +87,7 @@ export async function checkRateLimit(
         )
         .orderBy(rateLimitEvent.occurredAt)
         .limit(1);
-      const ageMs = oldest
-        ? w.windowMs - (now.getTime() - oldest.at.getTime())
-        : w.windowMs;
+      const ageMs = oldest ? w.windowMs - (now.getTime() - oldest.at.getTime()) : w.windowMs;
       return {
         ok: false,
         exceeded: w,

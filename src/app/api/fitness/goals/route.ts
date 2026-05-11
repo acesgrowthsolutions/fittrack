@@ -20,10 +20,7 @@ export async function GET() {
     return Response.json(results);
   } catch (error) {
     console.error("Error fetching goals:", error);
-    return Response.json(
-      { error: "Failed to fetch goals" },
-      { status: 500 }
-    );
+    return Response.json({ error: "Failed to fetch goals" }, { status: 500 });
   }
 }
 
@@ -59,9 +56,6 @@ export async function POST(req: Request) {
     return Response.json(created, { status: 201 });
   } catch (error) {
     console.error("Error creating goal:", error);
-    return Response.json(
-      { error: "Failed to create goal" },
-      { status: 500 }
-    );
+    return Response.json({ error: "Failed to create goal" }, { status: 500 });
   }
 }

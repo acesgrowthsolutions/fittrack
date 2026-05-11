@@ -1,19 +1,19 @@
-import { betterAuth } from "better-auth"
-import { drizzleAdapter } from "better-auth/adapters/drizzle"
-import { oAuthProxy } from "better-auth/plugins"
-import { db } from "./db"
-import { passwordResetTemplate, sendEmail, verificationTemplate } from "./email"
+import { betterAuth } from "better-auth";
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { oAuthProxy } from "better-auth/plugins";
+import { db } from "./db";
+import { passwordResetTemplate, sendEmail, verificationTemplate } from "./email";
 
-const googleClientId = process.env.GOOGLE_CLIENT_ID
-const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET
+const googleClientId = process.env.GOOGLE_CLIENT_ID;
+const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
 
 // Stable production URL anchoring OAuth callbacks. Preview deployments
 // proxy through this domain via the oAuthProxy plugin so we don't have to
 // add every preview URL to the Google authorized redirect list.
-const PRODUCTION_URL = "https://fitness-one-rust.vercel.app"
+const PRODUCTION_URL = "https://fitness-one-rust.vercel.app";
 
-const vercelEnv = process.env.VERCEL_ENV
-const vercelURL = process.env.VERCEL_URL
+const vercelEnv = process.env.VERCEL_ENV;
+const vercelURL = process.env.VERCEL_URL;
 
 // On preview deploys VERCEL_URL is the unique deploy host (e.g.
 // fitness-abc123-jennas-projects-...vercel.app). Use it as baseURL so
@@ -22,13 +22,12 @@ const vercelURL = process.env.VERCEL_URL
 const baseURL =
   vercelEnv === "preview" && vercelURL
     ? `https://${vercelURL}`
-    : process.env.BETTER_AUTH_URL ?? process.env.NEXT_PUBLIC_APP_URL
+    : (process.env.BETTER_AUTH_URL ?? process.env.NEXT_PUBLIC_APP_URL);
 
 // Only run the OAuth proxy on Vercel-hosted deployments. Locally we use
 // a direct redirect URI to localhost — proxying would needlessly bounce
 // the flow through production.
-const enableOAuthProxy =
-  vercelEnv === "production" || vercelEnv === "preview"
+const enableOAuthProxy = vercelEnv === "production" || vercelEnv === "preview";
 
 export const auth = betterAuth({
   baseURL,
@@ -56,25 +55,25 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     sendResetPassword: async ({ user, url }) => {
-      const { html, text } = passwordResetTemplate(user.email, url)
+      const { html, text } = passwordResetTemplate(user.email, url);
       await sendEmail({
         to: user.email,
         subject: "Reset your FitTrack password",
         html,
         text,
-      })
+      });
     },
   },
   emailVerification: {
     sendOnSignUp: true,
     sendVerificationEmail: async ({ user, url }) => {
-      const { html, text } = verificationTemplate(user.email, url)
+      const { html, text } = verificationTemplate(user.email, url);
       await sendEmail({
         to: user.email,
         subject: "Confirm your FitTrack email",
         html,
         text,
-      })
+      });
     },
   },
   socialProviders:
@@ -95,7 +94,5 @@ export const auth = betterAuth({
       trustedProviders: ["google"],
     },
   },
-  plugins: enableOAuthProxy
-    ? [oAuthProxy({ productionURL: PRODUCTION_URL })]
-    : undefined,
-})
+  plugins: enableOAuthProxy ? [oAuthProxy({ productionURL: PRODUCTION_URL })] : undefined,
+});

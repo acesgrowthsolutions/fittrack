@@ -24,10 +24,7 @@ export async function GET() {
     return Response.json(profile);
   } catch (error) {
     console.error("Error fetching profile:", error);
-    return Response.json(
-      { error: "Failed to fetch profile" },
-      { status: 500 }
-    );
+    return Response.json({ error: "Failed to fetch profile" }, { status: 500 });
   }
 }
 
@@ -39,15 +36,8 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const {
-      height,
-      weight,
-      age,
-      activityLevel,
-      dailyStepGoal,
-      dailyCalorieGoal,
-      preferredUnits,
-    } = body;
+    const { height, weight, age, activityLevel, dailyStepGoal, dailyCalorieGoal, preferredUnits } =
+      body;
 
     // Build update set, always include updatedAt to guarantee non-empty set
     const updateSet: Record<string, unknown> = { updatedAt: new Date() };
@@ -81,9 +71,6 @@ export async function POST(req: Request) {
     return Response.json(result);
   } catch (error) {
     console.error("Error saving profile:", error);
-    return Response.json(
-      { error: "Failed to save profile" },
-      { status: 500 }
-    );
+    return Response.json({ error: "Failed to save profile" }, { status: 500 });
   }
 }

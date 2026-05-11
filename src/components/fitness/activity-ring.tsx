@@ -35,7 +35,7 @@ export function ActivityRing({
       <svg
         width={size}
         height={size}
-        className="transform -rotate-90"
+        className="-rotate-90 transform"
         aria-label={`${clampedValue}% progress`}
         role="img"
       >
@@ -69,12 +69,8 @@ export function ActivityRing({
           className="absolute flex flex-col items-center justify-center"
           style={{ width: size, height: size }}
         >
-          {label && (
-            <span className="text-lg font-bold leading-tight">{label}</span>
-          )}
-          {sublabel && (
-            <span className="text-xs text-muted-foreground">{sublabel}</span>
-          )}
+          {label && <span className="text-lg leading-tight font-bold">{label}</span>}
+          {sublabel && <span className="text-muted-foreground text-xs">{sublabel}</span>}
         </div>
       )}
     </div>

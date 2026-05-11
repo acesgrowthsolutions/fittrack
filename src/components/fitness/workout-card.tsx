@@ -1,15 +1,6 @@
 "use client";
 
-import {
-  Bike,
-  Dumbbell,
-  Flame,
-  Footprints,
-  Heart,
-  Waves,
-  Zap,
-  Activity,
-} from "lucide-react";
+import { Bike, Dumbbell, Flame, Footprints, Heart, Waves, Zap, Activity } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import type { LucideIcon } from "lucide-react";
@@ -63,7 +54,7 @@ export function WorkoutCard({ workout, onClick }: WorkoutCardProps) {
 
   return (
     <Card
-      className={onClick ? "cursor-pointer hover:shadow-md transition-shadow" : ""}
+      className={onClick ? "cursor-pointer transition-shadow hover:shadow-md" : ""}
       onClick={onClick}
     >
       <CardContent className="p-4">
@@ -72,21 +63,19 @@ export function WorkoutCard({ workout, onClick }: WorkoutCardProps) {
             <Icon className="h-5 w-5" />
           </div>
 
-          <div className="flex-1 min-w-0">
+          <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <p className="font-medium truncate">{workout.name}</p>
-              <Badge variant="secondary" className="text-xs shrink-0">
+              <p className="truncate font-medium">{workout.name}</p>
+              <Badge variant="secondary" className="shrink-0 text-xs">
                 {workout.type}
               </Badge>
             </div>
-            <p className="text-sm text-muted-foreground">
-              {formatDate(workout.workoutDate)}
-            </p>
+            <p className="text-muted-foreground text-sm">{formatDate(workout.workoutDate)}</p>
           </div>
 
-          <div className="text-right text-sm shrink-0">
+          <div className="shrink-0 text-right text-sm">
             <p className="font-medium">{workout.durationMinutes} min</p>
-            <div className="flex items-center gap-1 text-muted-foreground">
+            <div className="text-muted-foreground flex items-center gap-1">
               <Flame className="h-3 w-3 text-orange-500" />
               <span>{workout.caloriesBurned} kcal</span>
             </div>

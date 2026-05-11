@@ -19,9 +19,7 @@ export async function GET() {
     const [stats] = await db
       .select()
       .from(dailyStats)
-      .where(
-        and(eq(dailyStats.userId, session.user.id), eq(dailyStats.date, today))
-      )
+      .where(and(eq(dailyStats.userId, session.user.id), eq(dailyStats.date, today)))
       .limit(1);
 
     if (!stats) {
@@ -38,10 +36,7 @@ export async function GET() {
     return Response.json(stats);
   } catch (error) {
     console.error("Error fetching today's stats:", error);
-    return Response.json(
-      { error: "Failed to fetch today's stats" },
-      { status: 500 }
-    );
+    return Response.json({ error: "Failed to fetch today's stats" }, { status: 500 });
   }
 }
 
@@ -92,9 +87,6 @@ export async function POST(req: Request) {
     return Response.json(result);
   } catch (error) {
     console.error("Error saving today's stats:", error);
-    return Response.json(
-      { error: "Failed to save today's stats" },
-      { status: 500 }
-    );
+    return Response.json({ error: "Failed to save today's stats" }, { status: 500 });
   }
 }

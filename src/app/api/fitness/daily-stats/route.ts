@@ -22,20 +22,12 @@ export async function GET(req: Request) {
     const results = await db
       .select()
       .from(dailyStats)
-      .where(
-        and(
-          eq(dailyStats.userId, session.user.id),
-          gte(dailyStats.date, startDateStr)
-        )
-      )
+      .where(and(eq(dailyStats.userId, session.user.id), gte(dailyStats.date, startDateStr)))
       .orderBy(desc(dailyStats.date));
 
     return Response.json(results);
   } catch (error) {
     console.error("Error fetching daily stats:", error);
-    return Response.json(
-      { error: "Failed to fetch daily stats" },
-      { status: 500 }
-    );
+    return Response.json({ error: "Failed to fetch daily stats" }, { status: 500 });
   }
 }

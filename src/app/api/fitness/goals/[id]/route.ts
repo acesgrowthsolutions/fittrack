@@ -44,10 +44,7 @@ export async function PUT(req: Request, { params }: Params) {
     return Response.json(updated);
   } catch (error) {
     console.error("Error updating goal:", error);
-    return Response.json(
-      { error: "Failed to update goal" },
-      { status: 500 }
-    );
+    return Response.json({ error: "Failed to update goal" }, { status: 500 });
   }
 }
 
@@ -76,9 +73,6 @@ export async function DELETE(_req: Request, { params }: Params) {
     return Response.json({ success: true });
   } catch (error) {
     console.error("Error deleting goal:", error);
-    return Response.json(
-      { error: "Failed to delete goal" },
-      { status: 500 }
-    );
+    return Response.json({ error: "Failed to delete goal" }, { status: 500 });
   }
 }

@@ -135,7 +135,7 @@ export default function Chat() {
   const [input, setInput] = useState("");
   const { messages, sendMessage } = useChat();
   return (
-    <div className="flex flex-col w-full max-w-md py-24 mx-auto stretch">
+    <div className="stretch mx-auto flex w-full max-w-md flex-col py-24">
       {messages.map((message) => (
         <div key={message.id} className="whitespace-pre-wrap">
           {message.role === "user" ? "User: " : "AI: "}
@@ -156,7 +156,7 @@ export default function Chat() {
         }}
       >
         <input
-          className="fixed dark:bg-zinc-900 bottom-0 w-full max-w-md p-2 mb-8 border border-zinc-300 dark:border-zinc-800 rounded shadow-xl"
+          className="fixed bottom-0 mb-8 w-full max-w-md rounded border border-zinc-300 p-2 shadow-xl dark:border-zinc-800 dark:bg-zinc-900"
           value={input}
           placeholder="Say something..."
           onChange={(e) => setInput(e.currentTarget.value)}
@@ -245,7 +245,6 @@ In this updated code:
 
 1. You import the `tool` function from the `ai` package and `z` from `zod` for schema validation.
 2. You define a `tools` object with a `weather` tool. This tool:
-
    - Has a description that helps the model understand when to use it.
    - Defines `inputSchema` using a Zod schema, specifying that it requires a `location` string to execute this tool. The model will attempt to extract this input from the context of the conversation. If it can't, it will ask the user for the missing information.
    - Defines an `execute` function that simulates getting weather data (in this case, it returns a random temperature). This is an asynchronous function running on the server so you can fetch real data from an external API.
@@ -276,7 +275,7 @@ export default function Chat() {
   const [input, setInput] = useState("");
   const { messages, sendMessage } = useChat();
   return (
-    <div className="flex flex-col w-full max-w-md py-24 mx-auto stretch">
+    <div className="stretch mx-auto flex w-full max-w-md flex-col py-24">
       {messages.map((message) => (
         <div key={message.id} className="whitespace-pre-wrap">
           {message.role === "user" ? "User: " : "AI: "}
@@ -285,11 +284,7 @@ export default function Chat() {
               case "text":
                 return <div key={`${message.id}-${i}`}>{part.text}</div>;
               case "tool-weather":
-                return (
-                  <pre key={`${message.id}-${i}`}>
-                    {JSON.stringify(part, null, 2)}
-                  </pre>
-                );
+                return <pre key={`${message.id}-${i}`}>{JSON.stringify(part, null, 2)}</pre>;
             }
           })}
         </div>
@@ -303,7 +298,7 @@ export default function Chat() {
         }}
       >
         <input
-          className="fixed dark:bg-zinc-900 bottom-0 w-full max-w-md p-2 mb-8 border border-zinc-300 dark:border-zinc-800 rounded shadow-xl"
+          className="fixed bottom-0 mb-8 w-full max-w-md rounded border border-zinc-300 p-2 shadow-xl dark:border-zinc-800 dark:bg-zinc-900"
           value={input}
           placeholder="Say something..."
           onChange={(e) => setInput(e.currentTarget.value)}
@@ -330,13 +325,7 @@ Modify your `app/api/chat/route.ts` file to include the `stopWhen` condition:
 
 ```tsx filename="app/api/chat/route.ts"
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-import {
-  streamText,
-  UIMessage,
-  convertToModelMessages,
-  tool,
-  stepCountIs,
-} from "ai";
+import { streamText, UIMessage, convertToModelMessages, tool, stepCountIs } from "ai";
 import { z } from "zod";
 
 export const maxDuration = 30;
@@ -388,13 +377,7 @@ Update your `app/api/chat/route.ts` file to add a new tool to convert the temper
 
 ```tsx filename="app/api/chat/route.ts" highlight="34-47"
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
-import {
-  streamText,
-  UIMessage,
-  convertToModelMessages,
-  tool,
-  stepCountIs,
-} from "ai";
+import { streamText, UIMessage, convertToModelMessages, tool, stepCountIs } from "ai";
 import { z } from "zod";
 
 export const maxDuration = 30;
@@ -427,9 +410,7 @@ export async function POST(req: Request) {
       convertFahrenheitToCelsius: tool({
         description: "Convert a temperature in fahrenheit to celsius",
         inputSchema: z.object({
-          temperature: z
-            .number()
-            .describe("The temperature in fahrenheit to convert"),
+          temperature: z.number().describe("The temperature in fahrenheit to convert"),
         }),
         execute: async ({ temperature }) => {
           const celsius = Math.round((temperature - 32) * (5 / 9));
@@ -459,7 +440,7 @@ export default function Chat() {
   const [input, setInput] = useState("");
   const { messages, sendMessage } = useChat();
   return (
-    <div className="flex flex-col w-full max-w-md py-24 mx-auto stretch">
+    <div className="stretch mx-auto flex w-full max-w-md flex-col py-24">
       {messages.map((message) => (
         <div key={message.id} className="whitespace-pre-wrap">
           {message.role === "user" ? "User: " : "AI: "}
@@ -469,11 +450,7 @@ export default function Chat() {
                 return <div key={`${message.id}-${i}`}>{part.text}</div>;
               case "tool-weather":
               case "tool-convertFahrenheitToCelsius":
-                return (
-                  <pre key={`${message.id}-${i}`}>
-                    {JSON.stringify(part, null, 2)}
-                  </pre>
-                );
+                return <pre key={`${message.id}-${i}`}>{JSON.stringify(part, null, 2)}</pre>;
             }
           })}
         </div>
@@ -487,7 +464,7 @@ export default function Chat() {
         }}
       >
         <input
-          className="fixed dark:bg-zinc-900 bottom-0 w-full max-w-md p-2 mb-8 border border-zinc-300 dark:border-zinc-800 rounded shadow-xl"
+          className="fixed bottom-0 mb-8 w-full max-w-md rounded border border-zinc-300 p-2 shadow-xl dark:border-zinc-800 dark:bg-zinc-900"
           value={input}
           placeholder="Say something..."
           onChange={(e) => setInput(e.currentTarget.value)}

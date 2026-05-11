@@ -1,13 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  Apple,
-  Camera,
-  Loader2,
-  Upload,
-  Utensils,
-} from "lucide-react";
+import { Apple, Camera, Loader2, Upload, Utensils } from "lucide-react";
 import { toast } from "sonner";
 import { UserProfile } from "@/components/auth/user-profile";
 import { MealCard, type Meal } from "@/components/fitness/meal-card";
@@ -75,9 +69,7 @@ export default function MealsPage() {
 
   // Upload state
   const [analyzing, setAnalyzing] = useState(false);
-  const [mealType, setMealType] = useState<(typeof MEAL_TYPES)[number]["value"]>(
-    "lunch"
-  );
+  const [mealType, setMealType] = useState<(typeof MEAL_TYPES)[number]["value"]>("lunch");
   const [note, setNote] = useState("");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
@@ -100,29 +92,24 @@ export default function MealsPage() {
     }
   }, []);
 
-  const fetchAllMeals = useCallback(
-    async (offset = 0, append = false) => {
-      try {
-        if (offset === 0) setAllLoading(true);
-        else setAllLoadingMore(true);
-        const res = await fetch(
-          `/api/meals?limit=${ALL_PAGE_SIZE}&offset=${offset}`
-        );
-        if (!res.ok) throw new Error("Failed to fetch meals");
-        const data: Meal[] = await res.json();
-        setAllMeals((prev) => (append ? [...prev, ...data] : data));
-        setAllHasMore(data.length === ALL_PAGE_SIZE);
-        setAllOffset(offset + data.length);
-        setAllLoaded(true);
-      } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Failed to load meals");
-      } finally {
-        setAllLoading(false);
-        setAllLoadingMore(false);
-      }
-    },
-    []
-  );
+  const fetchAllMeals = useCallback(async (offset = 0, append = false) => {
+    try {
+      if (offset === 0) setAllLoading(true);
+      else setAllLoadingMore(true);
+      const res = await fetch(`/api/meals?limit=${ALL_PAGE_SIZE}&offset=${offset}`);
+      if (!res.ok) throw new Error("Failed to fetch meals");
+      const data: Meal[] = await res.json();
+      setAllMeals((prev) => (append ? [...prev, ...data] : data));
+      setAllHasMore(data.length === ALL_PAGE_SIZE);
+      setAllOffset(offset + data.length);
+      setAllLoaded(true);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to load meals");
+    } finally {
+      setAllLoading(false);
+      setAllLoadingMore(false);
+    }
+  }, []);
 
   const fetchProfile = useCallback(async () => {
     try {
@@ -203,9 +190,7 @@ export default function MealsPage() {
       const data = await res.json();
       if (!res.ok) {
         const msg = data.error || "Analysis failed";
-        const detail = data.detail
-          ? ` — ${String(data.detail).slice(0, 200)}`
-          : "";
+        const detail = data.detail ? ` — ${String(data.detail).slice(0, 200)}` : "";
         throw new Error(msg + detail);
       }
       toast.success(`Logged ${data.totalCalories} kcal`);
@@ -255,8 +240,8 @@ export default function MealsPage() {
   if (isPending) {
     return (
       <div className="container mx-auto p-6">
-        <Skeleton className="h-8 w-48 mb-6" />
-        <Skeleton className="h-64 mb-6" />
+        <Skeleton className="mb-6 h-8 w-48" />
+        <Skeleton className="mb-6 h-64" />
         <div className="space-y-3">
           {Array.from({ length: 3 }).map((_, i) => (
             <Skeleton key={i} className="h-24" />
@@ -282,20 +267,18 @@ export default function MealsPage() {
       : null;
 
   return (
-    <div className="container mx-auto p-6 space-y-6 max-w-5xl">
+    <div className="container mx-auto max-w-5xl space-y-6 p-6">
       {/* Header */}
-      <div className="flex items-start justify-between flex-wrap gap-4">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Utensils className="h-6 w-6 text-primary" />
+          <h1 className="flex items-center gap-2 text-2xl font-bold">
+            <Utensils className="text-primary h-6 w-6" />
             Meals
           </h1>
-          <p className="text-muted-foreground">
-            Snap a photo and let AI estimate the calories
-          </p>
+          <p className="text-muted-foreground">Snap a photo and let AI estimate the calories</p>
         </div>
         <div className="flex items-center gap-2">
-          <Label htmlFor="meal-date" className="text-sm text-muted-foreground">
+          <Label htmlFor="meal-date" className="text-muted-foreground text-sm">
             Date
           </Label>
           <Input
@@ -316,7 +299,7 @@ export default function MealsPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           {!pendingFile ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <Button
                 variant="outline"
                 className="h-32 flex-col gap-2"
@@ -352,22 +335,19 @@ export default function MealsPage() {
           ) : (
             <div className="space-y-4">
               {previewUrl && (
-                <div className="relative w-full h-64 sm:h-80 rounded-md overflow-hidden bg-muted">
+                <div className="bg-muted relative h-64 w-full overflow-hidden rounded-md sm:h-80">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={previewUrl}
                     alt="Meal preview"
-                    className="w-full h-full object-contain"
+                    className="h-full w-full object-contain"
                   />
                 </div>
               )}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <Label>Meal type</Label>
-                  <Select
-                    value={mealType}
-                    onValueChange={(v) => setMealType(v as typeof mealType)}
-                  >
+                  <Select value={mealType} onValueChange={(v) => setMealType(v as typeof mealType)}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -402,11 +382,7 @@ export default function MealsPage() {
                 />
               </div>
               <div className="flex gap-2">
-                <Button
-                  onClick={analyze}
-                  disabled={analyzing}
-                  className="flex-1"
-                >
+                <Button onClick={analyze} disabled={analyzing} className="flex-1">
                   {analyzing ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -419,11 +395,7 @@ export default function MealsPage() {
                     </>
                   )}
                 </Button>
-                <Button
-                  variant="outline"
-                  onClick={clearPending}
-                  disabled={analyzing}
-                >
+                <Button variant="outline" onClick={clearPending} disabled={analyzing}>
                   Cancel
                 </Button>
               </div>
@@ -433,10 +405,7 @@ export default function MealsPage() {
       </Card>
 
       {/* Tabs: Day vs All history */}
-      <Tabs
-        value={activeTab}
-        onValueChange={(v) => setActiveTab(v as "day" | "all")}
-      >
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "day" | "all")}>
         <TabsList>
           <TabsTrigger value="day">Day</TabsTrigger>
           <TabsTrigger value="all">All meals</TabsTrigger>
@@ -453,12 +422,12 @@ export default function MealsPage() {
             <CardContent className="space-y-2">
               <div className="flex items-baseline justify-between">
                 <span className="text-3xl font-bold">{dayCalories}</span>
-                <span className="text-sm text-muted-foreground">
+                <span className="text-muted-foreground text-sm">
                   {calorieGoal ? `of ${calorieGoal} kcal goal` : "kcal consumed"}
                 </span>
               </div>
               {goalPct !== null && <Progress value={goalPct} />}
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs">
                 {dayMeals.length} meal{dayMeals.length === 1 ? "" : "s"} logged
               </p>
             </CardContent>
@@ -474,14 +443,12 @@ export default function MealsPage() {
               </div>
             ) : dayMeals.length === 0 ? (
               <Card>
-                <CardContent className="py-12 text-center text-muted-foreground">
+                <CardContent className="text-muted-foreground py-12 text-center">
                   No meals logged for this day yet.
                 </CardContent>
               </Card>
             ) : (
-              dayMeals.map((meal) => (
-                <MealCard key={meal.id} meal={meal} onDelete={deleteMeal} />
-              ))
+              dayMeals.map((meal) => <MealCard key={meal.id} meal={meal} onDelete={deleteMeal} />)
             )}
           </div>
         </TabsContent>
@@ -490,16 +457,16 @@ export default function MealsPage() {
           {/* All-history summary */}
           {allLoaded && allMeals.length > 0 && (
             <Card>
-              <CardContent className="py-4 flex items-baseline justify-between">
+              <CardContent className="flex items-baseline justify-between py-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-muted-foreground text-sm">
                     {allMeals.length} meal{allMeals.length === 1 ? "" : "s"}
                     {allHasMore ? "+ shown" : " total"}
                   </p>
                 </div>
                 <div className="text-right">
                   <span className="text-2xl font-bold">{totalAllCalories}</span>{" "}
-                  <span className="text-sm text-muted-foreground">kcal</span>
+                  <span className="text-muted-foreground text-sm">kcal</span>
                 </div>
               </CardContent>
             </Card>
@@ -514,35 +481,27 @@ export default function MealsPage() {
             </div>
           ) : allMeals.length === 0 ? (
             <Card>
-              <CardContent className="py-12 text-center text-muted-foreground">
+              <CardContent className="text-muted-foreground py-12 text-center">
                 You haven&apos;t logged any meals yet.
               </CardContent>
             </Card>
           ) : (
             <div className="space-y-6">
               {allMealsByDate.map(([date, items]) => {
-                const dayKcal = items.reduce(
-                  (s, m) => s + m.totalCalories,
-                  0
-                );
+                const dayKcal = items.reduce((s, m) => s + m.totalCalories, 0);
                 return (
                   <section key={date} className="space-y-2">
                     <div className="flex items-baseline justify-between">
-                      <h3 className="text-sm font-semibold text-muted-foreground">
+                      <h3 className="text-muted-foreground text-sm font-semibold">
                         {formatDateLabel(date)}
                       </h3>
-                      <span className="text-xs text-muted-foreground">
-                        {items.length} meal{items.length === 1 ? "" : "s"} ·{" "}
-                        {dayKcal} kcal
+                      <span className="text-muted-foreground text-xs">
+                        {items.length} meal{items.length === 1 ? "" : "s"} · {dayKcal} kcal
                       </span>
                     </div>
                     <div className="space-y-3">
                       {items.map((meal) => (
-                        <MealCard
-                          key={meal.id}
-                          meal={meal}
-                          onDelete={deleteMeal}
-                        />
+                        <MealCard key={meal.id} meal={meal} onDelete={deleteMeal} />
                       ))}
                     </div>
                   </section>

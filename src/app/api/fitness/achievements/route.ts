@@ -20,9 +20,6 @@ export async function GET() {
     return Response.json(results);
   } catch (error) {
     console.error("Error fetching achievements:", error);
-    return Response.json(
-      { error: "Failed to fetch achievements" },
-      { status: 500 }
-    );
+    return Response.json({ error: "Failed to fetch achievements" }, { status: 500 });
   }
 }

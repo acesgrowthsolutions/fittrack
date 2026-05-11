@@ -77,9 +77,7 @@ export default function StepsPage() {
         }
       }
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to load step data"
-      );
+      toast.error(error instanceof Error ? error.message : "Failed to load step data");
     } finally {
       setLoading(false);
     }
@@ -92,7 +90,7 @@ export default function StepsPage() {
   if (isPending) {
     return (
       <div className="container mx-auto p-6">
-        <Skeleton className="h-8 w-48 mb-6" />
+        <Skeleton className="mb-6 h-8 w-48" />
         <Skeleton className="h-48" />
       </div>
     );
@@ -101,9 +99,7 @@ export default function StepsPage() {
   if (!session) {
     return (
       <div className="container mx-auto px-4 py-12 text-center">
-        <p className="text-muted-foreground mb-4">
-          Sign in to track your steps
-        </p>
+        <p className="text-muted-foreground mb-4">Sign in to track your steps</p>
         <UserProfile />
       </div>
     );
@@ -111,7 +107,7 @@ export default function StepsPage() {
 
   if (loading) {
     return (
-      <div className="container mx-auto p-6 space-y-6">
+      <div className="container mx-auto space-y-6 p-6">
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-48" />
         <Skeleton className="h-72" />
@@ -126,14 +122,12 @@ export default function StepsPage() {
   const weeklyData = buildWeeklyData(history);
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="container mx-auto space-y-6 p-6">
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <h1 className="text-2xl font-bold">Step Tracking</h1>
-          <p className="text-muted-foreground">
-            Monitor your daily steps and activity
-          </p>
+          <p className="text-muted-foreground">Monitor your daily steps and activity</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
@@ -172,18 +166,16 @@ export default function StepsPage() {
       <Card>
         <CardContent className="p-6">
           <div className="flex flex-col items-center space-y-4">
-            <div className="bg-blue-500/10 rounded-full p-4">
+            <div className="rounded-full bg-blue-500/10 p-4">
               <Footprints className="h-10 w-10 text-blue-500" />
             </div>
             <div className="text-center">
               <p className="text-4xl font-bold">{steps.toLocaleString()}</p>
-              <p className="text-muted-foreground">
-                of {stepGoal.toLocaleString()} steps today
-              </p>
+              <p className="text-muted-foreground">of {stepGoal.toLocaleString()} steps today</p>
             </div>
             <div className="w-full max-w-md space-y-1">
               <Progress value={progress} className="h-3" />
-              <p className="text-sm text-muted-foreground text-center">
+              <p className="text-muted-foreground text-center text-sm">
                 {Math.round(progress)}% of daily goal
               </p>
             </div>
@@ -193,19 +185,15 @@ export default function StepsPage() {
                   <p className="text-lg font-semibold">
                     {parseFloat(todayStats.distanceKm).toFixed(1)}
                   </p>
-                  <p className="text-xs text-muted-foreground">km</p>
+                  <p className="text-muted-foreground text-xs">km</p>
                 </div>
                 <div>
-                  <p className="text-lg font-semibold">
-                    {todayStats.caloriesBurned}
-                  </p>
-                  <p className="text-xs text-muted-foreground">kcal</p>
+                  <p className="text-lg font-semibold">{todayStats.caloriesBurned}</p>
+                  <p className="text-muted-foreground text-xs">kcal</p>
                 </div>
                 <div>
-                  <p className="text-lg font-semibold">
-                    {todayStats.activeMinutes}
-                  </p>
-                  <p className="text-xs text-muted-foreground">min active</p>
+                  <p className="text-lg font-semibold">{todayStats.activeMinutes}</p>
+                  <p className="text-muted-foreground text-xs">min active</p>
                 </div>
               </div>
             )}
@@ -219,13 +207,11 @@ export default function StepsPage() {
       {/* 30-Day History */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base font-semibold">
-            30-Day History
-          </CardTitle>
+          <CardTitle className="text-base font-semibold">30-Day History</CardTitle>
         </CardHeader>
         <CardContent>
           {history.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-4">
+            <p className="text-muted-foreground py-4 text-center text-sm">
               No step data recorded yet. Start logging your steps!
             </p>
           ) : (
@@ -244,10 +230,10 @@ export default function StepsPage() {
                   {history.map((stat) => (
                     <TableRow key={stat.date}>
                       <TableCell>
-                        {new Date(stat.date + "T12:00:00").toLocaleDateString(
-                          "en-US",
-                          { month: "short", day: "numeric" }
-                        )}
+                        {new Date(stat.date + "T12:00:00").toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                        })}
                       </TableCell>
                       <TableCell className="text-right font-medium">
                         {stat.steps.toLocaleString()}
@@ -255,12 +241,8 @@ export default function StepsPage() {
                       <TableCell className="text-right">
                         {parseFloat(stat.distanceKm).toFixed(1)} km
                       </TableCell>
-                      <TableCell className="text-right">
-                        {stat.caloriesBurned}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {stat.activeMinutes}
-                      </TableCell>
+                      <TableCell className="text-right">{stat.caloriesBurned}</TableCell>
+                      <TableCell className="text-right">{stat.activeMinutes}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -273,9 +255,7 @@ export default function StepsPage() {
   );
 }
 
-function buildWeeklyData(
-  history: DailyStat[]
-): Array<{ date: string; steps: number }> {
+function buildWeeklyData(history: DailyStat[]): Array<{ date: string; steps: number }> {
   const map = new Map(history.map((h) => [h.date, h.steps]));
   const result: Array<{ date: string; steps: number }> = [];
 

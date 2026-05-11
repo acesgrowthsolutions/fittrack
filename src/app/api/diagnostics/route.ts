@@ -201,21 +201,18 @@ export async function GET(req: Request) {
     else if (!schemaApplied) fingerprint.push("schema-missing");
     if (!authConfigured) fingerprint.push("auth-misconfigured");
 
-    Sentry.captureMessage(
-      `Diagnostics failed: ${fingerprint.slice(1).join(",") || "unknown"}`,
-      {
-        level: "error",
-        fingerprint,
-        tags: { route: "api/diagnostics" },
-        extra: {
-          dbConnected,
-          schemaApplied,
-          dbError,
-          authConfigured,
-          authRouteResponding,
-        },
-      }
-    );
+    Sentry.captureMessage(`Diagnostics failed: ${fingerprint.slice(1).join(",") || "unknown"}`, {
+      level: "error",
+      fingerprint,
+      tags: { route: "api/diagnostics" },
+      extra: {
+        dbConnected,
+        schemaApplied,
+        dbError,
+        authConfigured,
+        authRouteResponding,
+      },
+    });
   }
 
   return NextResponse.json(body, {

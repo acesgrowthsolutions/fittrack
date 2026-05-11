@@ -29,19 +29,13 @@ export function CalorieChart({ data }: CalorieChartProps) {
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-base font-semibold">
-          Calories Burned (7 Days)
-        </CardTitle>
+        <CardTitle className="text-base font-semibold">Calories Burned (7 Days)</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="h-[250px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData}>
-              <CartesianGrid
-                strokeDasharray="3 3"
-                className="stroke-border"
-                vertical={false}
-              />
+              <CartesianGrid strokeDasharray="3 3" className="stroke-border" vertical={false} />
               <XAxis
                 dataKey="day"
                 className="text-xs"

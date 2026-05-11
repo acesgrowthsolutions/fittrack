@@ -79,36 +79,26 @@ export function SetupChecklist() {
     {
       key: "env",
       label: "Environment variables",
-      ok:
-        !!data?.env.POSTGRES_URL &&
-        !!data?.env.BETTER_AUTH_SECRET,
-      detail:
-        "Requires POSTGRES_URL, BETTER_AUTH_SECRET",
+      ok: !!data?.env.POSTGRES_URL && !!data?.env.BETTER_AUTH_SECRET,
+      detail: "Requires POSTGRES_URL, BETTER_AUTH_SECRET",
     },
     {
       key: "db",
       label: "Database connected & schema",
       ok: !!data?.database.connected && !!data?.database.schemaApplied,
-      detail: data?.database.error
-        ? `Error: ${data.database.error}`
-        : undefined,
+      detail: data?.database.error ? `Error: ${data.database.error}` : undefined,
     },
     {
       key: "auth",
       label: "Auth configured",
       ok: !!data?.auth.configured,
-      detail:
-        data?.auth.routeResponding === false
-          ? "Auth route not responding"
-          : undefined,
+      detail: data?.auth.routeResponding === false ? "Auth route not responding" : undefined,
     },
     {
       key: "ai",
       label: "AI integration (optional)",
       ok: !!data?.ai.configured,
-      detail: !data?.ai.configured
-        ? "Set OPENROUTER_API_KEY for AI chat"
-        : undefined,
+      detail: !data?.ai.configured ? "Set OPENROUTER_API_KEY for AI chat" : undefined,
     },
     {
       key: "email",
@@ -133,11 +123,11 @@ export function SetupChecklist() {
   const completed = steps.filter((s) => s.ok).length;
 
   return (
-    <div className="p-6 border rounded-lg text-left">
-      <div className="flex items-center justify-between mb-4">
+    <div className="rounded-lg border p-6 text-left">
+      <div className="mb-4 flex items-center justify-between">
         <div>
           <h3 className="font-semibold">Setup checklist</h3>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             {completed}/{steps.length} completed
           </p>
         </div>
@@ -146,7 +136,7 @@ export function SetupChecklist() {
         </Button>
       </div>
 
-      {error ? <div className="text-sm text-destructive">{error}</div> : null}
+      {error ? <div className="text-destructive text-sm">{error}</div> : null}
 
       <ul className="space-y-2">
         {steps.map((s) => (
@@ -156,16 +146,14 @@ export function SetupChecklist() {
             </div>
             <div>
               <div className="font-medium">{s.label}</div>
-              {s.detail ? (
-                <div className="text-sm text-muted-foreground">{s.detail}</div>
-              ) : null}
+              {s.detail ? <div className="text-muted-foreground text-sm">{s.detail}</div> : null}
             </div>
           </li>
         ))}
       </ul>
 
       {data ? (
-        <div className="mt-4 text-xs text-muted-foreground">
+        <div className="text-muted-foreground mt-4 text-xs">
           Last checked: {new Date(data.timestamp).toLocaleString()}
         </div>
       ) : null}

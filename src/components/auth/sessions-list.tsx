@@ -1,32 +1,27 @@
-"use client"
+"use client";
 
-import { useCallback, useEffect, useState } from "react"
-import { Loader2, LogOut, Monitor, Smartphone } from "lucide-react"
-import { toast } from "sonner"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import {
-  listSessions,
-  revokeOtherSessions,
-  revokeSession,
-  useSession,
-} from "@/lib/auth-client"
+import { useCallback, useEffect, useState } from "react";
+import { Loader2, LogOut, Monitor, Smartphone } from "lucide-react";
+import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { listSessions, revokeOtherSessions, revokeSession, useSession } from "@/lib/auth-client";
 
 type SessionRow = {
-  id: string
-  token: string
-  createdAt: string | Date
-  expiresAt: string | Date
-  ipAddress?: string | null
-  userAgent?: string | null
-}
+  id: string;
+  token: string;
+  createdAt: string | Date;
+  expiresAt: string | Date;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+};
 
 function describeUserAgent(ua: string | null | undefined): {
-  label: string
-  isMobile: boolean
+  label: string;
+  isMobile: boolean;
 } {
-  if (!ua) return { label: "Unknown device", isMobile: false }
-  const isMobile = /Mobile|Android|iPhone|iPad/i.test(ua)
+  if (!ua) return { label: "Unknown device", isMobile: false };
+  const isMobile = /Mobile|Android|iPhone|iPad/i.test(ua);
   const browser = /Edg\//.test(ua)
     ? "Edge"
     : /Chrome\//.test(ua)
@@ -35,7 +30,7 @@ function describeUserAgent(ua: string | null | undefined): {
         ? "Firefox"
         : /Safari\//.test(ua)
           ? "Safari"
-          : "Browser"
+          : "Browser";
   const os = /Windows NT/.test(ua)
     ? "Windows"
     : /Mac OS X|Macintosh/.test(ua)
@@ -46,126 +41,115 @@ function describeUserAgent(ua: string | null | undefined): {
           ? "iOS"
           : /Linux/.test(ua)
             ? "Linux"
-            : "Unknown OS"
-  return { label: `${browser} on ${os}`, isMobile }
+            : "Unknown OS";
+  return { label: `${browser} on ${os}`, isMobile };
 }
 
 function timeAgo(value: string | Date): string {
-  const d = typeof value === "string" ? new Date(value) : value
-  const diffSec = Math.floor((Date.now() - d.getTime()) / 1000)
-  if (diffSec < 60) return "just now"
-  if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m ago`
-  if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h ago`
-  return `${Math.floor(diffSec / 86400)}d ago`
+  const d = typeof value === "string" ? new Date(value) : value;
+  const diffSec = Math.floor((Date.now() - d.getTime()) / 1000);
+  if (diffSec < 60) return "just now";
+  if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m ago`;
+  if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h ago`;
+  return `${Math.floor(diffSec / 86400)}d ago`;
 }
 
 export function SessionsList() {
-  const { data: session } = useSession()
-  const currentToken = session?.session.token
-  const [sessions, setSessions] = useState<SessionRow[] | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const [revokingToken, setRevokingToken] = useState<string | null>(null)
-  const [revokingOthers, setRevokingOthers] = useState(false)
+  const { data: session } = useSession();
+  const currentToken = session?.session.token;
+  const [sessions, setSessions] = useState<SessionRow[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [revokingToken, setRevokingToken] = useState<string | null>(null);
+  const [revokingOthers, setRevokingOthers] = useState(false);
 
   const load = useCallback(async () => {
-    setError(null)
-    const result = await listSessions()
+    setError(null);
+    const result = await listSessions();
     if (result.error) {
-      setError(result.error.message || "Failed to load sessions")
-      return
+      setError(result.error.message || "Failed to load sessions");
+      return;
     }
-    setSessions(result.data as unknown as SessionRow[])
-  }, [])
+    setSessions(result.data as unknown as SessionRow[]);
+  }, []);
 
   useEffect(() => {
-    load()
-  }, [load])
+    load();
+  }, [load]);
 
   const handleRevoke = async (token: string) => {
-    setRevokingToken(token)
+    setRevokingToken(token);
     try {
-      const result = await revokeSession({ token })
+      const result = await revokeSession({ token });
       if (result.error) {
-        toast.error(result.error.message || "Failed to revoke session")
-        return
+        toast.error(result.error.message || "Failed to revoke session");
+        return;
       }
-      toast.success("Session revoked")
-      await load()
+      toast.success("Session revoked");
+      await load();
     } finally {
-      setRevokingToken(null)
+      setRevokingToken(null);
     }
-  }
+  };
 
   const handleRevokeOthers = async () => {
-    setRevokingOthers(true)
+    setRevokingOthers(true);
     try {
-      const result = await revokeOtherSessions()
+      const result = await revokeOtherSessions();
       if (result.error) {
-        toast.error(result.error.message || "Failed to sign out other devices")
-        return
+        toast.error(result.error.message || "Failed to sign out other devices");
+        return;
       }
-      toast.success("Signed out all other devices")
-      await load()
+      toast.success("Signed out all other devices");
+      await load();
     } finally {
-      setRevokingOthers(false)
+      setRevokingOthers(false);
     }
-  }
+  };
 
   if (sessions === null && !error) {
     return (
-      <div className="flex items-center gap-2 text-sm text-muted-foreground p-4">
+      <div className="text-muted-foreground flex items-center gap-2 p-4 text-sm">
         <Loader2 className="h-4 w-4 animate-spin" />
         Loading sessions...
       </div>
-    )
+    );
   }
 
   if (error) {
-    return (
-      <div className="text-sm text-destructive p-4 border rounded-lg">
-        {error}
-      </div>
-    )
+    return <div className="text-destructive rounded-lg border p-4 text-sm">{error}</div>;
   }
 
   if (!sessions || sessions.length === 0) {
     return (
-      <div className="text-sm text-muted-foreground p-4 border rounded-lg">
+      <div className="text-muted-foreground rounded-lg border p-4 text-sm">
         No active sessions found.
       </div>
-    )
+    );
   }
 
-  const others = sessions.filter((s) => s.token !== currentToken)
+  const others = sessions.filter((s) => s.token !== currentToken);
 
   return (
     <div className="space-y-3">
       {sessions.map((s) => {
-        const { label, isMobile } = describeUserAgent(s.userAgent)
-        const isCurrent = s.token === currentToken
-        const Icon = isMobile ? Smartphone : Monitor
+        const { label, isMobile } = describeUserAgent(s.userAgent);
+        const isCurrent = s.token === currentToken;
+        const Icon = isMobile ? Smartphone : Monitor;
         return (
-          <div
-            key={s.id}
-            className="flex items-center justify-between gap-3 p-3 border rounded-lg"
-          >
-            <div className="flex items-center gap-3 min-w-0">
-              <Icon className="h-5 w-5 text-muted-foreground shrink-0" />
+          <div key={s.id} className="flex items-center justify-between gap-3 rounded-lg border p-3">
+            <div className="flex min-w-0 items-center gap-3">
+              <Icon className="text-muted-foreground h-5 w-5 shrink-0" />
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <p className="font-medium truncate">{label}</p>
+                  <p className="truncate font-medium">{label}</p>
                   {isCurrent && (
-                    <Badge
-                      variant="outline"
-                      className="text-green-600 border-green-600"
-                    >
+                    <Badge variant="outline" className="border-green-600 text-green-600">
                       This device
                     </Badge>
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground truncate">
-                  {s.ipAddress ? `${s.ipAddress} · ` : ""}signed in{" "}
-                  {timeAgo(s.createdAt)}
+                <p className="text-muted-foreground truncate text-xs">
+                  {s.ipAddress ? `${s.ipAddress} · ` : ""}signed in {timeAgo(s.createdAt)}
                 </p>
               </div>
             </div>
@@ -180,7 +164,7 @@ export function SessionsList() {
               </Button>
             )}
           </div>
-        )
+        );
       })}
       {others.length > 0 && (
         <div className="pt-2">
@@ -191,7 +175,7 @@ export function SessionsList() {
             disabled={revokingOthers}
             className="w-full"
           >
-            <LogOut className="h-4 w-4 mr-2" />
+            <LogOut className="mr-2 h-4 w-4" />
             {revokingOthers
               ? "Signing out others..."
               : `Sign out ${others.length} other device${others.length > 1 ? "s" : ""}`}
@@ -199,5 +183,5 @@ export function SessionsList() {
         </div>
       )}
     </div>
-  )
+  );
 }

@@ -46,11 +46,7 @@ function mkStat(overrides: Partial<DailyStat> = {}): DailyStat {
 describe("BUG C1: qualifies() lacks exhaustive default", () => {
   it("returns undefined when passed an unknown BadgeType (silent failure)", () => {
     // Simulate a newly-added badge type that forgot a case in the switch
-    const result = qualifies(
-      "brand_new_badge" as never,
-      [mkWorkout()],
-      [mkStat()]
-    );
+    const result = qualifies("brand_new_badge" as never, [mkWorkout()], [mkStat()]);
     // BUG: returns undefined instead of false, and TS type says `boolean`
     expect(result).toBe(undefined);
   });
@@ -67,9 +63,7 @@ describe("BUG H5: iron_week uses 6-day window (WEEK = 6 * DAY)", () => {
   it("7 workouts spanning 8 calendar days (day 0..7) does NOT qualify — window is 6d", () => {
     // 7 workouts on days 10, 11, 12, 13, 14, 15, 17 — gap of 7 days between first & last
     const dates = ["10", "11", "12", "13", "14", "15", "17"];
-    const w = dates.map((d) =>
-      mkWorkout({ workoutDate: `2026-04-${d.padStart(2, "0")}` })
-    );
+    const w = dates.map((d) => mkWorkout({ workoutDate: `2026-04-${d.padStart(2, "0")}` }));
     // With a 6*DAY window, the span 10→17 is 7 days, exceeds, so fails
     expect(qualifies("iron_week", w, [])).toBe(false);
   });
@@ -123,16 +117,12 @@ describe("week_warrior correctness", () => {
         steps: 1000,
       })
     );
-    expect(qualifies("week_warrior", s.map(() => mkWorkout()) as never, s)).toBe(
-      true
-    );
+    expect(qualifies("week_warrior", s.map(() => mkWorkout()) as never, s)).toBe(true);
   });
 
   it("breaks streak on a missed day", () => {
     const dates = ["10", "11", "12", "14", "15", "16", "17"];
-    const s = dates.map((d) =>
-      mkStat({ date: `2026-04-${d.padStart(2, "0")}`, steps: 1000 })
-    );
+    const s = dates.map((d) => mkStat({ date: `2026-04-${d.padStart(2, "0")}`, steps: 1000 }));
     expect(qualifies("week_warrior", [], s)).toBe(false);
   });
 });

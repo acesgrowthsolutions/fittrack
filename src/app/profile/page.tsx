@@ -9,13 +9,7 @@ import { SessionsList } from "@/components/auth/sessions-list";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -46,7 +40,7 @@ export default function ProfilePage() {
 
   if (isPending || !session) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex min-h-screen items-center justify-center">
         <div>Loading...</div>
       </div>
     );
@@ -61,9 +55,7 @@ export default function ProfilePage() {
       })
     : null;
 
-  const handleEditProfileSubmit = async (
-    e: React.FormEvent<HTMLFormElement>,
-  ) => {
+  const handleEditProfileSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = e.currentTarget;
     const nameInput = form.elements.namedItem("name") as HTMLInputElement | null;
@@ -116,8 +108,8 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="container max-w-4xl mx-auto py-8 px-4">
-      <div className="flex items-center gap-4 mb-8">
+    <div className="container mx-auto max-w-4xl px-4 py-8">
+      <div className="mb-8 flex items-center gap-4">
         <Button
           variant="ghost"
           size="sm"
@@ -147,21 +139,18 @@ export default function ProfilePage() {
               </Avatar>
               <div className="space-y-2">
                 <h2 className="text-2xl font-semibold">{user.name}</h2>
-                <div className="flex items-center gap-2 text-muted-foreground">
+                <div className="text-muted-foreground flex items-center gap-2">
                   <Mail className="h-4 w-4" />
                   <span>{user.email}</span>
                   {user.emailVerified && (
-                    <Badge
-                      variant="outline"
-                      className="text-green-600 border-green-600"
-                    >
-                      <Shield className="h-3 w-3 mr-1" />
+                    <Badge variant="outline" className="border-green-600 text-green-600">
+                      <Shield className="mr-1 h-3 w-3" />
                       Verified
                     </Badge>
                   )}
                 </div>
                 {createdDate && (
-                  <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                  <div className="text-muted-foreground flex items-center gap-2 text-sm">
                     <Calendar className="h-4 w-4" />
                     <span>Member since {createdDate}</span>
                   </div>
@@ -178,26 +167,19 @@ export default function ProfilePage() {
             <CardDescription>Your account details and settings</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">
-                  Full Name
-                </label>
-                <div className="p-3 border rounded-md bg-muted/10">
+                <label className="text-muted-foreground text-sm font-medium">Full Name</label>
+                <div className="bg-muted/10 rounded-md border p-3">
                   {user.name || "Not provided"}
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">
-                  Email Address
-                </label>
-                <div className="p-3 border rounded-md bg-muted/10 flex items-center justify-between">
+                <label className="text-muted-foreground text-sm font-medium">Email Address</label>
+                <div className="bg-muted/10 flex items-center justify-between rounded-md border p-3">
                   <span>{user.email}</span>
                   {user.emailVerified && (
-                    <Badge
-                      variant="outline"
-                      className="text-green-600 border-green-600"
-                    >
+                    <Badge variant="outline" className="border-green-600 text-green-600">
                       Verified
                     </Badge>
                   )}
@@ -209,11 +191,11 @@ export default function ProfilePage() {
 
             <div className="space-y-4">
               <h3 className="text-lg font-medium">Account Status</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex items-center justify-between p-4 border rounded-lg">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="flex items-center justify-between rounded-lg border p-4">
                   <div className="space-y-1">
                     <p className="font-medium">Email Verification</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-muted-foreground text-sm">
                       Email address verification status
                     </p>
                   </div>
@@ -233,12 +215,10 @@ export default function ProfilePage() {
                     )}
                   </div>
                 </div>
-                <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex items-center justify-between rounded-lg border p-4">
                   <div className="space-y-1">
                     <p className="font-medium">Account Type</p>
-                    <p className="text-sm text-muted-foreground">
-                      Your account access level
-                    </p>
+                    <p className="text-muted-foreground text-sm">Your account access level</p>
                   </div>
                   <Badge variant="outline">Standard</Badge>
                 </div>
@@ -251,24 +231,19 @@ export default function ProfilePage() {
         <Card>
           <CardHeader>
             <CardTitle>Recent Activity</CardTitle>
-            <CardDescription>
-              Your recent account activity and sessions
-            </CardDescription>
+            <CardDescription>Your recent account activity and sessions</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 border rounded-lg">
+              <div className="flex items-center justify-between rounded-lg border p-4">
                 <div className="flex items-center space-x-3">
-                  <div className="h-2 w-2 bg-green-500 rounded-full"></div>
+                  <div className="h-2 w-2 rounded-full bg-green-500"></div>
                   <div>
                     <p className="font-medium">Current Session</p>
-                    <p className="text-sm text-muted-foreground">Active now</p>
+                    <p className="text-muted-foreground text-sm">Active now</p>
                   </div>
                 </div>
-                <Badge
-                  variant="outline"
-                  className="text-green-600 border-green-600"
-                >
+                <Badge variant="outline" className="border-green-600 text-green-600">
                   Active
                 </Badge>
               </div>
@@ -280,49 +255,41 @@ export default function ProfilePage() {
         <Card>
           <CardHeader>
             <CardTitle>Quick Actions</CardTitle>
-            <CardDescription>
-              Manage your account settings and preferences
-            </CardDescription>
+            <CardDescription>Manage your account settings and preferences</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               <Button
                 variant="outline"
-                className="justify-start h-auto p-4"
+                className="h-auto justify-start p-4"
                 onClick={() => setEditProfileOpen(true)}
               >
-                <User className="h-4 w-4 mr-2" />
+                <User className="mr-2 h-4 w-4" />
                 <div className="text-left">
                   <div className="font-medium">Edit Profile</div>
-                  <div className="text-xs text-muted-foreground">
-                    Update your information
-                  </div>
+                  <div className="text-muted-foreground text-xs">Update your information</div>
                 </div>
               </Button>
               <Button
                 variant="outline"
-                className="justify-start h-auto p-4"
+                className="h-auto justify-start p-4"
                 onClick={() => setSecurityOpen(true)}
               >
-                <Shield className="h-4 w-4 mr-2" />
+                <Shield className="mr-2 h-4 w-4" />
                 <div className="text-left">
                   <div className="font-medium">Security Settings</div>
-                  <div className="text-xs text-muted-foreground">
-                    Manage security options
-                  </div>
+                  <div className="text-muted-foreground text-xs">Manage security options</div>
                 </div>
               </Button>
               <Button
                 variant="outline"
-                className="justify-start h-auto p-4"
+                className="h-auto justify-start p-4"
                 onClick={() => setEmailPrefsOpen(true)}
               >
-                <Mail className="h-4 w-4 mr-2" />
+                <Mail className="mr-2 h-4 w-4" />
                 <div className="text-left">
                   <div className="font-medium">Email Preferences</div>
-                  <div className="text-xs text-muted-foreground">
-                    Configure notifications
-                  </div>
+                  <div className="text-muted-foreground text-xs">Configure notifications</div>
                 </div>
               </Button>
             </div>
@@ -336,8 +303,7 @@ export default function ProfilePage() {
           <DialogHeader>
             <DialogTitle>Edit Profile</DialogTitle>
             <DialogDescription>
-              Update your profile information. Changes will be saved to your
-              account.
+              Update your profile information. Changes will be saved to your account.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleEditProfileSubmit} className="space-y-4">
@@ -361,7 +327,7 @@ export default function ProfilePage() {
                 disabled
                 className="bg-muted"
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs">
                 Email changes aren&apos;t supported here yet
               </p>
             </div>
@@ -392,14 +358,12 @@ export default function ProfilePage() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 border rounded-lg">
+            <div className="flex items-center justify-between rounded-lg border p-4">
               <div className="flex items-center gap-3">
-                <Lock className="h-5 w-5 text-muted-foreground" />
+                <Lock className="text-muted-foreground h-5 w-5" />
                 <div>
                   <p className="font-medium">Password</p>
-                  <p className="text-sm text-muted-foreground">
-                    Change your account password
-                  </p>
+                  <p className="text-muted-foreground text-sm">Change your account password</p>
                 </div>
               </div>
               <Button
@@ -414,14 +378,12 @@ export default function ProfilePage() {
               </Button>
             </div>
 
-            <div className="flex items-center justify-between p-4 border rounded-lg">
+            <div className="flex items-center justify-between rounded-lg border p-4">
               <div className="flex items-center gap-3">
-                <Smartphone className="h-5 w-5 text-muted-foreground" />
+                <Smartphone className="text-muted-foreground h-5 w-5" />
                 <div>
                   <p className="font-medium">Two-Factor Authentication</p>
-                  <p className="text-sm text-muted-foreground">
-                    Add an extra layer of security
-                  </p>
+                  <p className="text-muted-foreground text-sm">Add an extra layer of security</p>
                 </div>
               </div>
               <Button variant="outline" size="sm" disabled>
@@ -429,12 +391,12 @@ export default function ProfilePage() {
               </Button>
             </div>
 
-            <div className="space-y-3 p-4 border rounded-lg">
+            <div className="space-y-3 rounded-lg border p-4">
               <div className="flex items-center gap-3">
-                <Shield className="h-5 w-5 text-muted-foreground" />
+                <Shield className="text-muted-foreground h-5 w-5" />
                 <div>
                   <p className="font-medium">Active Sessions</p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-muted-foreground text-sm">
                     Devices currently signed into your account
                   </p>
                 </div>
@@ -455,9 +417,7 @@ export default function ProfilePage() {
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Change Password</DialogTitle>
-            <DialogDescription>
-              Enter your current password and choose a new one.
-            </DialogDescription>
+            <DialogDescription>Enter your current password and choose a new one.</DialogDescription>
           </DialogHeader>
           <ChangePasswordForm
             onSuccess={() => {
@@ -474,26 +434,20 @@ export default function ProfilePage() {
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Email Preferences</DialogTitle>
-            <DialogDescription>
-              Configure your email notification settings.
-            </DialogDescription>
+            <DialogDescription>Configure your email notification settings.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 border rounded-lg">
+            <div className="flex items-center justify-between rounded-lg border p-4">
               <div>
                 <p className="font-medium">Marketing Emails</p>
-                <p className="text-sm text-muted-foreground">
-                  Product updates and announcements
-                </p>
+                <p className="text-muted-foreground text-sm">Product updates and announcements</p>
               </div>
               <Badge variant="secondary">Coming Soon</Badge>
             </div>
-            <div className="flex items-center justify-between p-4 border rounded-lg">
+            <div className="flex items-center justify-between rounded-lg border p-4">
               <div>
                 <p className="font-medium">Security Alerts</p>
-                <p className="text-sm text-muted-foreground">
-                  Important security notifications
-                </p>
+                <p className="text-muted-foreground text-sm">Important security notifications</p>
               </div>
               <Badge variant="default">Always On</Badge>
             </div>

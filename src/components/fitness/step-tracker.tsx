@@ -236,15 +236,15 @@ export function StepTracker({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-lg border bg-card p-6 space-y-4">
+      <div className="bg-card space-y-4 rounded-lg border p-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="bg-blue-500/10 rounded-full p-2">
+            <div className="rounded-full bg-blue-500/10 p-2">
               <Footprints className="h-5 w-5 text-blue-500" />
             </div>
             <div>
               <p className="font-semibold">Auto step counter</p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs">
                 {status === "tracking"
                   ? "Tracking — keep the app open while you walk"
                   : status === "paused"
@@ -256,8 +256,8 @@ export function StepTracker({
           {status === "tracking" && (
             <span className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400">
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
               </span>
               Live
             </span>
@@ -274,11 +274,9 @@ export function StepTracker({
         )}
 
         {steps > 0 && (
-          <p className="text-xs text-muted-foreground text-center">
+          <p className="text-muted-foreground text-center text-xs">
             Today total would become{" "}
-            <span className="font-medium text-foreground">
-              {projectedTotal.toLocaleString()}
-            </span>{" "}
+            <span className="text-foreground font-medium">{projectedTotal.toLocaleString()}</span>{" "}
             after saving
           </p>
         )}
@@ -297,7 +295,11 @@ export function StepTracker({
                 Pause
               </Button>
               <Button onClick={save} disabled={saving || steps === 0} className="flex-1">
-                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                {saving ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4" />
+                )}
                 Save
               </Button>
             </>
@@ -309,7 +311,11 @@ export function StepTracker({
                 Resume
               </Button>
               <Button onClick={save} disabled={saving || steps === 0} variant="outline">
-                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                {saving ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4" />
+                )}
                 Save
               </Button>
               <Button onClick={discard} variant="ghost" size="icon" aria-label="Discard">
@@ -324,38 +330,26 @@ export function StepTracker({
           )}
         </div>
 
-        <p className="text-[11px] text-muted-foreground leading-relaxed">
-          Best with the phone in your pocket or hand. The page must stay open;
-          accuracy is approximate (±10–15%).
+        <p className="text-muted-foreground text-[11px] leading-relaxed">
+          Best with the phone in your pocket or hand. The page must stay open; accuracy is
+          approximate (±10–15%).
         </p>
       </div>
     </div>
   );
 }
 
-function Stat({
-  label,
-  value,
-  highlight,
-}: {
-  label: string;
-  value: string;
-  highlight?: boolean;
-}) {
+function Stat({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
   return (
     <div className="text-center">
       <p
         className={
-          highlight
-            ? "text-2xl font-bold tabular-nums"
-            : "text-lg font-semibold tabular-nums"
+          highlight ? "text-2xl font-bold tabular-nums" : "text-lg font-semibold tabular-nums"
         }
       >
         {value}
       </p>
-      <p className="text-[11px] text-muted-foreground uppercase tracking-wide">
-        {label}
-      </p>
+      <p className="text-muted-foreground text-[11px] tracking-wide uppercase">{label}</p>
     </div>
   );
 }

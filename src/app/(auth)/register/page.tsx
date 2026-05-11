@@ -1,25 +1,19 @@
-import { headers } from "next/headers"
-import { redirect } from "next/navigation"
-import { SignUpForm } from "@/components/auth/sign-up-form"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { auth } from "@/lib/auth"
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import { SignUpForm } from "@/components/auth/sign-up-form";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { auth } from "@/lib/auth";
 
 export default async function RegisterPage() {
-  let isAuthenticated = false
+  let isAuthenticated = false;
   try {
-    const session = await auth.api.getSession({ headers: await headers() })
-    isAuthenticated = !!session
+    const session = await auth.api.getSession({ headers: await headers() });
+    isAuthenticated = !!session;
   } catch {
     // Session check failed (e.g. DB not ready) — continue to show register form
   }
   if (isAuthenticated) {
-    redirect("/dashboard")
+    redirect("/dashboard");
   }
 
   return (
@@ -34,5 +28,5 @@ export default async function RegisterPage() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

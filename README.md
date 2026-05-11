@@ -52,6 +52,7 @@ npx create-agentic-app@latest .
 ```
 
 The CLI will:
+
 - Copy all boilerplate files
 - Install dependencies with your preferred package manager (pnpm/npm/yarn)
 - Set up your environment file
@@ -174,12 +175,14 @@ Your application will be available at [http://localhost:3000](http://localhost:3
 The project includes a flexible storage abstraction that automatically switches between local filesystem storage (development) and Vercel Blob storage (production).
 
 **For Development (Local Storage):**
+
 - Leave `BLOB_READ_WRITE_TOKEN` empty or unset in your `.env` file
 - Files are automatically stored in `public/uploads/`
 - Files are served at `/uploads/` URL path
 - No external service or configuration needed
 
 **For Production (Vercel Blob):**
+
 1. Go to <a href="https://vercel.com/dashboard" target="_blank">Vercel Dashboard</a>
 2. Navigate to your project → **Storage** tab
 3. Click **Create** → **Blob**
@@ -276,18 +279,19 @@ This project includes custom slash commands for [Claude Code](https://claude.ai/
 
 ### Available Commands
 
-| Command | Description |
-|---------|-------------|
-| `/create-feature` | Create a new feature specification with requirements and implementation plan |
-| `/publish-to-github` | Publish a feature to GitHub Issues and Projects |
-| `/continue-feature` | Continue implementing the next task for a GitHub-published feature |
-| `/checkpoint` | Create a comprehensive checkpoint commit with all changes |
+| Command              | Description                                                                  |
+| -------------------- | ---------------------------------------------------------------------------- |
+| `/create-feature`    | Create a new feature specification with requirements and implementation plan |
+| `/publish-to-github` | Publish a feature to GitHub Issues and Projects                              |
+| `/continue-feature`  | Continue implementing the next task for a GitHub-published feature           |
+| `/checkpoint`        | Create a comprehensive checkpoint commit with all changes                    |
 
 ### Prerequisites
 
 Before using the GitHub-integrated commands:
 
 1. **GitHub CLI**: Install and authenticate the GitHub CLI
+
    ```bash
    # Install (if needed)
    brew install gh  # macOS
@@ -322,6 +326,7 @@ Once you've discussed the requirements, run:
 ```
 
 This creates a spec folder at `specs/{feature-name}/` containing:
+
 - `requirements.md` - What the feature does and acceptance criteria
 - `implementation-plan.md` - Phased tasks with checkboxes
 
@@ -334,6 +339,7 @@ Publish the feature to GitHub for tracking:
 ```
 
 This creates:
+
 - An **Epic issue** with full requirements
 - **Task issues** for each implementation step
 - A **GitHub Project** to track progress
@@ -349,6 +355,7 @@ Start implementing tasks one at a time:
 ```
 
 This command:
+
 1. Finds the next unblocked task (respecting dependencies)
 2. Updates the GitHub Project status to "In Progress"
 3. Implements the task following project conventions
@@ -368,6 +375,7 @@ At any point, create a detailed checkpoint commit:
 ```
 
 This stages all changes and creates a well-formatted commit with:
+
 - Clear summary line
 - Detailed description of changes
 - Co-author attribution
@@ -405,6 +413,7 @@ If you prefer not to use GitHub, you can still use `/create-feature` to create s
 ### Command Files Location
 
 Commands are defined in `.claude/commands/`:
+
 ```
 .claude/commands/
 ├── checkpoint.md

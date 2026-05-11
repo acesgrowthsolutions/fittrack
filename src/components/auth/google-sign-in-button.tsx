@@ -1,25 +1,23 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { signIn } from "@/lib/auth-client"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { signIn } from "@/lib/auth-client";
 
 export function GoogleSignInButton({ disabled }: { disabled?: boolean }) {
-  const [isPending, setIsPending] = useState(false)
-  const [error, setError] = useState("")
+  const [isPending, setIsPending] = useState(false);
+  const [error, setError] = useState("");
 
   const handleClick = async () => {
-    setError("")
-    setIsPending(true)
+    setError("");
+    setIsPending(true);
     try {
-      await signIn.social({ provider: "google", callbackURL: "/dashboard" })
+      await signIn.social({ provider: "google", callbackURL: "/dashboard" });
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to start Google sign-in"
-      )
-      setIsPending(false)
+      setError(err instanceof Error ? err.message : "Failed to start Google sign-in");
+      setIsPending(false);
     }
-  }
+  };
 
   return (
     <div className="space-y-2">
@@ -33,9 +31,9 @@ export function GoogleSignInButton({ disabled }: { disabled?: boolean }) {
         <GoogleIcon className="mr-2 h-4 w-4" />
         {isPending ? "Redirecting..." : "Continue with Google"}
       </Button>
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && <p className="text-destructive text-sm">{error}</p>}
     </div>
-  )
+  );
 }
 
 function GoogleIcon({ className }: { className?: string }) {
@@ -58,5 +56,5 @@ function GoogleIcon({ className }: { className?: string }) {
         fill="#EA4335"
       />
     </svg>
-  )
+  );
 }

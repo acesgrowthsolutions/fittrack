@@ -34,42 +34,32 @@ export function GoalCard({ goal }: GoalCardProps) {
 
   return (
     <Card>
-      <CardContent className="p-4 space-y-3">
+      <CardContent className="space-y-3 p-4">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-2">
             <div className="rounded-lg bg-yellow-500/10 p-2">
               <Target className="h-4 w-4 text-yellow-500" />
             </div>
             <div>
-              <p className="font-medium text-sm">
-                {GOAL_TYPE_LABELS[goal.type] ?? goal.type}
-              </p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm font-medium">{GOAL_TYPE_LABELS[goal.type] ?? goal.type}</p>
+              <p className="text-muted-foreground text-xs">
                 {current.toLocaleString()} / {target.toLocaleString()} {goal.unit}
               </p>
             </div>
           </div>
           {goal.completed ? (
-            <Badge className="bg-green-500/10 text-green-500 border-green-500/20">
-              Completed
-            </Badge>
+            <Badge className="border-green-500/20 bg-green-500/10 text-green-500">Completed</Badge>
           ) : goal.daysRemaining != null ? (
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <div className="text-muted-foreground flex items-center gap-1 text-xs">
               <Calendar className="h-3 w-3" />
-              <span>
-                {goal.daysRemaining === 0
-                  ? "Ends today"
-                  : `${goal.daysRemaining}d left`}
-              </span>
+              <span>{goal.daysRemaining === 0 ? "Ends today" : `${goal.daysRemaining}d left`}</span>
             </div>
           ) : null}
         </div>
 
         <div className="space-y-1">
           <Progress value={progress} className="h-2" />
-          <p className="text-xs text-muted-foreground text-right">
-            {Math.round(progress)}%
-          </p>
+          <p className="text-muted-foreground text-right text-xs">{Math.round(progress)}%</p>
         </div>
       </CardContent>
     </Card>

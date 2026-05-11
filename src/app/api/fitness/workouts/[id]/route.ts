@@ -34,10 +34,7 @@ export async function GET(_req: Request, { params }: Params) {
     return Response.json(workout);
   } catch (error) {
     console.error("Error fetching workout:", error);
-    return Response.json(
-      { error: "Failed to fetch workout" },
-      { status: 500 }
-    );
+    return Response.json({ error: "Failed to fetch workout" }, { status: 500 });
   }
 }
 
@@ -80,10 +77,7 @@ export async function PUT(req: Request, { params }: Params) {
     return Response.json(updated);
   } catch (error) {
     console.error("Error updating workout:", error);
-    return Response.json(
-      { error: "Failed to update workout" },
-      { status: 500 }
-    );
+    return Response.json({ error: "Failed to update workout" }, { status: 500 });
   }
 }
 
@@ -112,9 +106,6 @@ export async function DELETE(_req: Request, { params }: Params) {
     return Response.json({ success: true });
   } catch (error) {
     console.error("Error deleting workout:", error);
-    return Response.json(
-      { error: "Failed to delete workout" },
-      { status: 500 }
-    );
+    return Response.json({ error: "Failed to delete workout" }, { status: 500 });
   }
 }

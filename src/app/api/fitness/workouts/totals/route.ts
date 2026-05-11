@@ -1,13 +1,7 @@
 import { headers } from "next/headers";
 import { and, eq, gte, lte } from "drizzle-orm";
 import { auth } from "@/lib/auth";
-import {
-  addDays,
-  mondayOf,
-  startOfMonth,
-  startOfYear,
-  todayInTz,
-} from "@/lib/date-tz";
+import { addDays, mondayOf, startOfMonth, startOfYear, todayInTz } from "@/lib/date-tz";
 import { db } from "@/lib/db";
 import { workouts } from "@/lib/schema";
 import { getUserTz } from "@/lib/user-tz";
@@ -86,9 +80,6 @@ export async function GET() {
     });
   } catch (error) {
     console.error("Error fetching workout totals:", error);
-    return Response.json(
-      { error: "Failed to fetch workout totals" },
-      { status: 500 }
-    );
+    return Response.json({ error: "Failed to fetch workout totals" }, { status: 500 });
   }
 }

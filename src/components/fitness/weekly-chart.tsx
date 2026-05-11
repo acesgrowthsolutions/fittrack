@@ -1,14 +1,6 @@
 "use client";
 
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface WeeklyChartProps {
@@ -32,19 +24,13 @@ export function WeeklyChart({ data }: WeeklyChartProps) {
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-base font-semibold">
-          Weekly Steps
-        </CardTitle>
+        <CardTitle className="text-base font-semibold">Weekly Steps</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="h-[250px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData}>
-              <CartesianGrid
-                strokeDasharray="3 3"
-                className="stroke-border"
-                vertical={false}
-              />
+              <CartesianGrid strokeDasharray="3 3" className="stroke-border" vertical={false} />
               <XAxis
                 dataKey="day"
                 className="text-xs"
@@ -68,16 +54,9 @@ export function WeeklyChart({ data }: WeeklyChartProps) {
                   borderRadius: "8px",
                   color: "hsl(var(--foreground))",
                 }}
-                formatter={(value) => [
-                  Number(value).toLocaleString(),
-                  "Steps",
-                ]}
+                formatter={(value) => [Number(value).toLocaleString(), "Steps"]}
               />
-              <Bar
-                dataKey="steps"
-                fill="hsl(210 100% 60%)"
-                radius={[4, 4, 0, 0]}
-              />
+              <Bar dataKey="steps" fill="hsl(210 100% 60%)" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>

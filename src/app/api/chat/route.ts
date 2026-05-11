@@ -7,11 +7,7 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { addDays, todayInTz } from "@/lib/date-tz";
 import { db } from "@/lib/db";
-import {
-  checkRateLimit,
-  rateLimitResponse,
-  type RateLimitWindow,
-} from "@/lib/rate-limit";
+import { checkRateLimit, rateLimitResponse, type RateLimitWindow } from "@/lib/rate-limit";
 import { dailyStats, goals, userProfile, workouts } from "@/lib/schema";
 import { getUserTz } from "@/lib/user-tz";
 
@@ -41,32 +37,25 @@ const chatRequestSchema = z.object({
 async function buildUserContext(userId: string, tz: string): Promise<string> {
   const weekAgo = addDays(todayInTz(tz), -7);
 
-  const [profileResult, recentStats, recentWorkouts, activeGoals] =
-    await Promise.all([
-      db
-        .select()
-        .from(userProfile)
-        .where(eq(userProfile.userId, userId))
-        .limit(1),
-      db
-        .select()
-        .from(dailyStats)
-        .where(
-          and(eq(dailyStats.userId, userId), gte(dailyStats.date, weekAgo))
-        )
-        .orderBy(desc(dailyStats.date)),
-      db
-        .select()
-        .from(workouts)
-        .where(eq(workouts.userId, userId))
-        .orderBy(desc(workouts.workoutDate), desc(workouts.createdAt))
-        .limit(5),
-      db
-        .select()
-        .from(goals)
-        .where(and(eq(goals.userId, userId), eq(goals.completed, false)))
-        .orderBy(desc(goals.createdAt)),
-    ]);
+  const [profileResult, recentStats, recentWorkouts, activeGoals] = await Promise.all([
+    db.select().from(userProfile).where(eq(userProfile.userId, userId)).limit(1),
+    db
+      .select()
+      .from(dailyStats)
+      .where(and(eq(dailyStats.userId, userId), gte(dailyStats.date, weekAgo)))
+      .orderBy(desc(dailyStats.date)),
+    db
+      .select()
+      .from(workouts)
+      .where(eq(workouts.userId, userId))
+      .orderBy(desc(workouts.workoutDate), desc(workouts.createdAt))
+      .limit(5),
+    db
+      .select()
+      .from(goals)
+      .where(and(eq(goals.userId, userId), eq(goals.completed, false)))
+      .orderBy(desc(goals.createdAt)),
+  ]);
 
   const profile = profileResult[0];
   const units = profile?.preferredUnits ?? "metric";
@@ -81,10 +70,8 @@ async function buildUserContext(userId: string, tz: string): Promise<string> {
     if (profile.age != null) profileBits.push(`age ${profile.age}`);
     if (profile.height) profileBits.push(`height ${profile.height}${heightUnit}`);
     if (profile.weight) profileBits.push(`weight ${profile.weight}${weightUnit}`);
-    if (profile.activityLevel)
-      profileBits.push(`activity level: ${profile.activityLevel}`);
-    if (profile.dailyStepGoal)
-      profileBits.push(`daily step goal: ${profile.dailyStepGoal}`);
+    if (profile.activityLevel) profileBits.push(`activity level: ${profile.activityLevel}`);
+    if (profile.dailyStepGoal) profileBits.push(`daily step goal: ${profile.dailyStepGoal}`);
     if (profile.dailyCalorieGoal)
       profileBits.push(`daily calorie goal: ${profile.dailyCalorieGoal}`);
     profileBits.push(`units: ${units}`);
@@ -97,14 +84,8 @@ async function buildUserContext(userId: string, tz: string): Promise<string> {
 
   if (recentStats.length > 0) {
     const totalSteps = recentStats.reduce((sum, s) => sum + (s.steps ?? 0), 0);
-    const totalCalories = recentStats.reduce(
-      (sum, s) => sum + (s.caloriesBurned ?? 0),
-      0
-    );
-    const totalActiveMin = recentStats.reduce(
-      (sum, s) => sum + (s.activeMinutes ?? 0),
-      0
-    );
+    const totalCalories = recentStats.reduce((sum, s) => sum + (s.caloriesBurned ?? 0), 0);
+    const totalActiveMin = recentStats.reduce((sum, s) => sum + (s.activeMinutes ?? 0), 0);
     const avgSteps = Math.round(totalSteps / recentStats.length);
     lines.push(
       `Last 7 days: ${totalSteps} steps total (avg ${avgSteps}/day), ${totalCalories} kcal burned, ${totalActiveMin} active minutes across ${recentStats.length} logged day(s).`
@@ -136,12 +117,9 @@ async function buildUserContext(userId: string, tz: string): Promise<string> {
     for (const g of activeGoals) {
       const target = parseFloat(g.targetValue);
       const current = parseFloat(g.currentValue);
-      const pct =
-        target > 0 ? Math.min(Math.round((current / target) * 100), 100) : 0;
+      const pct = target > 0 ? Math.min(Math.round((current / target) * 100), 100) : 0;
       const deadline = g.endDate ? ` by ${g.endDate}` : "";
-      lines.push(
-        `- ${g.type}: ${current}/${target} ${g.unit} (${pct}%)${deadline}`
-      );
+      lines.push(`- ${g.type}: ${current}/${target} ${g.unit} (${pct}%)${deadline}`);
     }
   } else {
     lines.push("Active goals: none set.");
@@ -162,11 +140,7 @@ export async function POST(req: Request) {
 
   // Reject before parsing the body / building context / streaming the model
   // so abusers can't burn AI credits past the configured cap.
-  const rl = await checkRateLimit(
-    session.user.id,
-    "chat",
-    CHAT_RATE_LIMITS
-  );
+  const rl = await checkRateLimit(session.user.id, "chat", CHAT_RATE_LIMITS);
   if (!rl.ok) {
     return rateLimitResponse(rl);
   }

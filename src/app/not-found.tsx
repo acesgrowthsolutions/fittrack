@@ -5,16 +5,16 @@ import { Button } from "@/components/ui/button";
 export default function NotFound() {
   return (
     <div className="container mx-auto px-4 py-16">
-      <div className="max-w-md mx-auto text-center">
-        <div className="flex justify-center mb-6">
-          <FileQuestion className="h-16 w-16 text-muted-foreground" />
+      <div className="mx-auto max-w-md text-center">
+        <div className="mb-6 flex justify-center">
+          <FileQuestion className="text-muted-foreground h-16 w-16" />
         </div>
-        <h1 className="text-4xl font-bold mb-4">404</h1>
-        <h2 className="text-xl font-semibold mb-4">Page Not Found</h2>
+        <h1 className="mb-4 text-4xl font-bold">404</h1>
+        <h2 className="mb-4 text-xl font-semibold">Page Not Found</h2>
         <p className="text-muted-foreground mb-6">
           The page you&apos;re looking for doesn&apos;t exist or has been moved.
         </p>
-        <div className="flex gap-4 justify-center">
+        <div className="flex justify-center gap-4">
           <Button asChild>
             <Link href="/">Go home</Link>
           </Button>

@@ -47,30 +47,22 @@ export function UserProfile() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Avatar className="size-8 cursor-pointer hover:opacity-80 transition-opacity">
+        <Avatar className="size-8 cursor-pointer transition-opacity hover:opacity-80">
           <AvatarImage
             src={session.user?.image || ""}
             alt={session.user?.name || "User"}
             referrerPolicy="no-referrer"
           />
           <AvatarFallback>
-            {(
-              session.user?.name?.[0] ||
-              session.user?.email?.[0] ||
-              "U"
-            ).toUpperCase()}
+            {(session.user?.name?.[0] || session.user?.email?.[0] || "U").toUpperCase()}
           </AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">
-              {session.user?.name}
-            </p>
-            <p className="text-xs leading-none text-muted-foreground">
-              {session.user?.email}
-            </p>
+            <p className="text-sm leading-none font-medium">{session.user?.name}</p>
+            <p className="text-muted-foreground text-xs leading-none">{session.user?.email}</p>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />

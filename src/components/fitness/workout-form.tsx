@@ -52,26 +52,16 @@ interface WorkoutFormProps {
  * Calculates estimated calories burned using the standard MET formula.
  * Formula: (MET x weightKg x 3.5) / 200 x durationMinutes
  */
-function calculateCalories(
-  met: number,
-  weightKg: number,
-  durationMinutes: number
-): number {
+function calculateCalories(met: number, weightKg: number, durationMinutes: number): number {
   return Math.round(((met * weightKg * 3.5) / 200) * durationMinutes);
 }
 
-export function WorkoutForm({
-  onSuccess,
-  userWeightKg,
-  initialData,
-}: WorkoutFormProps) {
+export function WorkoutForm({ onSuccess, userWeightKg, initialData }: WorkoutFormProps) {
   const isEditing = !!initialData?.id;
 
   const [type, setType] = useState(initialData?.type ?? "");
   const [name, setName] = useState(initialData?.name ?? "");
-  const [workoutDate, setWorkoutDate] = useState(
-    initialData?.workoutDate ?? getLocalDateStr()
-  );
+  const [workoutDate, setWorkoutDate] = useState(initialData?.workoutDate ?? getLocalDateStr());
   const [durationMinutes, setDurationMinutes] = useState(
     initialData?.durationMinutes?.toString() ?? ""
   );
@@ -167,9 +157,7 @@ export function WorkoutForm({
 
     setIsSubmitting(true);
     try {
-      const url = isEditing
-        ? `/api/fitness/workouts/${initialData.id}`
-        : "/api/fitness/workouts";
+      const url = isEditing ? `/api/fitness/workouts/${initialData.id}` : "/api/fitness/workouts";
 
       const res = await fetch(url, {
         method: isEditing ? "PUT" : "POST",
@@ -193,9 +181,7 @@ export function WorkoutForm({
       toast.success(isEditing ? "Workout updated!" : "Workout logged!");
       onSuccess?.();
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to save workout"
-      );
+      toast.error(error instanceof Error ? error.message : "Failed to save workout");
     } finally {
       setIsSubmitting(false);
     }
@@ -261,9 +247,7 @@ export function WorkoutForm({
           <div className="flex items-center gap-2">
             <Label htmlFor="workout-calories">Calories *</Label>
             {isAutoCalculated && (
-              <span className="text-xs text-muted-foreground">
-                Auto-calculated
-              </span>
+              <span className="text-muted-foreground text-xs">Auto-calculated</span>
             )}
           </div>
           <Input
@@ -276,7 +260,7 @@ export function WorkoutForm({
             required
           />
           {!userWeightKg && (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground text-xs">
               Add your weight in Profile for auto-calculation
             </p>
           )}

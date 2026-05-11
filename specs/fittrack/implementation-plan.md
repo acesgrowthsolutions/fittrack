@@ -24,12 +24,14 @@
 - [x] Create `/api/fitness/summary/route.ts` — GET dashboard summary with streak, weekly workouts, recent workouts, active goals
 
 ### Technical Details
+
 - All routes use `auth.api.getSession({ headers: await headers() })` for auth checks
 - Return 401 if unauthenticated
 - Use Drizzle ORM with `eq`, `and`, `desc`, `gte`, `lte` operators
 - Dates stored as ISO date strings (`YYYY-MM-DD`)
 
 ### Acceptance Criteria
+
 - [x] All tasks in this phase completed
 - [x] Code passes lint and typecheck
 - [x] Changes follow project conventions
@@ -54,12 +56,14 @@
 - [x] Create `src/components/fitness/goal-card.tsx` — card with progress bar for a goal
 
 ### Technical Details
+
 - Activity rings use SVG `stroke-dasharray` / `stroke-dashoffset` for circular progress
 - Charts use `ResponsiveContainer` from recharts for responsive sizing
 - Forms use fetch to call API routes with toast feedback via Sonner
 - Color tokens: blue (steps), orange (calories), green (active minutes), purple (workouts)
 
 ### Acceptance Criteria
+
 - [x] All tasks in this phase completed
 - [x] Code passes lint and typecheck
 - [x] Changes follow project conventions
@@ -86,12 +90,14 @@
 - [x] Run `pnpm run lint && pnpm run typecheck` — zero errors
 
 ### Technical Details
+
 - Dashboard and pages are Client Components using `useSession()` for auth
 - Navigation highlights active route using `usePathname()`
 - Color scheme: blue-500 (steps/distance), orange-500 (calories), green-500 (active min), purple-500 (workouts), yellow-400 (achievements)
 - All pages redirect to `/login` if unauthenticated
 
 ### Acceptance Criteria
+
 - [x] All tasks in this phase completed
 - [x] Code passes lint and typecheck
 - [x] Changes follow project conventions

@@ -56,12 +56,7 @@ describe("calculateWorkoutStreak", () => {
 
   it("crosses year boundaries", () => {
     const today = "2026-01-02";
-    const set = new Set([
-      "2026-01-02",
-      "2026-01-01",
-      "2025-12-31",
-      "2025-12-30",
-    ]);
+    const set = new Set(["2026-01-02", "2026-01-01", "2025-12-31", "2025-12-30"]);
     expect(calculateWorkoutStreak(set, today)).toBe(4);
   });
 
@@ -72,11 +67,7 @@ describe("calculateWorkoutStreak", () => {
     let cursor = today;
     for (let i = 0; i < 10; i += 1) {
       set.add(cursor);
-      const [y, m, d] = cursor.split("-").map(Number) as [
-        number,
-        number,
-        number,
-      ];
+      const [y, m, d] = cursor.split("-").map(Number) as [number, number, number];
       const prev = new Date(Date.UTC(y, m - 1, d) - 86_400_000);
       const yy = prev.getUTCFullYear();
       const mm = String(prev.getUTCMonth() + 1).padStart(2, "0");

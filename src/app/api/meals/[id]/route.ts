@@ -7,8 +7,7 @@ import { deleteFile } from "@/lib/storage";
 
 type Params = { params: Promise<{ id: string }> };
 
-const uuidRegex =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export async function DELETE(_req: Request, { params }: Params) {
   try {

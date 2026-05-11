@@ -29,7 +29,7 @@ import Markdown from "react-markdown";
 
 const markdown = "# Hi, *Pluto*!";
 
-<Markdown>{markdown}</Markdown>
+<Markdown>{markdown}</Markdown>;
 ```
 
 With plugins:
@@ -40,7 +40,7 @@ import remarkGfm from "remark-gfm";
 
 const markdown = `Just a link: www.nasa.gov.`;
 
-<Markdown remarkPlugins={[remarkGfm]}>{markdown}</Markdown>
+<Markdown remarkPlugins={[remarkGfm]}>{markdown}</Markdown>;
 ```
 
 ## API
@@ -49,7 +49,7 @@ Key props:
 
 - `children` — markdown string to render
 - `remarkPlugins` — array of remark plugins
-- `rehypePlugins` — array of rehype plugins  
+- `rehypePlugins` — array of rehype plugins
 - `components` — object mapping HTML tags to React components
 - `allowedElements` — array of allowed HTML tags
 - `disallowedElements` — array of disallowed HTML tags
@@ -71,7 +71,7 @@ const markdown = `
 | Cell 1   | Cell 2   |
 `;
 
-<Markdown remarkPlugins={[remarkGfm]}>{markdown}</Markdown>
+<Markdown remarkPlugins={[remarkGfm]}>{markdown}</Markdown>;
 ```
 
 ### Custom Components (Syntax Highlighting)
@@ -109,7 +109,7 @@ console.log('Hello, world!');
   }}
 >
   {markdown}
-</Markdown>
+</Markdown>;
 ```
 
 ## Plugins

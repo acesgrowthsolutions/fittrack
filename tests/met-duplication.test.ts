@@ -29,10 +29,7 @@ describe("BUG M3: MET values duplicated across multiple files", () => {
   it("all 3 files define their own MET table", () => {
     for (const f of files) {
       const mets = extractMET(path.resolve(f));
-      expect(
-        Object.keys(mets).length,
-        `${f} should contain a MET table`
-      ).toBeGreaterThan(0);
+      expect(Object.keys(mets).length, `${f} should contain a MET table`).toBeGreaterThan(0);
     }
   });
 

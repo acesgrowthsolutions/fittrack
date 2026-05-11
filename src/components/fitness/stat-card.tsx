@@ -30,24 +30,16 @@ export function StatCard({
       <CardContent className="p-4">
         <div className="flex items-start justify-between">
           <div className="space-y-1">
-            <p className="text-sm text-muted-foreground">{title}</p>
+            <p className="text-muted-foreground text-sm">{title}</p>
             <div className="flex items-baseline gap-1">
               <span className="text-2xl font-bold">{value}</span>
-              {unit && (
-                <span className="text-sm text-muted-foreground">{unit}</span>
-              )}
+              {unit && <span className="text-muted-foreground text-sm">{unit}</span>}
             </div>
             {trend && trendValue && (
               <div className="flex items-center gap-1 text-xs">
-                {trend === "up" && (
-                  <TrendingUp className="h-3 w-3 text-green-500" />
-                )}
-                {trend === "down" && (
-                  <TrendingDown className="h-3 w-3 text-red-500" />
-                )}
-                {trend === "neutral" && (
-                  <Minus className="h-3 w-3 text-muted-foreground" />
-                )}
+                {trend === "up" && <TrendingUp className="h-3 w-3 text-green-500" />}
+                {trend === "down" && <TrendingDown className="h-3 w-3 text-red-500" />}
+                {trend === "neutral" && <Minus className="text-muted-foreground h-3 w-3" />}
                 <span
                   className={cn(
                     trend === "up" && "text-green-500",

@@ -1,17 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import {
-  Trophy,
-  Flame,
-  Footprints,
-  Award,
-  Star,
-  Zap,
-  Medal,
-  Crown,
-  Lock,
-} from "lucide-react";
+import { Trophy, Flame, Footprints, Award, Star, Zap, Medal, Crown, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { UserProfile } from "@/components/auth/user-profile";
 import { Card, CardContent } from "@/components/ui/card";
@@ -126,11 +116,7 @@ export default function AchievementsPage() {
       if (!res.ok) throw new Error("Failed to fetch achievements");
       setEarned(await res.json());
     } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Failed to load achievements"
-      );
+      toast.error(error instanceof Error ? error.message : "Failed to load achievements");
     } finally {
       setLoading(false);
     }
@@ -143,8 +129,8 @@ export default function AchievementsPage() {
   if (isPending) {
     return (
       <div className="container mx-auto p-6">
-        <Skeleton className="h-8 w-48 mb-6" />
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <Skeleton className="mb-6 h-8 w-48" />
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
           {Array.from({ length: 9 }).map((_, i) => (
             <Skeleton key={i} className="h-40" />
           ))}
@@ -156,9 +142,7 @@ export default function AchievementsPage() {
   if (!session) {
     return (
       <div className="container mx-auto px-4 py-12 text-center">
-        <p className="text-muted-foreground mb-4">
-          Sign in to view your achievements
-        </p>
+        <p className="text-muted-foreground mb-4">Sign in to view your achievements</p>
         <UserProfile />
       </div>
     );
@@ -167,7 +151,7 @@ export default function AchievementsPage() {
   const earnedTypes = new Set(earned.map((a) => a.badgeType));
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="container mx-auto space-y-6 p-6">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold">Achievements</h1>
@@ -177,46 +161,38 @@ export default function AchievementsPage() {
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
           {Array.from({ length: 9 }).map((_, i) => (
             <Skeleton key={i} className="h-40" />
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
           {ALL_BADGES.map((badge) => {
             const isEarned = earnedTypes.has(badge.type);
             const earnedData = earned.find((a) => a.badgeType === badge.type);
             const Icon = badge.icon;
 
             return (
-              <Card
-                key={badge.type}
-                className={isEarned ? "" : "opacity-50 grayscale"}
-              >
-                <CardContent className="p-4 flex flex-col items-center text-center space-y-2">
-                  <div
-                    className={`rounded-full p-3 ${
-                      isEarned ? badge.bgColor : "bg-muted"
-                    }`}
-                  >
+              <Card key={badge.type} className={isEarned ? "" : "opacity-50 grayscale"}>
+                <CardContent className="flex flex-col items-center space-y-2 p-4 text-center">
+                  <div className={`rounded-full p-3 ${isEarned ? badge.bgColor : "bg-muted"}`}>
                     {isEarned ? (
                       <Icon className={`h-8 w-8 ${badge.color}`} />
                     ) : (
-                      <Lock className="h-8 w-8 text-muted-foreground" />
+                      <Lock className="text-muted-foreground h-8 w-8" />
                     )}
                   </div>
-                  <p className="font-semibold text-sm">{badge.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {badge.description}
-                  </p>
+                  <p className="text-sm font-semibold">{badge.name}</p>
+                  <p className="text-muted-foreground text-xs">{badge.description}</p>
                   {isEarned && earnedData && (
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-muted-foreground text-xs">
                       Earned{" "}
-                      {new Date(earnedData.earnedAt).toLocaleDateString(
-                        "en-US",
-                        { month: "short", day: "numeric", year: "numeric" }
-                      )}
+                      {new Date(earnedData.earnedAt).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
                     </p>
                   )}
                 </CardContent>

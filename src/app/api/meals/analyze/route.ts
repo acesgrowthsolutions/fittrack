@@ -6,11 +6,7 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { todayInTz } from "@/lib/date-tz";
 import { db } from "@/lib/db";
-import {
-  checkRateLimit,
-  rateLimitResponse,
-  type RateLimitWindow,
-} from "@/lib/rate-limit";
+import { checkRateLimit, rateLimitResponse, type RateLimitWindow } from "@/lib/rate-limit";
 import { meals, type MealFoodItem } from "@/lib/schema";
 import { deleteFile, upload } from "@/lib/storage";
 import { getUserTz } from "@/lib/user-tz";
@@ -42,9 +38,7 @@ const foodItemSchema = z.object({
 });
 
 const analysisSchema = z.object({
-  description: z
-    .string()
-    .describe("Short description of the overall meal, one or two sentences"),
+  description: z.string().describe("Short description of the overall meal, one or two sentences"),
   food_items: z
     .array(foodItemSchema)
     .describe("Each distinct food or drink visible in the photo (empty array if not_food is true)"),
@@ -55,20 +49,12 @@ const analysisSchema = z.object({
   confidence: z
     .enum(["low", "medium", "high"])
     .describe("Confidence in the calorie estimate based on image clarity"),
-  not_food: z
-    .boolean()
-    .describe("True if the image does not appear to contain food"),
+  not_food: z.boolean().describe("True if the image does not appear to contain food"),
 });
 
-const ALLOWED_IMAGE_MIMES = new Set([
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/gif",
-]);
+const ALLOWED_IMAGE_MIMES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024; // 8MB
-
 
 export async function POST(req: Request) {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -78,19 +64,12 @@ export async function POST(req: Request) {
 
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
-    return Response.json(
-      { error: "OpenRouter API key not configured" },
-      { status: 500 }
-    );
+    return Response.json({ error: "OpenRouter API key not configured" }, { status: 500 });
   }
 
   // Reject before parsing the form / calling the model so abusers can't
   // burn AI credits. Limit applies even to malformed requests.
-  const rl = await checkRateLimit(
-    session.user.id,
-    "meals.analyze",
-    RATE_LIMITS
-  );
+  const rl = await checkRateLimit(session.user.id, "meals.analyze", RATE_LIMITS);
   if (!rl.ok) {
     return rateLimitResponse(rl);
   }
@@ -104,9 +83,7 @@ export async function POST(req: Request) {
 
   const image = formData.get("image");
   const mealTypeRaw = (formData.get("mealType") as string | null) ?? "snack";
-  const mealDate =
-    (formData.get("mealDate") as string | null) ??
-    todayInTz(await getUserTz());
+  const mealDate = (formData.get("mealDate") as string | null) ?? todayInTz(await getUserTz());
   const userNote = (formData.get("note") as string | null) ?? "";
 
   if (!(image instanceof File)) {
@@ -149,8 +126,7 @@ export async function POST(req: Request) {
   }
 
   const openrouter = createOpenRouter({ apiKey });
-  const visionModel =
-    process.env.OPENROUTER_VISION_MODEL || "openai/gpt-4o-mini";
+  const visionModel = process.env.OPENROUTER_VISION_MODEL || "openai/gpt-4o-mini";
 
   const promptText =
     "Analyze this meal photo and estimate calories. Identify each visible " +
@@ -219,7 +195,7 @@ export async function POST(req: Request) {
         error: "Failed to analyze image. Try a clearer photo.",
         detail:
           process.env.NODE_ENV === "development"
-            ? errAny.responseBody ?? errAny.cause?.responseBody ?? errAny.message
+            ? (errAny.responseBody ?? errAny.cause?.responseBody ?? errAny.message)
             : undefined,
       },
       { status: 502 }

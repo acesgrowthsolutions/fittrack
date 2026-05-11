@@ -9,9 +9,7 @@ const serverEnvSchema = z.object({
   POSTGRES_URL: z.string().url("Invalid database URL"),
 
   // Authentication
-  BETTER_AUTH_SECRET: z
-    .string()
-    .min(32, "BETTER_AUTH_SECRET must be at least 32 characters"),
+  BETTER_AUTH_SECRET: z.string().min(32, "BETTER_AUTH_SECRET must be at least 32 characters"),
 
   // OAuth
   GOOGLE_CLIENT_ID: z.string().optional(),
@@ -25,9 +23,7 @@ const serverEnvSchema = z.object({
   BLOB_READ_WRITE_TOKEN: z.string().optional(),
 
   // App
-  NODE_ENV: z
-    .enum(["development", "production", "test"])
-    .default("development"),
+  NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
 });
 
 /**
@@ -49,10 +45,7 @@ export function getServerEnv(): ServerEnv {
   const parsed = serverEnvSchema.safeParse(process.env);
 
   if (!parsed.success) {
-    console.error(
-      "Invalid server environment variables:",
-      parsed.error.flatten().fieldErrors
-    );
+    console.error("Invalid server environment variables:", parsed.error.flatten().fieldErrors);
     throw new Error("Invalid server environment variables");
   }
 
@@ -69,10 +62,7 @@ export function getClientEnv(): ClientEnv {
   });
 
   if (!parsed.success) {
-    console.error(
-      "Invalid client environment variables:",
-      parsed.error.flatten().fieldErrors
-    );
+    console.error("Invalid client environment variables:", parsed.error.flatten().fieldErrors);
     throw new Error("Invalid client environment variables");
   }
 
