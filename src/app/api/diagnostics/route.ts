@@ -1,5 +1,7 @@
+import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
+import { auth } from "@/lib/auth";
 
 type StatusLevel = "ok" | "warn" | "error";
 
@@ -40,8 +42,14 @@ interface DiagnosticsResponse {
 
 // This endpoint is intentionally public (no auth required) because it's used
 // by the setup checklist on the homepage before users are logged in.
-// It only returns boolean flags about configuration status, not sensitive data.
+// Boolean flags stay public so the checklist works; detailed error strings
+// (which may include DB host info or driver internals) are only revealed to
+// signed-in users or when running outside production, to avoid leaking
+// reconnaissance signal to unauthenticated traffic in prod.
 export async function GET(req: Request) {
+  const session = await auth.api.getSession({ headers: await headers() }).catch(() => null);
+  const includeDetails = !!session || process.env.NODE_ENV !== "production";
+
   const env = {
     POSTGRES_URL: Boolean(process.env.POSTGRES_URL),
     BETTER_AUTH_SECRET: Boolean(process.env.BETTER_AUTH_SECRET),
@@ -172,7 +180,7 @@ export async function GET(req: Request) {
     database: {
       connected: dbConnected,
       schemaApplied,
-      ...(dbError !== undefined && { error: dbError }),
+      ...(dbError !== undefined && includeDetails && { error: dbError }),
     },
     auth: {
       configured: authConfigured,
