@@ -21,6 +21,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useSession } from "@/lib/auth-client";
+import { addDays } from "@/lib/date-tz";
 import { getLocalDateStr } from "@/lib/local-date";
 
 const MEAL_TYPES = [
@@ -35,8 +36,10 @@ const ALL_PAGE_SIZE = 20;
 function formatDateLabel(dateStr: string): string {
   const today = getLocalDateStr();
   if (dateStr === today) return "Today";
-  // Yesterday computed via simple string math (works in any tz since both
-  // strings are user-local)
+  if (dateStr === addDays(today, -1)) return "Yesterday";
+  // Both today and dateStr are user-local YYYY-MM-DD, so parsing as UTC and
+  // formatting in UTC gives the correct weekday/date label without any tz
+  // shift (both anchors are in the same coordinate system).
   const [y, m, d] = dateStr.split("-").map(Number) as [number, number, number];
   const ms = Date.UTC(y, m - 1, d);
   const dt = new Date(ms);

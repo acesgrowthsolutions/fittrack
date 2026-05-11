@@ -1,5 +1,6 @@
 "use client";
 
+import type * as React from "react";
 import { Bike, Dumbbell, Flame, Footprints, Heart, Waves, Zap, Activity } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -52,10 +53,32 @@ export function WorkoutCard({ workout, onClick }: WorkoutCardProps) {
   const Icon = WORKOUT_ICONS[workout.type] ?? Activity;
   const iconColor = WORKOUT_COLORS[workout.type] ?? WORKOUT_COLORS.other;
 
+  // When the card is interactive, expose it as a button to assistive tech and
+  // handle Enter/Space — without these props the card is invisible to keyboard
+  // and screen-reader users even though mouse users can click it.
+  const interactiveProps = onClick
+    ? {
+        role: "button" as const,
+        tabIndex: 0,
+        onClick,
+        onKeyDown: (e: React.KeyboardEvent<HTMLDivElement>) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onClick();
+          }
+        },
+        "aria-label": `Open workout: ${workout.name}`,
+      }
+    : {};
+
   return (
     <Card
-      className={onClick ? "cursor-pointer transition-shadow hover:shadow-md" : ""}
-      onClick={onClick}
+      className={
+        onClick
+          ? "focus-visible:ring-ring cursor-pointer transition-shadow hover:shadow-md focus-visible:ring-2 focus-visible:outline-none"
+          : ""
+      }
+      {...interactiveProps}
     >
       <CardContent className="p-4">
         <div className="flex items-center gap-3">
