@@ -43,12 +43,10 @@ function mkStat(overrides: Partial<DailyStat> = {}): DailyStat {
   } as DailyStat;
 }
 
-describe("BUG C1: qualifies() lacks exhaustive default", () => {
-  it("returns undefined when passed an unknown BadgeType (silent failure)", () => {
-    // Simulate a newly-added badge type that forgot a case in the switch
+describe("qualifies() default case", () => {
+  it("returns false for unknown BadgeType (default branch, not undefined)", () => {
     const result = qualifies("brand_new_badge" as never, [mkWorkout()], [mkStat()]);
-    // BUG: returns undefined instead of false, and TS type says `boolean`
-    expect(result).toBe(undefined);
+    expect(result).toBe(false);
   });
 });
 
@@ -69,42 +67,50 @@ describe("BUG H5: iron_week uses 6-day window (WEEK = 6 * DAY)", () => {
   });
 });
 
-describe("BUG M6: speed_demon triggers on non-running workouts", () => {
-  it("awards speed_demon to a CYCLING workout at cycling pace (50 km in 30 min)", () => {
-    // Cycling at 100 km/h is nonsensical, but any 5+km under 5 min/km triggers
+describe("speed_demon is running-only", () => {
+  it("does NOT award speed_demon to a CYCLING workout, even at sub-5min/km pace", () => {
     const w = [
       mkWorkout({
         type: "cycling",
         durationMinutes: 30,
-        distanceKm: "50", // 0.6 min/km — absurdly fast for running
+        distanceKm: "50", // 0.6 min/km — absurdly fast for running, normal for cycling
       }),
     ];
-    // BUG: badge should be running-only but code checks all types
+    expect(qualifies("speed_demon", w, [])).toBe(false);
+  });
+
+  it("awards speed_demon to a RUNNING workout under 5 min/km", () => {
+    const w = [
+      mkWorkout({
+        type: "running",
+        durationMinutes: 20,
+        distanceKm: "5", // 4 min/km
+      }),
+    ];
     expect(qualifies("speed_demon", w, [])).toBe(true);
+  });
+
+  it("does NOT award speed_demon to a slow running workout", () => {
+    const w = [
+      mkWorkout({
+        type: "running",
+        durationMinutes: 30,
+        distanceKm: "5", // 6 min/km
+      }),
+    ];
+    expect(qualifies("speed_demon", w, [])).toBe(false);
   });
 });
 
-describe("BUG C1 (second): early_bird triggers off createdAt not workoutDate", () => {
-  it("awards early_bird when a workout is LOGGED before 7am, regardless of when it happened", () => {
-    // Workout performed at 9am, but logged (created) at 6:30 am next day
+describe("early_bird is deferred", () => {
+  // The workouts schema has no start-of-activity timestamp, only workoutDate
+  // (a date) and createdAt (insertion time, server-local). The badge cannot
+  // be implemented correctly until a startedAt column is added. Until then,
+  // qualifies() returns false for all inputs.
+  it("does not award early_bird regardless of input", () => {
     const w = [
-      mkWorkout({
-        workoutDate: "2026-04-15",
-        createdAt: new Date("2026-04-16T06:30:00"), // 6:30 am local
-      }),
+      mkWorkout({ workoutDate: "2026-04-15", createdAt: new Date("2026-04-15T05:00:00") }),
     ];
-    // BUG: uses createdAt.getHours() < 7, not the workout's actual start time
-    expect(qualifies("early_bird", w, [])).toBe(true);
-  });
-
-  it("does NOT award early_bird for a 5am workout logged at 10am", () => {
-    const w = [
-      mkWorkout({
-        workoutDate: "2026-04-15",
-        createdAt: new Date("2026-04-15T10:00:00"), // 10am local — too late
-      }),
-    ];
-    // BUG: the user did a 5am run but the badge won't fire
     expect(qualifies("early_bird", w, [])).toBe(false);
   });
 });

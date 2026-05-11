@@ -71,12 +71,21 @@ export function qualifies(type: BadgeType, w: Workout[], s: DailyStat[]): boolea
       return total >= 42.2;
     }
     case "speed_demon":
+      // Pace badge only applies to running — a cycling session at 30 km/h
+      // would trivially clear a "5 min/km" threshold otherwise.
       return w.some((x) => {
+        if (x.type !== "running") return false;
         const dist = x.distanceKm ? parseFloat(x.distanceKm) : 0;
         return dist > 0 && x.durationMinutes / dist < 5;
       });
     case "early_bird":
-      return w.some((x) => new Date(x.createdAt).getHours() < 7);
+      // Deferred: the workouts table has no start-of-activity timestamp,
+      // only workoutDate (a date column) and createdAt (when the row was
+      // inserted). The previous implementation used createdAt.getHours() in
+      // server local time, which awarded the badge based on when a user
+      // logged a workout, not when they performed it. Re-enable once a
+      // startedAt column exists. See audit P0 #3.
+      return false;
     case "iron_week": {
       // 7 workouts within any 7-day calendar window
       const days = w.map((x) => new Date(x.workoutDate).getTime());
@@ -108,6 +117,11 @@ export function qualifies(type: BadgeType, w: Workout[], s: DailyStat[]): boolea
       }
       return false;
     }
+    default:
+      // Unknown badge type — adding a new BADGE_DEFINITIONS entry without a
+      // matching case will silently never award. Returning false here makes
+      // the omission visible (no award) instead of returning undefined.
+      return false;
   }
 }
 
@@ -134,14 +148,21 @@ export async function checkAchievements(userId: string): Promise<BadgeType[]> {
   const toAward = pending.filter((b) => qualifies(b.type, userWorkouts, userStats));
   if (toAward.length === 0) return [];
 
-  await db.insert(achievements).values(
-    toAward.map((b) => ({
-      userId,
-      badgeType: b.type,
-      badgeName: b.name,
-      description: b.description,
-    }))
-  );
+  // onConflictDoNothing pairs with the unique (user_id, badge_type) index to
+  // make concurrent checkAchievements() calls idempotent — without it, two
+  // racing mutations could each pass the existence check and double-insert.
+  const inserted = await db
+    .insert(achievements)
+    .values(
+      toAward.map((b) => ({
+        userId,
+        badgeType: b.type,
+        badgeName: b.name,
+        description: b.description,
+      }))
+    )
+    .onConflictDoNothing({ target: [achievements.userId, achievements.badgeType] })
+    .returning({ badgeType: achievements.badgeType });
 
-  return toAward.map((b) => b.type);
+  return inserted.map((row) => row.badgeType as BadgeType);
 }

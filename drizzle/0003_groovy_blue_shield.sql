@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "achievements_user_badge_idx" ON "achievements" USING btree ("user_id","badge_type");

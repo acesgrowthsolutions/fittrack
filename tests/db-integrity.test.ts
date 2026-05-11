@@ -2,10 +2,8 @@ import { execSync } from "node:child_process";
 import { describe, it, expect } from "vitest";
 
 /**
- * Reproduces BUG M2 by inspecting the live Postgres schema.
- *
- * The achievements table does NOT have a unique constraint on
- * (user_id, badge_type), so concurrent writes can create duplicate badges.
+ * Verifies that the live Postgres schema enforces invariants that the
+ * application code relies on. Run against the docker-compose dev DB.
  */
 
 function psql(sql: string): string {
@@ -15,27 +13,19 @@ function psql(sql: string): string {
   ).trim();
 }
 
-describe("BUG M2: achievements table lacks unique (user_id, badge_type)", () => {
-  it("no unique constraint exists on (user_id, badge_type)", () => {
-    const result = psql(`
-      SELECT conname
-      FROM pg_constraint c
-      JOIN pg_class t ON c.conrelid = t.oid
-      WHERE t.relname = 'achievements' AND c.contype = 'u';
-    `);
-    // BUG: empty result means no unique constraint — duplicates are allowed
-    expect(result).toBe("");
-  });
-
-  it("no unique index on (user_id, badge_type) — only the pkey is unique", () => {
+describe("achievements: unique (user_id, badge_type) enforced", () => {
+  // Pairs with onConflictDoNothing in checkAchievements() to make concurrent
+  // award attempts idempotent. Without this index, two racing requests can
+  // both pass the existence check and double-insert.
+  it("a unique index on (user_id, badge_type) exists", () => {
     const result = psql(`
       SELECT indexname FROM pg_indexes
       WHERE tablename = 'achievements'
         AND indexdef ILIKE '%UNIQUE%'
-        AND indexname <> 'achievements_pkey';
+        AND indexdef ILIKE '%user_id%'
+        AND indexdef ILIKE '%badge_type%';
     `);
-    // BUG: no app-level unique constraint; only the id primary key is unique
-    expect(result).toBe("");
+    expect(result).not.toBe("");
   });
 });
 

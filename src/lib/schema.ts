@@ -276,7 +276,10 @@ export const achievements = pgTable(
     earnedAt: timestamp("earned_at").defaultNow().notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
-  (table) => [index("achievements_user_id_idx").on(table.userId)]
+  (table) => [
+    index("achievements_user_id_idx").on(table.userId),
+    uniqueIndex("achievements_user_badge_idx").on(table.userId, table.badgeType),
+  ]
 );
 
 // Tracks gateable actions (e.g. paid AI calls) so we can enforce per-user
