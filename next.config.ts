@@ -27,7 +27,21 @@ const nextConfig: NextConfig = {
 
   // Security headers
   async headers() {
+    // Minimal Content-Security-Policy: only directives that do NOT fall back
+    // to default-src, so script/style/img/connect remain unrestricted and
+    // can't break legitimate flows (Sentry telemetry, Vercel Analytics, the
+    // inline tz cookie script, blob meal images, OAuth avatars, etc.). A
+    // fuller policy with script-src/connect-src needs a CSP-Report-Only
+    // rollout to discover violations first — left for a future pass.
+    const csp = [
+      "base-uri 'self'", // can't override <base href> to redirect relative URLs
+      "form-action 'self'", // form posts can only go to this origin
+      "frame-ancestors 'none'", // CSP-level X-Frame-Options DENY
+      "object-src 'none'", // block <object>/<embed>/<applet> plugins
+    ].join("; ");
+
     const baseHeaders = [
+      { key: "Content-Security-Policy", value: csp },
       { key: "X-Frame-Options", value: "DENY" },
       { key: "X-Content-Type-Options", value: "nosniff" },
       { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
