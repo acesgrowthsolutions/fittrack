@@ -1,0 +1,36 @@
+version: 2
+updates:
+  # App dependencies. Weekly cadence keeps the PR queue manageable; security
+  # advisories still fire immediately regardless of schedule. Grouped so a
+  # single PR can update related ecosystems (e.g. all @sentry/* together)
+  # rather than spamming one PR per package.
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      sentry:
+        patterns: ["@sentry/*"]
+      drizzle:
+        patterns: ["drizzle-*"]
+      radix:
+        patterns: ["@radix-ui/*"]
+      ai-sdk:
+        patterns: ["@ai-sdk/*", "ai", "@openrouter/*"]
+      better-auth:
+        patterns: ["better-auth", "better-auth/*"]
+      types:
+        patterns: ["@types/*"]
+      eslint:
+        patterns: ["eslint", "eslint-*", "@eslint/*", "typescript-eslint"]
+
+  # Workflow action versions (actions/checkout, pnpm/action-setup, etc.).
+  # Updates here are usually trivial but security-relevant — pinning to old
+  # actions can ship known CVEs.
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 3
