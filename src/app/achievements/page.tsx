@@ -19,6 +19,7 @@ import {
 import { toast } from "sonner";
 import { UserProfile } from "@/components/auth/user-profile";
 import { Card, CardContent } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSession } from "@/lib/auth-client";
 import { BADGE_DEFINITIONS, type BadgeType } from "@/lib/badge-definitions";
@@ -30,6 +31,20 @@ interface Achievement {
   badgeName: string;
   description: string;
   earnedAt: string;
+}
+
+type BadgeProgress =
+  | { kind: "numeric"; current: number; target: number; unit: string }
+  | { kind: "no-tracker"; reason: string };
+
+interface AchievementsResponse {
+  earned: Achievement[];
+  progress: Record<string, BadgeProgress>;
+}
+
+// Strips trailing .0 so "5 / 5 km" doesn't render as "5.0 / 5 km".
+function fmtNumber(n: number): string {
+  return Number.isInteger(n) ? n.toString() : n.toFixed(1);
 }
 
 interface BadgeStyle {
@@ -75,13 +90,16 @@ const DEFAULT_STYLE: BadgeStyle = {
 export default function AchievementsPage() {
   const { data: session, isPending } = useSession();
   const [earned, setEarned] = useState<Achievement[]>([]);
+  const [progress, setProgress] = useState<Record<string, BadgeProgress>>({});
   const [loading, setLoading] = useState(true);
 
   const fetchAchievements = useCallback(async () => {
     try {
       const res = await fetch("/api/fitness/achievements");
       if (!res.ok) throw new Error("Failed to fetch achievements");
-      setEarned(await res.json());
+      const data: AchievementsResponse = await res.json();
+      setEarned(data.earned);
+      setProgress(data.progress);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to load achievements");
     } finally {
@@ -120,11 +138,17 @@ export default function AchievementsPage() {
   return (
     <div className="container mx-auto space-y-6 p-6">
       {/* Header */}
-      <div>
+      <div className="space-y-2">
         <h1 className="text-2xl font-bold">Achievements</h1>
-        <p className="text-muted-foreground">
-          {earned.length} of {BADGE_DEFINITIONS.length} badges earned
-        </p>
+        <div className="space-y-1">
+          <p className="text-muted-foreground text-sm">
+            {earned.length} of {BADGE_DEFINITIONS.length} badges earned
+          </p>
+          <Progress
+            value={Math.round((earned.length / Math.max(1, BADGE_DEFINITIONS.length)) * 100)}
+            className="h-2 max-w-md"
+          />
+        </div>
       </div>
 
       {loading ? (
@@ -140,9 +164,23 @@ export default function AchievementsPage() {
             const earnedData = earned.find((a) => a.badgeType === badge.type);
             const style = BADGE_STYLES[badge.type] ?? DEFAULT_STYLE;
             const Icon = style.icon;
+            const badgeProgress = progress[badge.type];
+
+            // Render the locked card without grayscale when there's measurable
+            // progress (>0) — the user is actively working toward it, so the
+            // tile should look alive rather than dead.
+            const showProgressBar =
+              !isEarned && badgeProgress?.kind === "numeric" && badgeProgress.target > 0;
+            const pct = showProgressBar
+              ? Math.min(100, Math.round((badgeProgress.current / badgeProgress.target) * 100))
+              : 0;
+            const hasMomentum = !isEarned && pct > 0;
 
             return (
-              <Card key={badge.type} className={isEarned ? "" : "opacity-50 grayscale"}>
+              <Card
+                key={badge.type}
+                className={isEarned ? "" : hasMomentum ? "opacity-80" : "opacity-50 grayscale"}
+              >
                 <CardContent className="flex flex-col items-center space-y-2 p-4 text-center">
                   <div className={`rounded-full p-3 ${isEarned ? style.bgColor : "bg-muted"}`}>
                     {isEarned ? (
@@ -153,6 +191,7 @@ export default function AchievementsPage() {
                   </div>
                   <p className="text-sm font-semibold">{badge.name}</p>
                   <p className="text-muted-foreground text-xs">{badge.description}</p>
+
                   {isEarned && earnedData && (
                     <p className="text-muted-foreground text-xs">
                       Earned{" "}
@@ -161,6 +200,22 @@ export default function AchievementsPage() {
                         day: "numeric",
                         year: "numeric",
                       })}
+                    </p>
+                  )}
+
+                  {showProgressBar && (
+                    <div className="w-full space-y-1 pt-1">
+                      <Progress value={pct} className="h-1.5" />
+                      <p className="text-muted-foreground text-xs tabular-nums">
+                        {fmtNumber(badgeProgress.current)} / {fmtNumber(badgeProgress.target)}{" "}
+                        {badgeProgress.unit}
+                      </p>
+                    </div>
+                  )}
+
+                  {!isEarned && badgeProgress?.kind === "no-tracker" && badgeProgress.reason && (
+                    <p className="text-muted-foreground pt-1 text-xs italic">
+                      {badgeProgress.reason}
                     </p>
                   )}
                 </CardContent>

@@ -1,8 +1,9 @@
 import { headers } from "next/headers";
-import { eq, desc } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
+import { computeAllProgress } from "@/lib/badge-progress";
 import { db } from "@/lib/db";
-import { achievements } from "@/lib/schema";
+import { achievements, dailyStats, workouts } from "@/lib/schema";
 
 export async function GET() {
   try {
@@ -11,13 +12,24 @@ export async function GET() {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const results = await db
-      .select()
-      .from(achievements)
-      .where(eq(achievements.userId, session.user.id))
-      .orderBy(desc(achievements.earnedAt));
+    const userId = session.user.id;
 
-    return Response.json(results);
+    // Pull earned achievements plus the raw inputs needed to compute progress
+    // toward un-earned ones, all in parallel. Same set checkAchievements()
+    // already reads, so no extra round-trip vs the previous behavior.
+    const [earned, userWorkouts, userStats] = await Promise.all([
+      db
+        .select()
+        .from(achievements)
+        .where(eq(achievements.userId, userId))
+        .orderBy(desc(achievements.earnedAt)),
+      db.select().from(workouts).where(eq(workouts.userId, userId)),
+      db.select().from(dailyStats).where(eq(dailyStats.userId, userId)),
+    ]);
+
+    const progress = computeAllProgress(userWorkouts, userStats);
+
+    return Response.json({ earned, progress });
   } catch (error) {
     console.error("Error fetching achievements:", error);
     return Response.json({ error: "Failed to fetch achievements" }, { status: 500 });
