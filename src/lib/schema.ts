@@ -174,6 +174,14 @@ export const workouts = pgTable(
   (table) => [
     index("workouts_user_id_idx").on(table.userId),
     index("workouts_date_idx").on(table.workoutDate),
+    // Composite serves `WHERE user_id = ? AND workout_date {>=,BETWEEN} ?`
+    // patterns used by /api/fitness/summary, workouts/totals, and the
+    // streak calculation. Without it Postgres has to pick one single-column
+    // index and discard rows by the other filter, which is fine at 50 rows
+    // and slow at 10k+. Leftmost-prefix usage means this also serves
+    // user_id-only queries; the single workouts_user_id_idx is now
+    // redundant but kept to avoid a destructive migration here.
+    index("workouts_user_date_idx").on(table.userId, table.workoutDate),
   ]
 );
 

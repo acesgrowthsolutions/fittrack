@@ -50,17 +50,23 @@ describeIfDb("workouts: index layout", () => {
     await client?.end({ timeout: 1 });
   });
 
-  it("workouts has separate user_id and workout_date indexes (no composite)", async () => {
-    const result = await client<{ indexname: string }[]>`
-      SELECT indexname FROM pg_indexes
+  // The composite serves WHERE user_id = ? AND workout_date {>=, BETWEEN} ?
+  // (the summary / totals / streak query shape) and, via leftmost-prefix
+  // usage, also serves user_id-only filters.
+  it("workouts has a composite (user_id, workout_date) index", async () => {
+    const result = await client<{ indexdef: string }[]>`
+      SELECT indexdef FROM pg_indexes
       WHERE tablename = 'workouts'
-      ORDER BY indexname;
+        AND indexdef ILIKE '%user_id%'
+        AND indexdef ILIKE '%workout_date%';
     `;
-    const names = result.map((r) => r.indexname);
-    expect(names).toContain("workouts_user_id_idx");
-    expect(names).toContain("workouts_date_idx");
-    // Documents the absence of a composite (user_id, workout_date) index —
-    // a known H4 opportunity from the audit, not yet acted on.
-    expect(names.some((n) => /user.*date|date.*user/i.test(n))).toBe(false);
+    expect(result.length).toBeGreaterThan(0);
+  });
+
+  it("workouts retains the date-only index for range-by-date queries", async () => {
+    const result = await client<{ indexname: string }[]>`
+      SELECT indexname FROM pg_indexes WHERE tablename = 'workouts';
+    `;
+    expect(result.map((r) => r.indexname)).toContain("workouts_date_idx");
   });
 });
