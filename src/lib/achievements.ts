@@ -48,6 +48,56 @@ export const BADGE_DEFINITIONS = [
     name: "Early Bird",
     description: "Log a workout before 7 AM",
   },
+  {
+    type: "getting_started",
+    name: "Getting Started",
+    description: "Complete 5 workouts",
+  },
+  {
+    type: "half_century",
+    name: "Half Century",
+    description: "Complete 50 workouts",
+  },
+  {
+    type: "five_k_club",
+    name: "5K Club",
+    description: "Run 5 km or more in a single workout",
+  },
+  {
+    type: "ten_k_club",
+    name: "10K Club",
+    description: "Run 10 km or more in a single workout",
+  },
+  {
+    type: "trailblazer",
+    name: "Trailblazer",
+    description: "Run a cumulative 100 km",
+  },
+  {
+    type: "step_master",
+    name: "Step Master",
+    description: "Reach 20,000 steps in a single day",
+  },
+  {
+    type: "long_session",
+    name: "Long Session",
+    description: "Complete a workout of 90 minutes or longer",
+  },
+  {
+    type: "calorie_crusher",
+    name: "Calorie Crusher",
+    description: "Burn 1,000 calories in a single workout",
+  },
+  {
+    type: "well_rounded",
+    name: "Well-Rounded",
+    description: "Complete 3 different workout types in a single calendar week",
+  },
+  {
+    type: "two_week_wonder",
+    name: "Two-Week Wonder",
+    description: "Log workouts on 14 consecutive days",
+  },
 ] as const;
 
 type BadgeType = (typeof BADGE_DEFINITIONS)[number]["type"];
@@ -58,17 +108,45 @@ export function qualifies(type: BadgeType, w: Workout[], s: DailyStat[]): boolea
   switch (type) {
     case "first_workout":
       return w.length >= 1;
+    case "getting_started":
+      return w.length >= 5;
+    case "half_century":
+      return w.length >= 50;
     case "century_club":
       return w.length >= 100;
     case "10k_steps":
       return s.some((d) => d.steps >= 10000);
+    case "step_master":
+      return s.some((d) => d.steps >= 20000);
+    case "long_session":
+      return w.some((x) => x.durationMinutes >= 90);
+    case "calorie_crusher":
+      return w.some((x) => x.caloriesBurned >= 1000);
+    case "five_k_club":
+      return w.some(
+        (x) => x.type === "running" && x.distanceKm != null && parseFloat(x.distanceKm) >= 5
+      );
+    case "ten_k_club":
+      return w.some(
+        (x) => x.type === "running" && x.distanceKm != null && parseFloat(x.distanceKm) >= 10
+      );
     case "half_marathon": {
-      const total = w.reduce((sum, x) => sum + (x.distanceKm ? parseFloat(x.distanceKm) : 0), 0);
+      const total = w
+        .filter((x) => x.type === "running")
+        .reduce((sum, x) => sum + (x.distanceKm ? parseFloat(x.distanceKm) : 0), 0);
       return total >= 21.1;
     }
     case "marathon": {
-      const total = w.reduce((sum, x) => sum + (x.distanceKm ? parseFloat(x.distanceKm) : 0), 0);
+      const total = w
+        .filter((x) => x.type === "running")
+        .reduce((sum, x) => sum + (x.distanceKm ? parseFloat(x.distanceKm) : 0), 0);
       return total >= 42.2;
+    }
+    case "trailblazer": {
+      const total = w
+        .filter((x) => x.type === "running")
+        .reduce((sum, x) => sum + (x.distanceKm ? parseFloat(x.distanceKm) : 0), 0);
+      return total >= 100;
     }
     case "speed_demon":
       // Pace badge only applies to running — a cycling session at 30 km/h
@@ -114,6 +192,46 @@ export function qualifies(type: BadgeType, w: Workout[], s: DailyStat[]): boolea
         const diffDays = Math.round((curr - prev) / (24 * 60 * 60 * 1000));
         streak = diffDays === 1 ? streak + 1 : 1;
         if (streak >= 7) return true;
+      }
+      return false;
+    }
+    case "two_week_wonder": {
+      // 14 consecutive calendar days with at least one workout
+      const dates = Array.from(new Set(w.map((x) => x.workoutDate))).sort();
+      let streak = 1;
+      for (let i = 1; i < dates.length; i++) {
+        const prev = new Date(dates[i - 1] as string).getTime();
+        const curr = new Date(dates[i] as string).getTime();
+        const diffDays = Math.round((curr - prev) / (24 * 60 * 60 * 1000));
+        streak = diffDays === 1 ? streak + 1 : 1;
+        if (streak >= 14) return true;
+      }
+      return false;
+    }
+    case "well_rounded": {
+      // 3+ distinct workout types within any 7-calendar-day window.
+      // Group workouts by date, then slide a 7-day window over the sorted
+      // unique-date timeline and count distinct types inside it.
+      const dayTypes = new Map<string, Set<string>>();
+      for (const x of w) {
+        let set = dayTypes.get(x.workoutDate);
+        if (!set) {
+          set = new Set();
+          dayTypes.set(x.workoutDate, set);
+        }
+        set.add(x.type);
+      }
+      const sortedDates = [...dayTypes.keys()].sort();
+      const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+      for (let i = 0; i < sortedDates.length; i++) {
+        const windowTypes = new Set<string>();
+        const startMs = new Date(sortedDates[i] as string).getTime();
+        for (let j = i; j < sortedDates.length; j++) {
+          const dayMs = new Date(sortedDates[j] as string).getTime();
+          if (dayMs - startMs >= WEEK_MS) break;
+          for (const t of dayTypes.get(sortedDates[j] as string) ?? []) windowTypes.add(t);
+          if (windowTypes.size >= 3) return true;
+        }
       }
       return false;
     }

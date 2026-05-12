@@ -115,6 +115,152 @@ describe("early_bird is deferred", () => {
   });
 });
 
+describe("workout-count badges", () => {
+  it("getting_started fires at 5 workouts and not before", () => {
+    const four = Array.from({ length: 4 }, () => mkWorkout());
+    const five = Array.from({ length: 5 }, () => mkWorkout());
+    expect(qualifies("getting_started", four, [])).toBe(false);
+    expect(qualifies("getting_started", five, [])).toBe(true);
+  });
+
+  it("half_century fires at 50 workouts and not before", () => {
+    const fortyNine = Array.from({ length: 49 }, () => mkWorkout());
+    const fifty = Array.from({ length: 50 }, () => mkWorkout());
+    expect(qualifies("half_century", fortyNine, [])).toBe(false);
+    expect(qualifies("half_century", fifty, [])).toBe(true);
+  });
+});
+
+describe("distance badges are running-only", () => {
+  it("five_k_club requires a single 5+km RUN", () => {
+    expect(qualifies("five_k_club", [mkWorkout({ type: "cycling", distanceKm: "50" })], [])).toBe(
+      false
+    );
+    expect(qualifies("five_k_club", [mkWorkout({ type: "running", distanceKm: "4.9" })], [])).toBe(
+      false
+    );
+    expect(qualifies("five_k_club", [mkWorkout({ type: "running", distanceKm: "5" })], [])).toBe(
+      true
+    );
+  });
+
+  it("ten_k_club requires a single 10+km RUN", () => {
+    expect(qualifies("ten_k_club", [mkWorkout({ type: "running", distanceKm: "9.99" })], [])).toBe(
+      false
+    );
+    expect(qualifies("ten_k_club", [mkWorkout({ type: "running", distanceKm: "10" })], [])).toBe(
+      true
+    );
+  });
+
+  it("trailblazer sums only running distance, not cycling", () => {
+    // 95km running + 50km cycling = 145km but only 95km counts → no badge
+    const w = [
+      mkWorkout({ type: "running", distanceKm: "50" }),
+      mkWorkout({ type: "running", distanceKm: "45" }),
+      mkWorkout({ type: "cycling", distanceKm: "50" }),
+    ];
+    expect(qualifies("trailblazer", w, [])).toBe(false);
+    // Add 5km more running → 100km total running, fires
+    w.push(mkWorkout({ type: "running", distanceKm: "5" }));
+    expect(qualifies("trailblazer", w, [])).toBe(true);
+  });
+
+  it("half_marathon now requires running distance (tightened from earlier behavior)", () => {
+    // Pure cycling no longer qualifies — previously it incorrectly did.
+    expect(
+      qualifies("half_marathon", [mkWorkout({ type: "cycling", distanceKm: "100" })], [])
+    ).toBe(false);
+    expect(
+      qualifies("half_marathon", [mkWorkout({ type: "running", distanceKm: "21.1" })], [])
+    ).toBe(true);
+  });
+});
+
+describe("step_master", () => {
+  it("fires at 20k steps in a single day", () => {
+    expect(qualifies("step_master", [], [mkStat({ steps: 19999 })])).toBe(false);
+    expect(qualifies("step_master", [], [mkStat({ steps: 20000 })])).toBe(true);
+  });
+});
+
+describe("long_session", () => {
+  it("fires at 90+ minutes in a single workout", () => {
+    expect(qualifies("long_session", [mkWorkout({ durationMinutes: 89 })], [])).toBe(false);
+    expect(qualifies("long_session", [mkWorkout({ durationMinutes: 90 })], [])).toBe(true);
+  });
+});
+
+describe("calorie_crusher", () => {
+  it("fires at 1000+ calories burned in a single workout", () => {
+    expect(qualifies("calorie_crusher", [mkWorkout({ caloriesBurned: 999 })], [])).toBe(false);
+    expect(qualifies("calorie_crusher", [mkWorkout({ caloriesBurned: 1000 })], [])).toBe(true);
+  });
+});
+
+describe("well_rounded", () => {
+  it("fires when 3 different types appear within any 7-day window", () => {
+    const w = [
+      mkWorkout({ type: "running", workoutDate: "2026-04-10" }),
+      mkWorkout({ type: "cycling", workoutDate: "2026-04-12" }),
+      mkWorkout({ type: "yoga", workoutDate: "2026-04-15" }),
+    ];
+    expect(qualifies("well_rounded", w, [])).toBe(true);
+  });
+
+  it("does not fire when 3 types are spread across more than 7 days", () => {
+    const w = [
+      mkWorkout({ type: "running", workoutDate: "2026-04-01" }),
+      mkWorkout({ type: "cycling", workoutDate: "2026-04-10" }),
+      mkWorkout({ type: "yoga", workoutDate: "2026-04-20" }),
+    ];
+    expect(qualifies("well_rounded", w, [])).toBe(false);
+  });
+
+  it("does not fire when only 2 distinct types are logged", () => {
+    const w = Array.from({ length: 6 }, (_, i) =>
+      mkWorkout({
+        type: i % 2 === 0 ? "running" : "cycling",
+        workoutDate: `2026-04-${String(10 + i).padStart(2, "0")}`,
+      })
+    );
+    expect(qualifies("well_rounded", w, [])).toBe(false);
+  });
+});
+
+describe("two_week_wonder", () => {
+  it("fires at 14 consecutive workout days", () => {
+    const w = Array.from({ length: 14 }, (_, i) =>
+      mkWorkout({ workoutDate: `2026-04-${String(10 + i).padStart(2, "0")}` })
+    );
+    expect(qualifies("two_week_wonder", w, [])).toBe(true);
+  });
+
+  it("does not fire on a 13-day run", () => {
+    const w = Array.from({ length: 13 }, (_, i) =>
+      mkWorkout({ workoutDate: `2026-04-${String(10 + i).padStart(2, "0")}` })
+    );
+    expect(qualifies("two_week_wonder", w, [])).toBe(false);
+  });
+
+  it("breaks the streak at a gap", () => {
+    // Days 10-15 (6), gap on 16, days 17-23 (7) — longest is 7, not 14
+    const dates = ["10", "11", "12", "13", "14", "15", "17", "18", "19", "20", "21", "22", "23"];
+    const w = dates.map((d) => mkWorkout({ workoutDate: `2026-04-${d.padStart(2, "0")}` }));
+    expect(qualifies("two_week_wonder", w, [])).toBe(false);
+  });
+
+  it("multiple workouts on the same day count as one", () => {
+    // 14 workouts but only 7 distinct days → no badge
+    const w: ReturnType<typeof mkWorkout>[] = [];
+    for (let i = 0; i < 7; i++) {
+      w.push(mkWorkout({ workoutDate: `2026-04-${String(10 + i).padStart(2, "0")}` }));
+      w.push(mkWorkout({ workoutDate: `2026-04-${String(10 + i).padStart(2, "0")}` }));
+    }
+    expect(qualifies("two_week_wonder", w, [])).toBe(false);
+  });
+});
+
 describe("week_warrior correctness", () => {
   it("requires 7 consecutive days with activity", () => {
     const s = Array.from({ length: 7 }, (_, i) =>
