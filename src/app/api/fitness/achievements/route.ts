@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import { desc, eq } from "drizzle-orm";
+import { checkAchievements } from "@/lib/achievements";
 import { auth } from "@/lib/auth";
 import { computeAllProgress } from "@/lib/badge-progress";
 import { db } from "@/lib/db";
@@ -13,6 +14,17 @@ export async function GET() {
     }
 
     const userId = session.user.id;
+
+    // Lazy backfill: award any badges the user newly qualifies for before we
+    // read. Catches users who already met the criteria for a badge before
+    // that badge existed in BADGE_DEFINITIONS (e.g. the 10 added in a later
+    // release) — without this, those users would never see them awarded
+    // because checkAchievements otherwise only runs after a mutating event
+    // (workout/steps log). Safe on every visit: the unique index +
+    // onConflictDoNothing inside checkAchievements make it idempotent.
+    await checkAchievements(userId).catch((err) => {
+      console.error("Lazy checkAchievements failed for", userId, err);
+    });
 
     // Pull earned achievements plus the raw inputs needed to compute progress
     // toward un-earned ones, all in parallel. Same set checkAchievements()

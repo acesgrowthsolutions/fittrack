@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import { eq, and } from "drizzle-orm";
+import { checkAchievements } from "@/lib/achievements";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { workouts } from "@/lib/schema";
@@ -77,6 +78,13 @@ export async function PUT(req: Request, { params }: Params) {
     if (!updated) {
       return Response.json({ error: "Workout not found" }, { status: 404 });
     }
+
+    // Editing duration/calories/distance can newly qualify the user for a
+    // badge (long_session, calorie_crusher, five_k_club, etc.) that the
+    // original insert didn't. Fire-and-forget; failure is non-fatal.
+    checkAchievements(session.user.id).catch((err) =>
+      console.error("Achievement check after workout edit failed:", err)
+    );
 
     return Response.json(updated);
   } catch (error) {
