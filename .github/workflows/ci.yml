@@ -52,6 +52,8 @@ jobs:
 
       - run: pnpm lint
 
+      - run: pnpm format:check
+
       - run: pnpm typecheck
 
       # Apply migrations so the schema is in the state db-integrity.test.ts
@@ -59,3 +61,7 @@ jobs:
       - run: pnpm db:migrate
 
       - run: pnpm test
+
+      # Verify the production build compiles. Catches Sentry/Turbopack/route
+      # config regressions that lint and typecheck miss.
+      - run: pnpm build:ci
