@@ -9,6 +9,7 @@ import { UserProfile } from "@/components/auth/user-profile";
 import { ActivityRing } from "@/components/fitness/activity-ring";
 import { CalorieChart } from "@/components/fitness/calorie-chart";
 import { GoalCard } from "@/components/fitness/goal-card";
+import { LifetimeTracker } from "@/components/fitness/lifetime-tracker";
 import { StatCard } from "@/components/fitness/stat-card";
 import { WeeklyChart } from "@/components/fitness/weekly-chart";
 import { WorkoutCard } from "@/components/fitness/workout-card";
@@ -317,6 +318,9 @@ export default function DashboardPage() {
           }))}
         />
       </div>
+
+      {/* Lifetime Tracker */}
+      <LifetimeTracker />
 
       {/* Bottom Row: Recent Workouts + Active Goals */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
