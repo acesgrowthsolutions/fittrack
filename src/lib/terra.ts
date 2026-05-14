@@ -240,3 +240,38 @@ export type TerraWebhookEvent =
   | TerraDeauthEvent
   | TerraDailyEvent
   | { type: string; user?: TerraUser; [key: string]: unknown };
+
+/**
+ * Parses one daily entry into the shape we store in `daily_stats`. Returns
+ * null if the entry has no usable date — those get dropped, not zero-filled.
+ *
+ * `start_time` is treated as the local-day boundary: Terra includes the tz
+ * offset in the string, so the YYYY-MM-DD prefix is already the user's
+ * local date for that summary. Slicing 10 chars avoids re-deriving tz here.
+ */
+export function mapDailyEntry(entry: TerraDailyEntry): {
+  date: string;
+  steps: number;
+  distanceKm: string;
+  caloriesBurned: number;
+  activeMinutes: number;
+} | null {
+  const start = entry.metadata?.start_time;
+  if (typeof start !== "string" || start.length < 10) return null;
+  const date = start.slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;
+
+  const steps = Math.max(0, Math.round(entry.distance_data?.steps ?? 0));
+  const distanceMeters = Math.max(0, entry.distance_data?.distance_meters ?? 0);
+  const distanceKm = (distanceMeters / 1000).toFixed(2);
+  const caloriesBurned = Math.max(
+    0,
+    Math.round(entry.calories_data?.total_burned_calories ?? 0)
+  );
+  const activeMinutes = Math.max(
+    0,
+    Math.round((entry.active_durations_data?.activity_seconds ?? 0) / 60)
+  );
+
+  return { date, steps, distanceKm, caloriesBurned, activeMinutes };
+}
