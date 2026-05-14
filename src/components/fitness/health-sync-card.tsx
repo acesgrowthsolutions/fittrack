@@ -176,8 +176,10 @@ export function HealthSyncCard({ onConnectionChange }: HealthSyncCardProps) {
         <div>
           <p className="font-semibold">Sync with Apple Health or Google Fit</p>
           <p className="text-muted-foreground text-xs">
-            Pulls your actual step count from your phone&apos;s health app — more
-            accurate than the in-browser tracker.
+            <span className="text-foreground font-medium">No watch needed</span> —
+            your iPhone or Android already counts steps with its built-in motion
+            chip. A wearable (Fitbit, Garmin, Whoop, Oura) just adds heart-rate
+            and workout detail if you have one.
           </p>
         </div>
       </div>
@@ -185,6 +187,12 @@ export function HealthSyncCard({ onConnectionChange }: HealthSyncCardProps) {
         {connecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Link2 className="h-4 w-4" />}
         Connect health app
       </Button>
+      <p className="text-muted-foreground border-t pt-3 text-xs">
+        Don&apos;t want to connect? You can also leave the in-browser tracker
+        below running while you walk, or tap{" "}
+        <span className="text-foreground font-medium">Edit manually</span> at the
+        top of this page to type in a step count.
+      </p>
     </div>
   );
 }
