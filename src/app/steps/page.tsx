@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Footprints, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { UserProfile } from "@/components/auth/user-profile";
+import { HealthSyncCard } from "@/components/fitness/health-sync-card";
 import { StepForm } from "@/components/fitness/step-form";
 import { StepTracker } from "@/components/fitness/step-tracker";
 import { WeeklyChart } from "@/components/fitness/weekly-chart";
@@ -48,6 +49,11 @@ export default function StepsPage() {
   const [stepGoal, setStepGoal] = useState(10000);
   const [userHeightCm, setUserHeightCm] = useState<number | null>(null);
   const [userWeightKg, setUserWeightKg] = useState<number | null>(null);
+  // When a health app is connected, hide the in-browser accelerometer
+  // tracker — otherwise the user could log steps twice (once via the page,
+  // once via Apple Health / Google Fit), and the webhook OVERWRITE would
+  // clobber the in-browser deltas anyway.
+  const [healthConnected, setHealthConnected] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
@@ -154,13 +160,18 @@ export default function StepsPage() {
         </Dialog>
       </div>
 
-      {/* Auto step tracker */}
-      <StepTracker
-        initialTodaySteps={todayStats?.steps ?? 0}
-        userHeightCm={userHeightCm}
-        userWeightKg={userWeightKg}
-        onSaved={fetchData}
-      />
+      {/* Health-app integration (Terra) */}
+      <HealthSyncCard onConnectionChange={setHealthConnected} />
+
+      {/* In-browser auto step tracker — hidden when a health app is syncing */}
+      {!healthConnected && (
+        <StepTracker
+          initialTodaySteps={todayStats?.steps ?? 0}
+          userHeightCm={userHeightCm}
+          userWeightKg={userWeightKg}
+          onSaved={fetchData}
+        />
+      )}
 
       {/* Today's Progress */}
       <Card>
