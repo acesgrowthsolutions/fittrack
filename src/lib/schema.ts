@@ -290,6 +290,43 @@ export const achievements = pgTable(
   ]
 );
 
+// Per-user connection state for an external health-data provider (Terra in
+// v1, but the schema stays provider-agnostic). One row per (user, provider);
+// `externalUserId` is the provider's internal user identifier (e.g. Terra's
+// user_id), and `source` is the underlying datasource Terra is reading from
+// (APPLE, GOOGLE, FITBIT, …). `status="active"` means we should accept
+// webhook payloads for this row; `disconnected` is a soft-delete kept around
+// so re-connecting can refresh the same row.
+export const healthIntegrationStatusEnum = pgEnum("health_integration_status", [
+  "active",
+  "disconnected",
+]);
+
+export const healthIntegration = pgTable(
+  "health_integration",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    provider: text("provider").notNull(),
+    externalUserId: text("external_user_id").notNull(),
+    source: text("source"),
+    status: healthIntegrationStatusEnum("status").default("active").notNull(),
+    connectedAt: timestamp("connected_at").defaultNow().notNull(),
+    lastSyncAt: timestamp("last_sync_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    uniqueIndex("health_integration_user_provider_idx").on(table.userId, table.provider),
+    uniqueIndex("health_integration_external_idx").on(table.provider, table.externalUserId),
+  ]
+);
+
 // Tracks gateable actions (e.g. paid AI calls) so we can enforce per-user
 // sliding-window rate limits. Rows are append-only; old rows are pruned by
 // checkRateLimit() on each call.
