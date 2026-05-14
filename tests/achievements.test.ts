@@ -278,3 +278,171 @@ describe("week_warrior correctness", () => {
     expect(qualifies("week_warrior", [], s)).toBe(false);
   });
 });
+
+describe("night_owl (hidden)", () => {
+  // Uses createdAt UTC. Window is [22:00, 04:00) — h >= 22 OR h < 4.
+  it("fires when a workout is logged at 22:00 UTC (boundary inclusive)", () => {
+    const w = [mkWorkout({ createdAt: new Date("2026-04-15T22:00:00Z") })];
+    expect(qualifies("night_owl", w, [])).toBe(true);
+  });
+
+  it("fires when a workout is logged at 02:00 UTC", () => {
+    const w = [mkWorkout({ createdAt: new Date("2026-04-15T02:30:00Z") })];
+    expect(qualifies("night_owl", w, [])).toBe(true);
+  });
+
+  it("does not fire at 21:59 UTC (one minute before the window opens)", () => {
+    const w = [mkWorkout({ createdAt: new Date("2026-04-15T21:59:00Z") })];
+    expect(qualifies("night_owl", w, [])).toBe(false);
+  });
+
+  it("does not fire at 04:00 UTC (boundary exclusive)", () => {
+    const w = [mkWorkout({ createdAt: new Date("2026-04-15T04:00:00Z") })];
+    expect(qualifies("night_owl", w, [])).toBe(false);
+  });
+
+  it("does not fire mid-day", () => {
+    const w = [mkWorkout({ createdAt: new Date("2026-04-15T12:00:00Z") })];
+    expect(qualifies("night_owl", w, [])).toBe(false);
+  });
+});
+
+describe("comeback_kid (hidden)", () => {
+  it("does not fire with a single workout", () => {
+    expect(qualifies("comeback_kid", [mkWorkout()], [])).toBe(false);
+  });
+
+  it("fires when two workouts are exactly 30 days apart", () => {
+    const w = [
+      mkWorkout({ workoutDate: "2026-04-01" }),
+      mkWorkout({ workoutDate: "2026-05-01" }),
+    ];
+    expect(qualifies("comeback_kid", w, [])).toBe(true);
+  });
+
+  it("does not fire on a 29-day gap", () => {
+    const w = [
+      mkWorkout({ workoutDate: "2026-04-01" }),
+      mkWorkout({ workoutDate: "2026-04-30" }),
+    ];
+    expect(qualifies("comeback_kid", w, [])).toBe(false);
+  });
+
+  it("fires when a long gap appears anywhere in the history", () => {
+    // dense activity for a week, 35-day break, then return
+    const dates = ["10", "11", "12", "13", "14", "15", "16"];
+    const w = dates.map((d) => mkWorkout({ workoutDate: `2026-04-${d.padStart(2, "0")}` }));
+    w.push(mkWorkout({ workoutDate: "2026-05-21" }));
+    expect(qualifies("comeback_kid", w, [])).toBe(true);
+  });
+
+  it("collapses duplicate workouts on the same day", () => {
+    // Two workouts on the same day shouldn't satisfy the 2-date minimum.
+    const w = [
+      mkWorkout({ workoutDate: "2026-04-15" }),
+      mkWorkout({ workoutDate: "2026-04-15" }),
+    ];
+    expect(qualifies("comeback_kid", w, [])).toBe(false);
+  });
+});
+
+describe("triathlete (hidden)", () => {
+  it("fires when running + cycling + swimming all on the same date", () => {
+    const w = [
+      mkWorkout({ type: "running", workoutDate: "2026-04-15" }),
+      mkWorkout({ type: "cycling", workoutDate: "2026-04-15" }),
+      mkWorkout({ type: "swimming", workoutDate: "2026-04-15" }),
+    ];
+    expect(qualifies("triathlete", w, [])).toBe(true);
+  });
+
+  it("does not fire when one discipline is missing on the day", () => {
+    const w = [
+      mkWorkout({ type: "running", workoutDate: "2026-04-15" }),
+      mkWorkout({ type: "cycling", workoutDate: "2026-04-15" }),
+    ];
+    expect(qualifies("triathlete", w, [])).toBe(false);
+  });
+
+  it("does not fire when the three disciplines are spread across different days", () => {
+    const w = [
+      mkWorkout({ type: "running", workoutDate: "2026-04-15" }),
+      mkWorkout({ type: "cycling", workoutDate: "2026-04-16" }),
+      mkWorkout({ type: "swimming", workoutDate: "2026-04-17" }),
+    ];
+    expect(qualifies("triathlete", w, [])).toBe(false);
+  });
+
+  it("fires if any single day has all three, even if other days are partial", () => {
+    const w = [
+      mkWorkout({ type: "running", workoutDate: "2026-04-10" }),
+      mkWorkout({ type: "running", workoutDate: "2026-04-15" }),
+      mkWorkout({ type: "cycling", workoutDate: "2026-04-15" }),
+      mkWorkout({ type: "swimming", workoutDate: "2026-04-15" }),
+    ];
+    expect(qualifies("triathlete", w, [])).toBe(true);
+  });
+});
+
+describe("weekend_warrior (hidden)", () => {
+  // In 2026, Saturdays are Apr 4, Apr 11, Apr 18, Apr 25.
+  function satSun(sat: string, sun: string) {
+    return [
+      mkWorkout({ workoutDate: sat }),
+      mkWorkout({ workoutDate: sun }),
+    ];
+  }
+
+  it("fires on 4 consecutive Sat+Sun pairs", () => {
+    const w = [
+      ...satSun("2026-04-04", "2026-04-05"),
+      ...satSun("2026-04-11", "2026-04-12"),
+      ...satSun("2026-04-18", "2026-04-19"),
+      ...satSun("2026-04-25", "2026-04-26"),
+    ];
+    expect(qualifies("weekend_warrior", w, [])).toBe(true);
+  });
+
+  it("does not fire on 3 consecutive Sat+Sun pairs", () => {
+    const w = [
+      ...satSun("2026-04-04", "2026-04-05"),
+      ...satSun("2026-04-11", "2026-04-12"),
+      ...satSun("2026-04-18", "2026-04-19"),
+    ];
+    expect(qualifies("weekend_warrior", w, [])).toBe(false);
+  });
+
+  it("does not fire when a Sunday is missing from a pair", () => {
+    const w = [
+      ...satSun("2026-04-04", "2026-04-05"),
+      ...satSun("2026-04-11", "2026-04-12"),
+      mkWorkout({ workoutDate: "2026-04-18" }), // Sat only
+      ...satSun("2026-04-25", "2026-04-26"),
+    ];
+    // 4 Saturdays exist, but Apr 18 has no Sunday → streak breaks after Apr 12,
+    // restarts at Apr 25 with streak 1 → never reaches 4.
+    expect(qualifies("weekend_warrior", w, [])).toBe(false);
+  });
+
+  it("does not fire when there's a gap between weekend pairs", () => {
+    const w = [
+      ...satSun("2026-04-04", "2026-04-05"),
+      ...satSun("2026-04-11", "2026-04-12"),
+      // skip 2026-04-18/19
+      ...satSun("2026-04-25", "2026-04-26"),
+      ...satSun("2026-05-02", "2026-05-03"),
+    ];
+    expect(qualifies("weekend_warrior", w, [])).toBe(false);
+  });
+
+  it("ignores mid-week workouts", () => {
+    const w = [
+      ...satSun("2026-04-04", "2026-04-05"),
+      mkWorkout({ workoutDate: "2026-04-08" }), // Wednesday, no effect
+      ...satSun("2026-04-11", "2026-04-12"),
+      ...satSun("2026-04-18", "2026-04-19"),
+      ...satSun("2026-04-25", "2026-04-26"),
+    ];
+    expect(qualifies("weekend_warrior", w, [])).toBe(true);
+  });
+});

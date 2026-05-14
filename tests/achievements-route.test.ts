@@ -41,3 +41,26 @@ describe("workout PUT re-runs checkAchievements", () => {
     expect(workoutPut).toMatch(/checkAchievements\(session\.user\.id\)/);
   });
 });
+
+describe("achievements GET strips hidden-badge progress before responding", () => {
+  // Hidden badges' criteria must not leak through the network — even users
+  // who view-source can't see numeric thresholds for badges they haven't
+  // earned. Source-level check matches the existing test style here.
+  it("imports BADGE_DEFINITIONS", () => {
+    expect(achievementsGet).toMatch(
+      /import\s+\{[^}]*BADGE_DEFINITIONS[^}]*\}\s+from\s+["']@\/lib\/badge-definitions["']/
+    );
+  });
+
+  it("deletes progress for any hidden badge before returning", () => {
+    // Loose match — accept any iteration syntax that walks BADGE_DEFINITIONS
+    // and deletes from progress for hidden entries.
+    expect(achievementsGet).toMatch(/for\s*\([^)]*BADGE_DEFINITIONS[^)]*\)/);
+    expect(achievementsGet).toMatch(/\.hidden\b/);
+    expect(achievementsGet).toMatch(/delete\s+progress\[/);
+    const stripIdx = achievementsGet.search(/delete\s+progress\[/);
+    const returnIdx = achievementsGet.indexOf("return Response.json({ earned, progress }");
+    expect(stripIdx).toBeGreaterThan(0);
+    expect(returnIdx).toBeGreaterThan(stripIdx);
+  });
+});

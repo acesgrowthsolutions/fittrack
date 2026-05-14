@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import { desc, eq } from "drizzle-orm";
 import { checkAchievements } from "@/lib/achievements";
 import { auth } from "@/lib/auth";
+import { BADGE_DEFINITIONS } from "@/lib/badge-definitions";
 import { computeAllProgress } from "@/lib/badge-progress";
 import { db } from "@/lib/db";
 import { achievements, dailyStats, workouts } from "@/lib/schema";
@@ -40,6 +41,14 @@ export async function GET() {
     ]);
 
     const progress = computeAllProgress(userWorkouts, userStats);
+
+    // Don't leak hidden-badge criteria — strip their progress before the
+    // response leaves the server. The client never sees current/target for
+    // a hidden badge it hasn't earned, so users can't reverse-engineer
+    // unlock conditions from the network tab.
+    for (const def of BADGE_DEFINITIONS) {
+      if (def.hidden) delete progress[def.type];
+    }
 
     return Response.json({ earned, progress });
   } catch (error) {

@@ -15,6 +15,11 @@ import {
   MapPin,
   Hourglass,
   Sunrise,
+  Moon,
+  CalendarDays,
+  Rocket,
+  Waves,
+  HelpCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { UserProfile } from "@/components/auth/user-profile";
@@ -79,6 +84,10 @@ const BADGE_STYLES: Record<BadgeType, BadgeStyle> = {
   calorie_crusher: { icon: Flame, color: "text-red-500", bgColor: "bg-red-500/10" },
   well_rounded: { icon: Sparkles, color: "text-lime-500", bgColor: "bg-lime-500/10" },
   two_week_wonder: { icon: Flame, color: "text-orange-600", bgColor: "bg-orange-600/10" },
+  night_owl: { icon: Moon, color: "text-indigo-400", bgColor: "bg-indigo-400/10" },
+  weekend_warrior: { icon: CalendarDays, color: "text-amber-500", bgColor: "bg-amber-500/10" },
+  comeback_kid: { icon: Rocket, color: "text-emerald-500", bgColor: "bg-emerald-500/10" },
+  triathlete: { icon: Waves, color: "text-cyan-500", bgColor: "bg-cyan-500/10" },
 };
 
 const DEFAULT_STYLE: BadgeStyle = {
@@ -161,14 +170,12 @@ export default function AchievementsPage() {
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
           {BADGE_DEFINITIONS.map((badge) => {
             const isEarned = earnedTypes.has(badge.type);
+            const isHiddenLocked = badge.hidden && !isEarned;
             const earnedData = earned.find((a) => a.badgeType === badge.type);
             const style = BADGE_STYLES[badge.type] ?? DEFAULT_STYLE;
             const Icon = style.icon;
             const badgeProgress = progress[badge.type];
 
-            // Render the locked card without grayscale when there's measurable
-            // progress (>0) — the user is actively working toward it, so the
-            // tile should look alive rather than dead.
             const showProgressBar =
               !isEarned && badgeProgress?.kind === "numeric" && badgeProgress.target > 0;
             const pct = showProgressBar
@@ -185,12 +192,16 @@ export default function AchievementsPage() {
                   <div className={`rounded-full p-3 ${isEarned ? style.bgColor : "bg-muted"}`}>
                     {isEarned ? (
                       <Icon className={`h-8 w-8 ${style.color}`} />
+                    ) : isHiddenLocked ? (
+                      <HelpCircle className="text-muted-foreground h-8 w-8" />
                     ) : (
                       <Lock className="text-muted-foreground h-8 w-8" />
                     )}
                   </div>
-                  <p className="text-sm font-semibold">{badge.name}</p>
-                  <p className="text-muted-foreground text-xs">{badge.description}</p>
+                  <p className="text-sm font-semibold">{isHiddenLocked ? "???" : badge.name}</p>
+                  <p className="text-muted-foreground text-xs">
+                    {isHiddenLocked ? "Keep exploring to unlock" : badge.description}
+                  </p>
 
                   {isEarned && earnedData && (
                     <p className="text-muted-foreground text-xs">
@@ -203,7 +214,7 @@ export default function AchievementsPage() {
                     </p>
                   )}
 
-                  {showProgressBar && (
+                  {!isHiddenLocked && showProgressBar && (
                     <div className="w-full space-y-1 pt-1">
                       <Progress value={pct} className="h-1.5" />
                       <p className="text-muted-foreground text-xs tabular-nums">
@@ -213,11 +224,14 @@ export default function AchievementsPage() {
                     </div>
                   )}
 
-                  {!isEarned && badgeProgress?.kind === "no-tracker" && badgeProgress.reason && (
-                    <p className="text-muted-foreground pt-1 text-xs italic">
-                      {badgeProgress.reason}
-                    </p>
-                  )}
+                  {!isHiddenLocked &&
+                    !isEarned &&
+                    badgeProgress?.kind === "no-tracker" &&
+                    badgeProgress.reason && (
+                      <p className="text-muted-foreground pt-1 text-xs italic">
+                        {badgeProgress.reason}
+                      </p>
+                    )}
                 </CardContent>
               </Card>
             );

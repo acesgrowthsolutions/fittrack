@@ -113,6 +113,64 @@ export function qualifies(type: BadgeType, w: Workout[], s: DailyStat[]): boolea
       }
       return false;
     }
+    case "night_owl": {
+      // Approximated from createdAt (server time, UTC on Vercel) — measures
+      // when the user *logged* the workout, not when they performed it.
+      // Same shortcoming early_bird had; acceptable for a hidden badge.
+      return w.some((x) => {
+        const h = new Date(x.createdAt).getUTCHours();
+        return h >= 22 || h < 4;
+      });
+    }
+    case "comeback_kid": {
+      // 30+ day gap between any two consecutive unique workout dates.
+      const dates = Array.from(new Set(w.map((x) => x.workoutDate))).sort();
+      if (dates.length < 2) return false;
+      for (let i = 1; i < dates.length; i++) {
+        const prev = new Date(dates[i - 1] as string).getTime();
+        const curr = new Date(dates[i] as string).getTime();
+        if ((curr - prev) / (24 * 60 * 60 * 1000) >= 30) return true;
+      }
+      return false;
+    }
+    case "triathlete": {
+      // Running + cycling + swimming all on the same calendar date.
+      const byDate = new Map<string, Set<string>>();
+      for (const x of w) {
+        let types = byDate.get(x.workoutDate);
+        if (!types) {
+          types = new Set();
+          byDate.set(x.workoutDate, types);
+        }
+        types.add(x.type);
+      }
+      for (const types of byDate.values()) {
+        if (types.has("running") && types.has("cycling") && types.has("swimming")) return true;
+      }
+      return false;
+    }
+    case "weekend_warrior": {
+      // 4 consecutive weekends with workouts on BOTH Sat and Sun. Workout
+      // dates are YYYY-MM-DD strings, so parsing as UTC keeps day-of-week
+      // arithmetic stable across the runner's local timezone.
+      const dateSet = new Set(w.map((x) => x.workoutDate));
+      const validSatMs: number[] = [];
+      for (const d of dateSet) {
+        const t = new Date((d as string) + "T00:00:00Z").getTime();
+        if (new Date(t).getUTCDay() !== 6) continue; // Saturday only
+        const sun = new Date(t + 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+        if (dateSet.has(sun)) validSatMs.push(t);
+      }
+      validSatMs.sort((a, b) => a - b);
+      const WEEK = 7 * 24 * 60 * 60 * 1000;
+      let streak = 1;
+      for (let i = 1; i < validSatMs.length; i++) {
+        const weeksApart = ((validSatMs[i] as number) - (validSatMs[i - 1] as number)) / WEEK;
+        streak = weeksApart === 1 ? streak + 1 : 1;
+        if (streak >= 4) return true;
+      }
+      return false;
+    }
     case "well_rounded": {
       // 3+ distinct workout types within any 7-calendar-day window.
       // Group workouts by date, then slide a 7-day window over the sorted

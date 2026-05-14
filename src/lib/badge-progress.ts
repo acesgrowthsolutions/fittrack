@@ -205,6 +205,16 @@ export function computeBadgeProgress(type: BadgeType, w: Workout[], s: DailyStat
     case "early_bird":
       return { kind: "no-tracker", reason: "Coming soon" };
 
+    // Hidden badges: progress is stripped from the API response before it
+    // ever reaches the client, but we still need entries here so
+    // computeAllProgress() covers every BadgeType (the exhaustiveness
+    // guard below returns "" otherwise, which is harmless but noisy).
+    case "night_owl":
+    case "weekend_warrior":
+    case "comeback_kid":
+    case "triathlete":
+      return { kind: "no-tracker", reason: "" };
+
     default:
       // Exhaustiveness guard: every badge in BADGE_DEFINITIONS must map.
       return { kind: "no-tracker", reason: "" };
