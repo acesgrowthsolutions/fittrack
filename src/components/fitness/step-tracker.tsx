@@ -8,11 +8,14 @@ import { Button } from "@/components/ui/button";
 type Status = "idle" | "permission-needed" | "tracking" | "paused";
 
 // Step detection tuning. These work well on phones held in hand or pocket.
-// We compute the magnitude of acceleration including gravity, smooth it,
-// and look for upward zero-crossings above a small threshold with a minimum
-// interval between steps (you cannot step faster than ~5/sec).
-const SMOOTHING = 0.85; // low-pass filter weight on previous value
-const STEP_THRESHOLD_MS2 = 1.05; // peak amplitude above gravity baseline
+// We compute the magnitude of acceleration, smooth it on two time scales —
+// fast for the step signal, slow for a self-calibrating baseline — then
+// peak-detect on the difference. The dynamic baseline matters because some
+// Android browsers strip gravity from `accelerationIncludingGravity`, so a
+// hardcoded 9.81 baseline never triggers on those devices.
+const SMOOTHING = 0.7; // fast low-pass weight on previous value (~50ms τ at 60Hz)
+const BASELINE_SMOOTHING = 0.97; // slow rolling mean (~550ms τ at 60Hz)
+const STEP_THRESHOLD_MS2 = 0.9; // peak amplitude above dynamic baseline
 const MIN_STEP_INTERVAL_MS = 250; // ~240 steps/min ceiling
 const STRIDE_M_FALLBACK = 0.75; // average adult stride if profile missing
 const KCAL_PER_STEP = 0.04;
@@ -56,7 +59,9 @@ export function StepTracker({
   // Refs hold values that the motion handler reads without re-rendering.
   const stepsRef = useRef(0);
   const lastStepAtRef = useRef(0);
-  const filteredRef = useRef(9.81); // start at gravity baseline
+  const filteredRef = useRef(0);
+  const baselineRef = useRef(0);
+  const initializedRef = useRef(false);
   const armedRef = useRef(true);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
@@ -74,12 +79,22 @@ export function StepTracker({
     if (!a || a.x == null || a.y == null || a.z == null) return;
 
     const magnitude = Math.sqrt(a.x * a.x + a.y * a.y + a.z * a.z);
-    const filtered = SMOOTHING * filteredRef.current + (1 - SMOOTHING) * magnitude;
-    filteredRef.current = filtered;
 
-    // Deviation from gravity baseline (~9.81). Walking peaks are typically
-    // 1–3 m/s² above baseline.
-    const deviation = filtered - 9.81;
+    // First sample seeds both filters to wherever the device sits, so the
+    // baseline doesn't have to drift up from 0 (or down from 9.81) before
+    // peaks become detectable.
+    if (!initializedRef.current) {
+      filteredRef.current = magnitude;
+      baselineRef.current = magnitude;
+      initializedRef.current = true;
+      return;
+    }
+
+    filteredRef.current = SMOOTHING * filteredRef.current + (1 - SMOOTHING) * magnitude;
+    baselineRef.current =
+      BASELINE_SMOOTHING * baselineRef.current + (1 - BASELINE_SMOOTHING) * magnitude;
+
+    const deviation = filteredRef.current - baselineRef.current;
     const now = Date.now();
     const sinceLast = now - lastStepAtRef.current;
 
@@ -183,7 +198,9 @@ export function StepTracker({
       toast.success(`Added ${steps.toLocaleString()} steps`);
       stepsRef.current = 0;
       lastStepAtRef.current = 0;
-      filteredRef.current = 9.81;
+      filteredRef.current = 0;
+      baselineRef.current = 0;
+      initializedRef.current = false;
       armedRef.current = true;
       setSteps(0);
       setSeconds(0);
@@ -204,7 +221,9 @@ export function StepTracker({
     stopMotion();
     stepsRef.current = 0;
     lastStepAtRef.current = 0;
-    filteredRef.current = 9.81;
+    filteredRef.current = 0;
+    baselineRef.current = 0;
+    initializedRef.current = false;
     armedRef.current = true;
     setSteps(0);
     setSeconds(0);
