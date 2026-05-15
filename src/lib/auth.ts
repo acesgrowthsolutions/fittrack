@@ -100,6 +100,12 @@ export const auth = betterAuth({
       // same address instead of creating a duplicate account.
       enabled: true,
       trustedProviders: ["google"],
+      // Permits a signed-in user to attach a Google identity whose email
+      // differs from their primary email. Used by the "Link Google
+      // Account" button on the profile page — without this flag, calling
+      // linkSocial() with a mismatched email creates a fresh user
+      // instead of attaching to the current session.
+      allowDifferentEmails: true,
     },
   },
   plugins: enableOAuthProxy ? [oAuthProxy({ productionURL: PRODUCTION_URL })] : undefined,

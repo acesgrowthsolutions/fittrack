@@ -12,6 +12,8 @@ import {
   Smartphone,
   Download,
   Trash2,
+  Link2,
+  Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ChangePasswordForm } from "@/components/auth/change-password-form";
@@ -30,7 +32,15 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { sendVerificationEmail, signOut, updateUser, useSession } from "@/lib/auth-client";
+import {
+  linkSocial,
+  listAccounts,
+  sendVerificationEmail,
+  signOut,
+  unlinkAccount,
+  updateUser,
+  useSession,
+} from "@/lib/auth-client";
 
 export default function ProfilePage() {
   const { data: session, isPending } = useSession();
@@ -45,12 +55,88 @@ export default function ProfilePage() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteConfirmEmail, setDeleteConfirmEmail] = useState("");
   const [deleting, setDeleting] = useState(false);
+  // Connected accounts state. Linked Google identities show up here once the
+  // dialog opens; null means we haven't fetched yet. Empty array means we
+  // fetched and the user has no linked OAuth identities — important to
+  // distinguish from "still loading" for the button's enabled state.
+  const [linkedGoogleAccounts, setLinkedGoogleAccounts] = useState<
+    Array<{ id: string; accountId: string }> | null
+  >(null);
+  const [linking, setLinking] = useState(false);
+  const [unlinkingId, setUnlinkingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isPending && !session) {
       router.push("/");
     }
   }, [isPending, session, router]);
+
+  // Load linked accounts whenever the Security dialog opens, so the "Link
+  // Google Account" row shows whether one is already attached and lets the
+  // user remove it. Reset when the dialog closes so re-opening triggers a
+  // fresh fetch (covers the case of the user linking, closing, and
+  // re-opening to see the new state).
+  useEffect(() => {
+    if (!securityOpen) {
+      setLinkedGoogleAccounts(null);
+      return;
+    }
+    let cancelled = false;
+    listAccounts()
+      .then((result) => {
+        if (cancelled) return;
+        const accounts = Array.isArray(result?.data) ? result.data : [];
+        const googleOnly = accounts
+          .filter((a: { providerId: string }) => a.providerId === "google")
+          .map((a: { id: string; accountId: string }) => ({
+            id: a.id,
+            accountId: a.accountId,
+          }));
+        setLinkedGoogleAccounts(googleOnly);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setLinkedGoogleAccounts([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [securityOpen]);
+
+  const handleLinkGoogle = async () => {
+    setLinking(true);
+    try {
+      // Better Auth redirects the browser to Google for consent, then back
+      // to /profile after success — the post-redirect render will see the
+      // freshly-linked account when the dialog reopens.
+      await linkSocial({ provider: "google", callbackURL: "/profile" });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to start Google linking");
+      setLinking(false);
+    }
+  };
+
+  const handleUnlinkGoogle = async (accountId: string, accountRowId: string) => {
+    if (!confirm("Unlink this Google account? You'll need to sign in with a different method.")) {
+      return;
+    }
+    setUnlinkingId(accountRowId);
+    try {
+      const result = await unlinkAccount({ providerId: "google", accountId });
+      if (result.error) {
+        toast.error(result.error.message || "Failed to unlink");
+        return;
+      }
+      toast.success("Google account unlinked");
+      setLinkedGoogleAccounts((prev) =>
+        prev ? prev.filter((a) => a.id !== accountRowId) : prev
+      );
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to unlink");
+    } finally {
+      setUnlinkingId(null);
+    }
+  };
 
   if (isPending || !session) {
     return (
@@ -548,6 +634,64 @@ export default function ProfilePage() {
               <Button variant="outline" size="sm" disabled>
                 Coming Soon
               </Button>
+            </div>
+
+            {/* Connected accounts. Lets the user attach a Google identity
+                (even with a different email than their primary, thanks to
+                accountLinking.allowDifferentEmails on the server) so they
+                can sign in with either credentials or Google later. */}
+            <div className="space-y-3 rounded-lg border p-4">
+              <div className="flex items-center gap-3">
+                <Link2 className="text-muted-foreground h-5 w-5" />
+                <div>
+                  <p className="font-medium">Connected accounts</p>
+                  <p className="text-muted-foreground text-sm">
+                    Link extra sign-in methods (e.g. a different Google account)
+                  </p>
+                </div>
+              </div>
+              {linkedGoogleAccounts === null ? (
+                <div className="text-muted-foreground flex items-center gap-2 text-sm">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  Loading linked accounts…
+                </div>
+              ) : linkedGoogleAccounts.length === 0 ? (
+                <Button onClick={handleLinkGoogle} disabled={linking} size="sm">
+                  {linking ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Link2 className="h-4 w-4" />
+                  )}
+                  Link Google account
+                </Button>
+              ) : (
+                <div className="space-y-2">
+                  {linkedGoogleAccounts.map((acc) => (
+                    <div
+                      key={acc.id}
+                      className="bg-muted/20 flex items-center justify-between rounded-md p-2 text-sm"
+                    >
+                      <span className="text-muted-foreground">Google · {acc.accountId.slice(0, 12)}…</span>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleUnlinkGoogle(acc.accountId, acc.id)}
+                        disabled={unlinkingId === acc.id}
+                      >
+                        {unlinkingId === acc.id ? "Unlinking…" : "Unlink"}
+                      </Button>
+                    </div>
+                  ))}
+                  <Button onClick={handleLinkGoogle} disabled={linking} size="sm" variant="outline">
+                    {linking ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Link2 className="h-4 w-4" />
+                    )}
+                    Link another Google account
+                  </Button>
+                </div>
+              )}
             </div>
 
             <div className="space-y-3 rounded-lg border p-4">
