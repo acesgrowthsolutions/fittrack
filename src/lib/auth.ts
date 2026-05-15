@@ -19,10 +19,18 @@ const vercelURL = process.env.VERCEL_URL;
 // fitness-abc123-jennas-projects-...vercel.app). Use it as baseURL so
 // Better Auth's cookies and redirects target the actual host the user is
 // on, not the production alias inherited from BETTER_AUTH_URL.
+//
+// `||` instead of `??` because Vercel surfaces unset env vars as empty
+// strings, not undefined — `??` would happily forward "" and Better Auth
+// would refuse to determine a base URL at runtime. The final fallback to
+// PRODUCTION_URL guarantees a usable host even if all three env vars are
+// missing/empty on production.
 const baseURL =
   vercelEnv === "preview" && vercelURL
     ? `https://${vercelURL}`
-    : (process.env.BETTER_AUTH_URL ?? process.env.NEXT_PUBLIC_APP_URL);
+    : process.env.BETTER_AUTH_URL ||
+      process.env.NEXT_PUBLIC_APP_URL ||
+      (vercelEnv === "production" ? PRODUCTION_URL : undefined);
 
 // Only run the OAuth proxy on Vercel-hosted deployments. Locally we use
 // a direct redirect URI to localhost — proxying would needlessly bounce

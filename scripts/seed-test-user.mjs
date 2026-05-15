@@ -1,17 +1,27 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import { randomUUID } from "node:crypto";
 import postgres from "postgres";
 import { hashPassword } from "better-auth/crypto";
 
-const envFile = readFileSync(new URL("../.env", import.meta.url), "utf8");
-for (const line of envFile.split("\n")) {
-  const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*?)\s*$/);
-  if (!m) continue;
-  let v = m[2].replace(/\r$/, "");
-  if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) {
-    v = v.slice(1, -1);
+// Load env from .env.production.local first (so this works against prod
+// after `vercel env pull .env.production.local`) and fall back to .env
+// for local-dev runs. Matches the loading order used by the other scripts
+// in this directory.
+for (const file of [".env.production.local", ".env"]) {
+  const url = new URL(`../${file}`, import.meta.url);
+  if (!existsSync(url)) continue;
+  const envFile = readFileSync(url, "utf8");
+  for (const line of envFile.split("\n")) {
+    const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*?)\s*$/);
+    if (!m) continue;
+    let v = m[2].replace(/\r$/, "");
+    if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) {
+      v = v.slice(1, -1);
+    }
+    if (!process.env[m[1]]) process.env[m[1]] = v;
   }
-  if (!process.env[m[1]]) process.env[m[1]] = v;
+  console.log(`[env source: ${file}]`);
+  break;
 }
 
 const email = process.argv[2] ?? "test@example.com";
