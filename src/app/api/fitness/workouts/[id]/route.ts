@@ -4,6 +4,7 @@ import { checkAchievements } from "@/lib/achievements";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { workouts } from "@/lib/schema";
+import { getUserTz } from "@/lib/user-tz";
 import { parseJsonBody, workoutUpdateSchema } from "@/lib/validators/fitness";
 
 type Params = { params: Promise<{ id: string }> };
@@ -83,7 +84,9 @@ export async function PUT(req: Request, { params }: Params) {
     // badge (long_session, calorie_crusher, five_k_club, etc.) that the
     // original insert didn't. Awaited so we can include newly-earned badges
     // in the response for an immediate client toast; errors are non-fatal.
-    const newBadges = await checkAchievements(session.user.id).catch((err) => {
+    // userTz threads through for time-of-day badges (early_bird).
+    const userTz = await getUserTz();
+    const newBadges = await checkAchievements(session.user.id, userTz).catch((err) => {
       console.error("Achievement check after workout edit failed:", err);
       return [];
     });

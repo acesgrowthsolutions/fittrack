@@ -6,6 +6,7 @@ import { BADGE_DEFINITIONS } from "@/lib/badge-definitions";
 import { computeAllProgress } from "@/lib/badge-progress";
 import { db } from "@/lib/db";
 import { achievements, dailyStats, workouts } from "@/lib/schema";
+import { getUserTz } from "@/lib/user-tz";
 
 export async function GET() {
   try {
@@ -23,7 +24,10 @@ export async function GET() {
     // because checkAchievements otherwise only runs after a mutating event
     // (workout/steps log). Safe on every visit: the unique index +
     // onConflictDoNothing inside checkAchievements make it idempotent.
-    await checkAchievements(userId).catch((err) => {
+    // userTz threads through so time-of-day badges (early_bird, night_owl)
+    // are evaluated in the user's local hours during the lazy backfill,
+    // not in Vercel's UTC.
+    await checkAchievements(userId, await getUserTz()).catch((err) => {
       console.error("Lazy checkAchievements failed for", userId, err);
     });
 

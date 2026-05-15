@@ -4,6 +4,7 @@ import { checkAchievements } from "@/lib/achievements";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { workouts } from "@/lib/schema";
+import { getUserTz } from "@/lib/user-tz";
 import { parseJsonBody, workoutCreateSchema } from "@/lib/validators/fitness";
 
 export async function GET(req: Request) {
@@ -68,8 +69,10 @@ export async function POST(req: Request) {
     // badges in the response and let the client toast them immediately.
     // Errors are swallowed: a failed check shouldn't fail the workout
     // create itself, and the lazy backfill on /achievements catches the
-    // miss.
-    const newBadges = await checkAchievements(session.user.id).catch((err) => {
+    // miss. userTz threads through so time-of-day badges (early_bird)
+    // evaluate in the user's local hours, not Vercel's UTC.
+    const userTz = await getUserTz();
+    const newBadges = await checkAchievements(session.user.id, userTz).catch((err) => {
       console.error("Achievement check failed:", err);
       return [];
     });

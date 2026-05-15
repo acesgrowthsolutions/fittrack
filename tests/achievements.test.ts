@@ -102,16 +102,39 @@ describe("speed_demon is running-only", () => {
   });
 });
 
-describe("early_bird is deferred", () => {
-  // The workouts schema has no start-of-activity timestamp, only workoutDate
-  // (a date) and createdAt (insertion time, server-local). The badge cannot
-  // be implemented correctly until a startedAt column is added. Until then,
-  // qualifies() returns false for all inputs.
-  it("does not award early_bird regardless of input", () => {
-    const w = [
-      mkWorkout({ workoutDate: "2026-04-15", createdAt: new Date("2026-04-15T05:00:00") }),
-    ];
-    expect(qualifies("early_bird", w, [])).toBe(false);
+describe("early_bird (tz-aware)", () => {
+  // Measures log-time (createdAt) evaluated in the user's tz, not UTC.
+  // "Before 7 AM" means the user's local 7 AM. Pass userTz as the 4th
+  // qualifies() arg; falls back to UTC when omitted.
+
+  it("fires when a workout is logged at 06:00 in the user's tz", () => {
+    // 06:00 America/Los_Angeles = 13:00 UTC. UTC-only check would miss it.
+    const w = [mkWorkout({ createdAt: new Date("2026-04-15T13:00:00Z") })];
+    expect(qualifies("early_bird", w, [], "America/Los_Angeles")).toBe(true);
+  });
+
+  it("does not fire at 07:00 local (boundary exclusive)", () => {
+    // 07:00 America/Los_Angeles = 14:00 UTC.
+    const w = [mkWorkout({ createdAt: new Date("2026-04-15T14:00:00Z") })];
+    expect(qualifies("early_bird", w, [], "America/Los_Angeles")).toBe(false);
+  });
+
+  it("uses the user's tz, not UTC", () => {
+    // 06:00 Asia/Tokyo = 21:00 UTC the previous day. UTC-only check would
+    // call this evening and miss; tz-aware sees morning and awards.
+    const w = [mkWorkout({ createdAt: new Date("2026-04-15T21:00:00Z") })];
+    expect(qualifies("early_bird", w, [], "Asia/Tokyo")).toBe(true);
+    expect(qualifies("early_bird", w, [], "UTC")).toBe(false);
+  });
+
+  it("defaults to UTC when tz argument is omitted", () => {
+    const w = [mkWorkout({ createdAt: new Date("2026-04-15T05:00:00Z") })];
+    expect(qualifies("early_bird", w, [])).toBe(true);
+  });
+
+  it("returns false when no workout sits before 7 AM in any input", () => {
+    const w = [mkWorkout({ createdAt: new Date("2026-04-15T15:00:00Z") })];
+    expect(qualifies("early_bird", w, [], "America/Los_Angeles")).toBe(false);
   });
 });
 
@@ -279,8 +302,10 @@ describe("week_warrior correctness", () => {
   });
 });
 
-describe("night_owl (hidden)", () => {
-  // Uses createdAt UTC. Window is [22:00, 04:00) — h >= 22 OR h < 4.
+describe("night_owl (hidden, tz-aware)", () => {
+  // Window is [22:00, 04:00) evaluated in the caller's tz. Tests that omit
+  // a tz exercise the default-UTC path; one test below pins a non-UTC zone
+  // to lock in the tz-aware behavior.
   it("fires when a workout is logged at 22:00 UTC (boundary inclusive)", () => {
     const w = [mkWorkout({ createdAt: new Date("2026-04-15T22:00:00Z") })];
     expect(qualifies("night_owl", w, [])).toBe(true);
@@ -304,6 +329,14 @@ describe("night_owl (hidden)", () => {
   it("does not fire mid-day", () => {
     const w = [mkWorkout({ createdAt: new Date("2026-04-15T12:00:00Z") })];
     expect(qualifies("night_owl", w, [])).toBe(false);
+  });
+
+  it("evaluates the night window in the caller's tz, not UTC", () => {
+    // 13:00 UTC is 22:00 Asia/Tokyo (next-day local) — qualifies in Tokyo,
+    // not in UTC (where it's the middle of the afternoon).
+    const w = [mkWorkout({ createdAt: new Date("2026-04-15T13:00:00Z") })];
+    expect(qualifies("night_owl", w, [], "Asia/Tokyo")).toBe(true);
+    expect(qualifies("night_owl", w, [], "UTC")).toBe(false);
   });
 });
 

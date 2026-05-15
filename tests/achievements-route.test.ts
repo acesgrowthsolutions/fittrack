@@ -27,8 +27,9 @@ describe("achievements GET lazily backfills", () => {
   it("invokes checkAchievements before returning", () => {
     // The call must happen inside the GET handler. Easiest check: the call
     // appears at all, and before the Response.json that returns earned data.
-    expect(achievementsGet).toMatch(/checkAchievements\(\s*userId\s*\)/);
-    const checkIdx = achievementsGet.indexOf("checkAchievements(userId)");
+    // Match starts with `userId` so an extra tz arg doesn't break the test.
+    expect(achievementsGet).toMatch(/checkAchievements\(\s*userId\b/);
+    const checkIdx = achievementsGet.search(/checkAchievements\(\s*userId\b/);
     const returnIdx = achievementsGet.indexOf("return Response.json({ earned, progress }");
     expect(checkIdx).toBeGreaterThan(0);
     expect(returnIdx).toBeGreaterThan(checkIdx);
@@ -38,7 +39,9 @@ describe("achievements GET lazily backfills", () => {
 describe("workout PUT re-runs checkAchievements", () => {
   it("imports and calls checkAchievements after a successful update", () => {
     expect(workoutPut).toMatch(/from\s+["']@\/lib\/achievements["']/);
-    expect(workoutPut).toMatch(/checkAchievements\(session\.user\.id\)/);
+    // Tolerate any trailing args (e.g. the userTz arg added for time-of-day
+    // badges) — we only care that the call exists with the right first arg.
+    expect(workoutPut).toMatch(/checkAchievements\(\s*session\.user\.id\b/);
   });
 });
 

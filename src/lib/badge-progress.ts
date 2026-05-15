@@ -203,7 +203,7 @@ export function computeBadgeProgress(type: BadgeType, w: Workout[], s: DailyStat
     case "speed_demon":
       return { kind: "no-tracker", reason: "Run under 5 min/km" };
     case "early_bird":
-      return { kind: "no-tracker", reason: "Coming soon" };
+      return { kind: "no-tracker", reason: "Log a workout before 7 AM" };
 
     // Hidden badges: progress is stripped from the API response before it
     // ever reaches the client, but we still need entries here so

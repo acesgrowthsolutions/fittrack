@@ -9,7 +9,26 @@ export type { BadgeType };
 type Workout = typeof workouts.$inferSelect;
 type DailyStat = typeof dailyStats.$inferSelect;
 
-export function qualifies(type: BadgeType, w: Workout[], s: DailyStat[]): boolean {
+// Extract the local-clock hour (0-23) of an absolute moment in a given IANA
+// tz. Used by time-of-day badges (early_bird, night_owl) so "before 7 AM"
+// means *the user's* 7 AM, not Vercel's UTC 7 AM.
+function hourInTz(d: Date, tz: string): number {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: tz,
+    hour: "2-digit",
+    hour12: false,
+  }).formatToParts(d);
+  const h = parseInt(parts.find((p) => p.type === "hour")?.value ?? "0", 10);
+  // en-US can emit "24" for midnight under some locales — normalise to 0.
+  return Number.isFinite(h) ? h % 24 : 0;
+}
+
+export function qualifies(
+  type: BadgeType,
+  w: Workout[],
+  s: DailyStat[],
+  userTz: string = "UTC"
+): boolean {
   switch (type) {
     case "first_workout":
       return w.length >= 1;
@@ -62,13 +81,12 @@ export function qualifies(type: BadgeType, w: Workout[], s: DailyStat[]): boolea
         return dist > 0 && x.durationMinutes / dist < 5;
       });
     case "early_bird":
-      // Deferred: the workouts table has no start-of-activity timestamp,
-      // only workoutDate (a date column) and createdAt (when the row was
-      // inserted). The previous implementation used createdAt.getHours() in
-      // server local time, which awarded the badge based on when a user
-      // logged a workout, not when they performed it. Re-enable once a
-      // startedAt column exists. See audit P0 #3.
-      return false;
+      // We measure log-time, not start-of-activity (the workouts table
+      // doesn't carry the latter). That matches the badge description
+      // ("Log a workout before 7 AM") literally. `userTz` is the caller's
+      // current IANA tz — without it we'd default to UTC and silently
+      // misfire for anyone east or west of Greenwich.
+      return w.some((x) => hourInTz(new Date(x.createdAt), userTz) < 7);
     case "iron_week": {
       // 7 workouts within any 7-day calendar window
       const days = w.map((x) => new Date(x.workoutDate).getTime());
@@ -114,11 +132,12 @@ export function qualifies(type: BadgeType, w: Workout[], s: DailyStat[]): boolea
       return false;
     }
     case "night_owl": {
-      // Approximated from createdAt (server time, UTC on Vercel) — measures
-      // when the user *logged* the workout, not when they performed it.
-      // Same shortcoming early_bird had; acceptable for a hidden badge.
+      // Measures log-time (the workouts table has no start-of-activity
+      // timestamp) — matches the badge surprise factor either way. Uses
+      // the user's tz so "between 10 PM and 4 AM" means their local night,
+      // not Vercel's UTC night.
       return w.some((x) => {
-        const h = new Date(x.createdAt).getUTCHours();
+        const h = hourInTz(new Date(x.createdAt), userTz);
         return h >= 22 || h < 4;
       });
     }
@@ -210,8 +229,18 @@ export function qualifies(type: BadgeType, w: Workout[], s: DailyStat[]): boolea
  * Evaluate all badge rules for a user and insert any newly-earned achievements.
  * Returns the list of badge types awarded this call. Safe to call after any
  * mutation that could affect progress (workouts, daily stats).
+ *
+ * `userTz` should be the caller's current IANA tz (from getUserTz() on a
+ * cookie-bearing request). Without it we default to UTC, which is fine for
+ * tz-insensitive badges (counts, distances, step thresholds) but will skew
+ * time-of-day ones (early_bird, night_owl) for non-UTC users. Callers
+ * without a request context (e.g. the Terra webhook) can omit it — those
+ * paths only trigger step badges, which don't care about hour.
  */
-export async function checkAchievements(userId: string): Promise<BadgeType[]> {
+export async function checkAchievements(
+  userId: string,
+  userTz: string = "UTC"
+): Promise<BadgeType[]> {
   const existing = await db
     .select({ badgeType: achievements.badgeType })
     .from(achievements)
@@ -226,7 +255,7 @@ export async function checkAchievements(userId: string): Promise<BadgeType[]> {
     db.select().from(dailyStats).where(eq(dailyStats.userId, userId)),
   ]);
 
-  const toAward = pending.filter((b) => qualifies(b.type, userWorkouts, userStats));
+  const toAward = pending.filter((b) => qualifies(b.type, userWorkouts, userStats, userTz));
   if (toAward.length === 0) return [];
 
   // onConflictDoNothing pairs with the unique (user_id, badge_type) index to
