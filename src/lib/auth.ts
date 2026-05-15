@@ -90,6 +90,14 @@ export const auth = betterAuth({
           google: {
             clientId: googleClientId,
             clientSecret: googleClientSecret,
+            // Always show Google's account picker. Without this, OAuth
+            // silently reuses whichever Google account the browser is
+            // already signed into, which makes the linkSocial flow useless
+            // when the user wants to attach a *different* gmail than the
+            // one they routinely sign in with. The "Use another account"
+            // option in the picker is the only way to add a second
+            // identity from a phone that's only logged into one gmail.
+            prompt: "select_account",
           },
         }
       : undefined,
