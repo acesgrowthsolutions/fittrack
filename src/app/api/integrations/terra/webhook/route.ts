@@ -12,6 +12,7 @@
  */
 
 import { and, eq } from "drizzle-orm";
+import { checkAchievements } from "@/lib/achievements";
 import { db } from "@/lib/db";
 import { dailyStats, healthIntegration } from "@/lib/schema";
 import {
@@ -136,6 +137,17 @@ async function handleDaily(event: Extract<TerraWebhookEvent, { type: string }>) 
           eq(healthIntegration.externalUserId, String(externalUserId))
         )
       );
+
+    // Step-count badges (10k_steps, step_master) can newly qualify after a
+    // Terra sync — every other mutation path already runs this. We await
+    // rather than fire-and-forget because the function may be torn down by
+    // the runtime as soon as we return 200, and a detached promise would
+    // be lost. Failure is non-fatal: log it and still ack the webhook.
+    try {
+      await checkAchievements(integration.userId);
+    } catch (err) {
+      console.error("Achievement check after Terra daily sync failed:", err);
+    }
   }
 
   return { ok: true as const, writtenDays };
