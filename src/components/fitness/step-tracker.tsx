@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Footprints, Loader2, Pause, Play, Save, Square } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { showNewBadgeToasts } from "@/lib/badge-toast";
 
 type Status = "idle" | "permission-needed" | "tracking" | "paused";
 
@@ -195,7 +196,9 @@ export function StepTracker({
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || "Failed to save steps");
       }
+      const data = await res.json().catch(() => ({}));
       toast.success(`Added ${steps.toLocaleString()} steps`);
+      showNewBadgeToasts(data?.newBadges);
       stepsRef.current = 0;
       lastStepAtRef.current = 0;
       filteredRef.current = 0;

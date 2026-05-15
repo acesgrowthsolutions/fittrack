@@ -70,11 +70,16 @@ export async function POST(req: Request) {
       })
       .returning();
 
-    checkAchievements(session.user.id).catch((err) =>
-      console.error("Achievement check failed:", err)
-    );
+    // Awaited (not fire-and-forget) so we can surface any newly-earned
+    // step badges (10k_steps, step_master) via the response and toast them
+    // the instant the user crosses the threshold. Errors are non-fatal —
+    // the lazy /achievements backfill catches them later.
+    const newBadges = await checkAchievements(session.user.id).catch((err) => {
+      console.error("Achievement check failed:", err);
+      return [];
+    });
 
-    return Response.json(result);
+    return Response.json({ ...result, newBadges });
   } catch (error) {
     console.error("Error adding steps:", error);
     return Response.json({ error: "Failed to add steps" }, { status: 500 });

@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { showNewBadgeToasts } from "@/lib/badge-toast";
 
 interface StepFormProps {
   onSuccess?: () => void;
@@ -69,7 +70,9 @@ export function StepForm({
         throw new Error(data.error || "Failed to save steps");
       }
 
+      const data = await res.json().catch(() => ({}));
       toast.success("Steps logged!");
+      showNewBadgeToasts(data?.newBadges);
       onSuccess?.();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to save steps");

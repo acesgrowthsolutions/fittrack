@@ -82,11 +82,15 @@ export async function POST(req: Request) {
       })
       .returning();
 
-    checkAchievements(session.user.id).catch((err) =>
-      console.error("Achievement check failed:", err)
-    );
+    // Awaited (not fire-and-forget) so we can surface any newly-earned
+    // badges via the response for an immediate client toast. Errors are
+    // non-fatal — the lazy /achievements backfill catches them later.
+    const newBadges = await checkAchievements(session.user.id).catch((err) => {
+      console.error("Achievement check failed:", err);
+      return [];
+    });
 
-    return Response.json(result);
+    return Response.json({ ...result, newBadges });
   } catch (error) {
     console.error("Error saving today's stats:", error);
     return Response.json({ error: "Failed to save today's stats" }, { status: 500 });

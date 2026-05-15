@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { showNewBadgeToasts } from "@/lib/badge-toast";
 import { getLocalDateStr } from "@/lib/local-date";
 import { calculateCalories, WORKOUT_MET_VALUES } from "@/lib/met-values";
 
@@ -156,7 +157,9 @@ export function WorkoutForm({ onSuccess, userWeightKg, initialData }: WorkoutFor
         throw new Error(data.error || "Failed to save workout");
       }
 
+      const data = await res.json().catch(() => ({}));
       toast.success(isEditing ? "Workout updated!" : "Workout logged!");
+      showNewBadgeToasts(data?.newBadges);
       onSuccess?.();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to save workout");

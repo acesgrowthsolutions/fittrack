@@ -64,11 +64,17 @@ export async function POST(req: Request) {
       })
       .returning();
 
-    checkAchievements(session.user.id).catch((err) =>
-      console.error("Achievement check failed:", err)
-    );
+    // Awaited (not fire-and-forget) so we can return any newly-earned
+    // badges in the response and let the client toast them immediately.
+    // Errors are swallowed: a failed check shouldn't fail the workout
+    // create itself, and the lazy backfill on /achievements catches the
+    // miss.
+    const newBadges = await checkAchievements(session.user.id).catch((err) => {
+      console.error("Achievement check failed:", err);
+      return [];
+    });
 
-    return Response.json(created, { status: 201 });
+    return Response.json({ ...created, newBadges }, { status: 201 });
   } catch (error) {
     console.error("Error creating workout:", error);
     return Response.json({ error: "Failed to create workout" }, { status: 500 });

@@ -81,12 +81,14 @@ export async function PUT(req: Request, { params }: Params) {
 
     // Editing duration/calories/distance can newly qualify the user for a
     // badge (long_session, calorie_crusher, five_k_club, etc.) that the
-    // original insert didn't. Fire-and-forget; failure is non-fatal.
-    checkAchievements(session.user.id).catch((err) =>
-      console.error("Achievement check after workout edit failed:", err)
-    );
+    // original insert didn't. Awaited so we can include newly-earned badges
+    // in the response for an immediate client toast; errors are non-fatal.
+    const newBadges = await checkAchievements(session.user.id).catch((err) => {
+      console.error("Achievement check after workout edit failed:", err);
+      return [];
+    });
 
-    return Response.json(updated);
+    return Response.json({ ...updated, newBadges });
   } catch (error) {
     console.error("Error updating workout:", error);
     return Response.json({ error: "Failed to update workout" }, { status: 500 });
