@@ -1,3 +1,6 @@
+import importPlugin from "eslint-plugin-import";
+import reactPlugin from "eslint-plugin-react";
+import reactHooksPlugin from "eslint-plugin-react-hooks";
 import nextConfig from "eslint-config-next/core-web-vitals";
 
 const config = [
@@ -5,6 +8,7 @@ const config = [
     ignores: [
       ".next/**",
       ".next.nosync/**",
+      ".vercel/**",
       "node_modules/**",
       "node_modules.nosync/**",
       "node_modules */**",
@@ -19,6 +23,14 @@ const config = [
   },
   ...nextConfig,
   {
+    // Flat config scopes plugins per-config-object, so rules below that
+    // reference react/ react-hooks/ import/ namespaces need those plugins
+    // declared *here*, even though the next preset above also registers them.
+    plugins: {
+      react: reactPlugin,
+      "react-hooks": reactHooksPlugin,
+      import: importPlugin,
+    },
     rules: {
       // React rules
       "react/jsx-no-target-blank": "error",

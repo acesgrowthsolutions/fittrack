@@ -1,7 +1,7 @@
+import * as Sentry from "@sentry/nextjs";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { oAuthProxy } from "better-auth/plugins";
-import * as Sentry from "@sentry/nextjs";
 import { db } from "./db";
 import { passwordResetTemplate, sendEmail, verificationTemplate } from "./email";
 
