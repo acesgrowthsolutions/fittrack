@@ -13,6 +13,7 @@ import {
   Utensils,
 } from "lucide-react";
 import { UserProfile } from "@/components/auth/user-profile";
+import { useMounted } from "@/hooks/use-mounted";
 import { useSession } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 import { ModeToggle } from "./ui/mode-toggle";
@@ -31,6 +32,10 @@ const NAV_ITEMS = [
 export function SiteHeader() {
   const { data: session } = useSession();
   const pathname = usePathname();
+  // Suppress session-dependent nav until after hydration so server and first
+  // client render produce identical DOM, avoiding React hydration error #418
+  // when the client session atom resolves synchronously from cache.
+  const showAuthNav = useMounted() && !!session;
 
   return (
     <>
@@ -66,7 +71,7 @@ export function SiteHeader() {
             </h1>
 
             {/* Nav links for authenticated users */}
-            {session && (
+            {showAuthNav && (
               <div className="hidden items-center gap-1 md:flex">
                 {NAV_ITEMS.map((item) => {
                   const isActive = pathname === item.href;
@@ -97,7 +102,7 @@ export function SiteHeader() {
         </nav>
 
         {/* Mobile nav for authenticated users */}
-        {session && (
+        {showAuthNav && (
           <div className="border-t md:hidden">
             <div className="container mx-auto flex gap-1 overflow-x-auto px-4 py-2">
               {NAV_ITEMS.map((item) => {

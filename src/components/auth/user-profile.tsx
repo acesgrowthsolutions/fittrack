@@ -13,13 +13,18 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useMounted } from "@/hooks/use-mounted";
 import { useSession, signOut } from "@/lib/auth-client";
 
 export function UserProfile() {
   const { data: session, isPending } = useSession();
   const router = useRouter();
+  // Server and first client render both treat the session as not-yet-known
+  // so the rendered DOM matches; the cached session (if any) only becomes
+  // visible on the post-hydration re-render. Prevents React hydration #418.
+  const mounted = useMounted();
 
-  if (isPending) {
+  if (!mounted || isPending) {
     return <div>Loading...</div>;
   }
 

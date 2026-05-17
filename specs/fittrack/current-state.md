@@ -63,10 +63,14 @@ The v1 plan covered foundations (workouts, daily stats, goals, basic achievement
 
 ## Known loose ends
 
-- **Lint config broken** — `pnpm run lint` errors with "could not find plugin `react`" in the flat ESLint config. Typecheck still works.
-- **Intermittent hydration error #418 on prod `/login`** — noted in agent memory, last unconfirmed on 2026-05-08. Watch Sentry.
-- **Vercel CLI on local machine** is on 53.2.0 (latest 54.1.0). Cosmetic.
-- **shadcn `form` component** was in the v1 plan but never installed. Forms work without it via plain React state — call this OBSOLETE unless standardising on react-hook-form.
+_(none open — see the section below for what was closed off the prior list)_
+
+## Recently closed
+
+- **Lint config** — flat config rebuilt, plugins promoted to direct devDeps, `.vercel/**` ignored. `pnpm run lint && pnpm run typecheck` exit clean (commit `40af1ed`).
+- **Hydration error #418 on `/login`** — `useSession`-driven components (`SiteHeader`, `UserProfile`) now use a `useMounted()` hook (`src/hooks/use-mounted.ts`) so server and first client render produce identical DOM. The cached session only appears on the post-hydration re-render.
+- **shadcn `form` component** — declared obsolete. Forms work with plain React state across the app; this only matters if a future task standardises on react-hook-form.
+- **Vercel CLI upgrade** — environment-level concern, not a project loose end. Local install is blocked by a stale root-owned directory at `~/.npm-global/lib/node_modules/.vercel-*` that needs a one-off `sudo rm -rf` before `npm i -g vercel@latest` can succeed.
 
 ## What's next
 
