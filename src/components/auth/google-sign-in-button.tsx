@@ -12,7 +12,25 @@ export function GoogleSignInButton({ disabled }: { disabled?: boolean }) {
     setError("");
     setIsPending(true);
     try {
-      await signIn.social({ provider: "google", callbackURL: "/dashboard" });
+      // Better Auth returns { data, error } on failure rather than throwing,
+      // so without an explicit error check the button would sit on
+      // "Redirecting..." forever when the server returns 4xx/5xx.
+      const result = await signIn.social({ provider: "google", callbackURL: "/dashboard" });
+      if (result?.error) {
+        const status = result.error.status;
+        const code = result.error.code;
+        const friendly =
+          status === 429 || code === "TOO_MANY_REQUESTS"
+            ? "Too many attempts. Please wait a minute and try again."
+            : status === 500
+              ? "Google sign-in is temporarily unavailable. Please try again or use email."
+              : result.error.message || "Failed to start Google sign-in";
+        setError(friendly);
+        setIsPending(false);
+      }
+      // On success Better Auth redirects the browser away from this page,
+      // so we intentionally leave isPending=true to keep the button disabled
+      // until navigation happens.
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to start Google sign-in");
       setIsPending(false);

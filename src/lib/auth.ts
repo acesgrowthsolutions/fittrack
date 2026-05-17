@@ -1,6 +1,7 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { oAuthProxy } from "better-auth/plugins";
+import * as Sentry from "@sentry/nextjs";
 import { db } from "./db";
 import { passwordResetTemplate, sendEmail, verificationTemplate } from "./email";
 
@@ -117,4 +118,22 @@ export const auth = betterAuth({
     },
   },
   plugins: enableOAuthProxy ? [oAuthProxy({ productionURL: PRODUCTION_URL })] : undefined,
+  // Better Auth's router swallows internal errors and returns a generic 500
+  // with no body. Forward exceptions to Sentry and the server console so we
+  // can actually diagnose failures on /sign-in/social, /callback/google, etc.
+  // without having to reproduce them locally.
+  onAPIError: {
+    onError: (e) => {
+      const err = e as Error & { status?: string | number };
+      Sentry.captureException(err, {
+        tags: { surface: "better-auth" },
+        extra: { status: err?.status },
+      });
+      console.error("[better-auth] API error", {
+        status: err?.status,
+        message: err?.message,
+        stack: err?.stack,
+      });
+    },
+  },
 });
