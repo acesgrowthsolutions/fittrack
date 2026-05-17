@@ -12,10 +12,17 @@ export function GoogleSignInButton({ disabled }: { disabled?: boolean }) {
     setError("");
     setIsPending(true);
     try {
-      // Better Auth returns { data, error } on failure rather than throwing,
-      // so without an explicit error check the button would sit on
-      // "Redirecting..." forever when the server returns 4xx/5xx.
-      const result = await signIn.social({ provider: "google", callbackURL: "/dashboard" });
+      // Pass disableRedirect so Better Auth's redirect plugin doesn't try to
+      // navigate inside a silent try/catch — that previously made every
+      // navigation failure look like a successful sign-in with no observable
+      // effect, leaving the button stuck on "Redirecting..." forever. We
+      // navigate manually below so we can surface any failure.
+      const result = await signIn.social({
+        provider: "google",
+        callbackURL: "/dashboard",
+        disableRedirect: true,
+      });
+
       if (result?.error) {
         const status = result.error.status;
         const code = result.error.code;
@@ -27,10 +34,19 @@ export function GoogleSignInButton({ disabled }: { disabled?: boolean }) {
               : result.error.message || "Failed to start Google sign-in";
         setError(friendly);
         setIsPending(false);
+        return;
       }
-      // On success Better Auth redirects the browser away from this page,
-      // so we intentionally leave isPending=true to keep the button disabled
-      // until navigation happens.
+
+      const url = (result?.data as { url?: string } | undefined)?.url;
+      if (!url) {
+        setError("Google sign-in didn't return a redirect URL. Please try again.");
+        setIsPending(false);
+        return;
+      }
+
+      // Manual navigation: leaves isPending=true so the button stays disabled
+      // while the browser loads accounts.google.com.
+      window.location.href = url;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to start Google sign-in");
       setIsPending(false);
