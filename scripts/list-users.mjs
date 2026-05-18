@@ -43,7 +43,9 @@ try {
   }
   console.log(`\nUsers (${rows.length}):\n`);
   for (const r of rows) {
-    console.log(`  ${r.email}   ${r.name}   ${r.achievements} achievements   created ${new Date(r.created_at).toISOString().slice(0, 10)}`);
+    console.log(
+      `  ${r.email}   ${r.name}   ${r.achievements} achievements   created ${new Date(r.created_at).toISOString().slice(0, 10)}`
+    );
   }
 } finally {
   await sql.end();

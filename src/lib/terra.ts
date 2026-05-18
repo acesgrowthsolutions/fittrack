@@ -125,8 +125,14 @@ export async function generateWidgetSession(params: {
   authSuccessRedirectUrl?: string;
   authFailureRedirectUrl?: string;
 }): Promise<{ url: string; sessionId: string; expiresIn: number }> {
-  const { config, referenceId, providers, language, authSuccessRedirectUrl, authFailureRedirectUrl } =
-    params;
+  const {
+    config,
+    referenceId,
+    providers,
+    language,
+    authSuccessRedirectUrl,
+    authFailureRedirectUrl,
+  } = params;
 
   const res = await fetch(`${TERRA_API_BASE}/auth/generateWidgetSession`, {
     method: "POST",
@@ -264,10 +270,7 @@ export function mapDailyEntry(entry: TerraDailyEntry): {
   const steps = Math.max(0, Math.round(entry.distance_data?.steps ?? 0));
   const distanceMeters = Math.max(0, entry.distance_data?.distance_meters ?? 0);
   const distanceKm = (distanceMeters / 1000).toFixed(2);
-  const caloriesBurned = Math.max(
-    0,
-    Math.round(entry.calories_data?.total_burned_calories ?? 0)
-  );
+  const caloriesBurned = Math.max(0, Math.round(entry.calories_data?.total_burned_calories ?? 0));
   const activeMinutes = Math.max(
     0,
     Math.round((entry.active_durations_data?.activity_seconds ?? 0) / 60)

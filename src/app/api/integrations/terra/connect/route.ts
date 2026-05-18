@@ -16,10 +16,7 @@ export async function POST(req: Request) {
 
     const config = getTerraConfig();
     if (!config) {
-      return Response.json(
-        { error: "Terra integration is not configured" },
-        { status: 503 }
-      );
+      return Response.json({ error: "Terra integration is not configured" }, { status: 503 });
     }
 
     // Build redirect URLs from the request origin so this works on preview

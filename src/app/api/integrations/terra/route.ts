@@ -30,10 +30,7 @@ export async function GET() {
       })
       .from(healthIntegration)
       .where(
-        and(
-          eq(healthIntegration.userId, session.user.id),
-          eq(healthIntegration.provider, PROVIDER)
-        )
+        and(eq(healthIntegration.userId, session.user.id), eq(healthIntegration.provider, PROVIDER))
       )
       .limit(1);
 
@@ -68,10 +65,7 @@ export async function DELETE() {
       })
       .from(healthIntegration)
       .where(
-        and(
-          eq(healthIntegration.userId, session.user.id),
-          eq(healthIntegration.provider, PROVIDER)
-        )
+        and(eq(healthIntegration.userId, session.user.id), eq(healthIntegration.provider, PROVIDER))
       )
       .limit(1);
 
@@ -95,10 +89,7 @@ export async function DELETE() {
       .update(healthIntegration)
       .set({ status: "disconnected", updatedAt: new Date() })
       .where(
-        and(
-          eq(healthIntegration.userId, session.user.id),
-          eq(healthIntegration.provider, PROVIDER)
-        )
+        and(eq(healthIntegration.userId, session.user.id), eq(healthIntegration.provider, PROVIDER))
       );
 
     return Response.json({ connected: false });

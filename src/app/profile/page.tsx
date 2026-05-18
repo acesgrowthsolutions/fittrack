@@ -59,9 +59,10 @@ export default function ProfilePage() {
   // dialog opens; null means we haven't fetched yet. Empty array means we
   // fetched and the user has no linked OAuth identities — important to
   // distinguish from "still loading" for the button's enabled state.
-  const [linkedGoogleAccounts, setLinkedGoogleAccounts] = useState<
-    Array<{ id: string; accountId: string }> | null
-  >(null);
+  const [linkedGoogleAccounts, setLinkedGoogleAccounts] = useState<Array<{
+    id: string;
+    accountId: string;
+  }> | null>(null);
   const [linking, setLinking] = useState(false);
   const [unlinkingId, setUnlinkingId] = useState<string | null>(null);
 
@@ -128,9 +129,7 @@ export default function ProfilePage() {
         return;
       }
       toast.success("Google account unlinked");
-      setLinkedGoogleAccounts((prev) =>
-        prev ? prev.filter((a) => a.id !== accountRowId) : prev
-      );
+      setLinkedGoogleAccounts((prev) => (prev ? prev.filter((a) => a.id !== accountRowId) : prev));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to unlink");
     } finally {
@@ -671,7 +670,9 @@ export default function ProfilePage() {
                       key={acc.id}
                       className="bg-muted/20 flex items-center justify-between rounded-md p-2 text-sm"
                     >
-                      <span className="text-muted-foreground">Google · {acc.accountId.slice(0, 12)}…</span>
+                      <span className="text-muted-foreground">
+                        Google · {acc.accountId.slice(0, 12)}…
+                      </span>
                       <Button
                         size="sm"
                         variant="ghost"
