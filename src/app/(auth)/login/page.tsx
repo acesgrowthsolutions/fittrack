@@ -22,6 +22,11 @@ export default async function LoginPage({
 
   const { reset } = await searchParams;
 
+  // Hide the Google button on deploys (e.g. unconfigured previews) where the
+  // OAuth credentials aren't set — without these the social-signin endpoint
+  // 500s and the user just sees a generic "temporarily unavailable" message.
+  const googleEnabled = Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
+
   return (
     <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center p-4">
       <Card className="w-full max-w-md">
@@ -35,7 +40,7 @@ export default async function LoginPage({
               Password reset successfully. Please sign in with your new password.
             </p>
           )}
-          <SignInButton />
+          <SignInButton googleEnabled={googleEnabled} />
         </CardContent>
       </Card>
     </div>

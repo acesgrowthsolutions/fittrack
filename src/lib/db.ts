@@ -25,7 +25,12 @@ function buildClient(): Pg {
   return postgres(connectionString, {
     max: 10,
     idle_timeout: 20,
-    connect_timeout: 10,
+    // 30s connect timeout: Neon auto-suspends inactive databases and the
+    // first cold-start connect after hibernation can take ~10-20s to wake
+    // the compute. A 10s budget was tight enough that low-traffic
+    // environments (e.g. preview deploys) intermittently failed with
+    // CONNECT_TIMEOUT — which surfaces as "Failed to sign in" to users.
+    connect_timeout: 30,
     max_lifetime: 60 * 30,
     onnotice: () => {},
   });

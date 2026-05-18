@@ -16,6 +16,8 @@ export default async function RegisterPage() {
     redirect("/dashboard");
   }
 
+  const googleEnabled = Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
+
   return (
     <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center p-4">
       <Card className="w-full max-w-md">
@@ -24,7 +26,7 @@ export default async function RegisterPage() {
           <CardDescription>Get started with your new account</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col items-center">
-          <SignUpForm />
+          <SignUpForm googleEnabled={googleEnabled} />
         </CardContent>
       </Card>
     </div>

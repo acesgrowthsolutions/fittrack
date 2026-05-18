@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { signIn } from "@/lib/auth-client";
 import { GoogleSignInButton } from "./google-sign-in-button";
 
-export function SignInButton() {
+export function SignInButton({ googleEnabled = true }: { googleEnabled?: boolean }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -49,15 +49,19 @@ export function SignInButton() {
 
   return (
     <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-4">
-      <GoogleSignInButton disabled={isPending} />
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background text-muted-foreground px-2">Or continue with</span>
-        </div>
-      </div>
+      {googleEnabled && (
+        <>
+          <GoogleSignInButton disabled={isPending} />
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background text-muted-foreground px-2">Or continue with</span>
+            </div>
+          </div>
+        </>
+      )}
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
         <Input
