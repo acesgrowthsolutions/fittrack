@@ -76,12 +76,10 @@ export async function POST(req: Request) {
     // the lazy /achievements backfill catches them later. userTz already
     // resolved above for today's-date calc; passing it through so a check
     // that touches early_bird/night_owl evaluates in the user's tz too.
-    const newBadges = await checkAchievements(session.user.id, await getUserTz()).catch(
-      (err) => {
-        console.error("Achievement check failed:", err);
-        return [];
-      }
-    );
+    const newBadges = await checkAchievements(session.user.id, await getUserTz()).catch((err) => {
+      console.error("Achievement check failed:", err);
+      return [];
+    });
 
     return Response.json({ ...result, newBadges });
   } catch (error) {

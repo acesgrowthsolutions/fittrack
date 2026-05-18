@@ -165,10 +165,7 @@ describe("Terra connect route source", () => {
 });
 
 describe("Terra status/disconnect route source", () => {
-  const route = readFileSync(
-    path.resolve("src/app/api/integrations/terra/route.ts"),
-    "utf8"
-  );
+  const route = readFileSync(path.resolve("src/app/api/integrations/terra/route.ts"), "utf8");
 
   it("exposes both GET and DELETE handlers", () => {
     expect(route).toMatch(/export\s+async\s+function\s+GET\b/);

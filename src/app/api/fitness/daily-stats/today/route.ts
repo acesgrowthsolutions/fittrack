@@ -86,12 +86,10 @@ export async function POST(req: Request) {
     // badges via the response for an immediate client toast. Errors are
     // non-fatal — the lazy /achievements backfill catches them later.
     // userTz threads through for time-of-day badges (early_bird).
-    const newBadges = await checkAchievements(session.user.id, await getUserTz()).catch(
-      (err) => {
-        console.error("Achievement check failed:", err);
-        return [];
-      }
-    );
+    const newBadges = await checkAchievements(session.user.id, await getUserTz()).catch((err) => {
+      console.error("Achievement check failed:", err);
+      return [];
+    });
 
     return Response.json({ ...result, newBadges });
   } catch (error) {

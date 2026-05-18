@@ -55,12 +55,7 @@ describe("verifyTerraSignature", () => {
   });
 
   it("rejects a header missing the t component", () => {
-    const result = verifyTerraSignature(
-      "v1=deadbeef",
-      body,
-      SECRET,
-      now
-    );
+    const result = verifyTerraSignature("v1=deadbeef", body, SECRET, now);
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.reason).toMatch(/malformed/i);
   });

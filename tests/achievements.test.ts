@@ -346,18 +346,12 @@ describe("comeback_kid (hidden)", () => {
   });
 
   it("fires when two workouts are exactly 30 days apart", () => {
-    const w = [
-      mkWorkout({ workoutDate: "2026-04-01" }),
-      mkWorkout({ workoutDate: "2026-05-01" }),
-    ];
+    const w = [mkWorkout({ workoutDate: "2026-04-01" }), mkWorkout({ workoutDate: "2026-05-01" })];
     expect(qualifies("comeback_kid", w, [])).toBe(true);
   });
 
   it("does not fire on a 29-day gap", () => {
-    const w = [
-      mkWorkout({ workoutDate: "2026-04-01" }),
-      mkWorkout({ workoutDate: "2026-04-30" }),
-    ];
+    const w = [mkWorkout({ workoutDate: "2026-04-01" }), mkWorkout({ workoutDate: "2026-04-30" })];
     expect(qualifies("comeback_kid", w, [])).toBe(false);
   });
 
@@ -371,10 +365,7 @@ describe("comeback_kid (hidden)", () => {
 
   it("collapses duplicate workouts on the same day", () => {
     // Two workouts on the same day shouldn't satisfy the 2-date minimum.
-    const w = [
-      mkWorkout({ workoutDate: "2026-04-15" }),
-      mkWorkout({ workoutDate: "2026-04-15" }),
-    ];
+    const w = [mkWorkout({ workoutDate: "2026-04-15" }), mkWorkout({ workoutDate: "2026-04-15" })];
     expect(qualifies("comeback_kid", w, [])).toBe(false);
   });
 });
@@ -420,10 +411,7 @@ describe("triathlete (hidden)", () => {
 describe("weekend_warrior (hidden)", () => {
   // In 2026, Saturdays are Apr 4, Apr 11, Apr 18, Apr 25.
   function satSun(sat: string, sun: string) {
-    return [
-      mkWorkout({ workoutDate: sat }),
-      mkWorkout({ workoutDate: sun }),
-    ];
+    return [mkWorkout({ workoutDate: sat }), mkWorkout({ workoutDate: sun })];
   }
 
   it("fires on 4 consecutive Sat+Sun pairs", () => {

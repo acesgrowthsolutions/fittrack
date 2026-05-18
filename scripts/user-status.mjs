@@ -44,9 +44,12 @@ try {
   }
   console.log(`User: ${user.name} (${user.id})\n`);
 
-  const [{ count: workoutCount }] = await sql`SELECT COUNT(*)::int AS count FROM workouts WHERE user_id = ${user.id}`;
-  const [{ count: dailyCount }] = await sql`SELECT COUNT(*)::int AS count FROM daily_stats WHERE user_id = ${user.id}`;
-  const [maxSteps] = await sql`SELECT MAX(steps)::int AS max_steps FROM daily_stats WHERE user_id = ${user.id}`;
+  const [{ count: workoutCount }] =
+    await sql`SELECT COUNT(*)::int AS count FROM workouts WHERE user_id = ${user.id}`;
+  const [{ count: dailyCount }] =
+    await sql`SELECT COUNT(*)::int AS count FROM daily_stats WHERE user_id = ${user.id}`;
+  const [maxSteps] =
+    await sql`SELECT MAX(steps)::int AS max_steps FROM daily_stats WHERE user_id = ${user.id}`;
 
   console.log(`Workouts logged:     ${workoutCount}`);
   console.log(`Daily-stat rows:     ${dailyCount}`);
@@ -67,7 +70,9 @@ try {
   if (workoutCount === 0 && dailyCount === 0) {
     console.log("\nNo activity → no badges would unlock from a backfill.");
   } else if (achievements.length === 0) {
-    console.log("\nActivity exists but no achievements awarded — backfill should fix this. Open /achievements on prod to trigger lazy backfill, or run a server-side checkAchievements.");
+    console.log(
+      "\nActivity exists but no achievements awarded — backfill should fix this. Open /achievements on prod to trigger lazy backfill, or run a server-side checkAchievements."
+    );
   }
 } finally {
   await sql.end();
