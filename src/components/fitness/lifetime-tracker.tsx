@@ -54,7 +54,9 @@ export function LifetimeTracker() {
 
   const fetchStats = useCallback(async () => {
     try {
-      const res = await fetch("/api/fitness/lifetime", { cache: "no-store" });
+      // Default browser caching — the API route sets Cache-Control with a
+      // 5min max-age + SWR. Lifetime stats don't need second-level freshness.
+      const res = await fetch("/api/fitness/lifetime");
       if (!res.ok) throw new Error("Failed");
       setStats(await res.json());
     } catch {

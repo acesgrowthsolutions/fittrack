@@ -55,7 +55,17 @@ export async function GET() {
       ...mealDates.map((r) => r.d),
     ];
 
-    return Response.json(computeLifetimeStats(allDates));
+    // Lifetime stats only change when the user logs a workout/steps entry/meal
+    // — at most a handful of times per day. Browser-cache the per-user
+    // response for 5 minutes (private = don't share across users) and serve
+    // stale for another 5 while a fresh copy is revalidated in the background.
+    // This is what makes returning to the dashboard feel snappy: the most
+    // expensive query on the page now hits the browser cache.
+    return Response.json(computeLifetimeStats(allDates), {
+      headers: {
+        "Cache-Control": "private, max-age=300, stale-while-revalidate=300",
+      },
+    });
   } catch (error) {
     console.error("Error fetching lifetime stats:", error);
     return Response.json({ error: "Failed to fetch lifetime stats" }, { status: 500 });
