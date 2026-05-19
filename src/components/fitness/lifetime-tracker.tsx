@@ -1,18 +1,12 @@
-"use client";
-
-import { useCallback, useEffect, useState } from "react";
 import { Calendar, CalendarCheck, CalendarDays, CalendarRange } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import type { LifetimeStats } from "@/lib/lifetime-stats";
 
-interface LifetimeStats {
-  days: number;
-  weeks: number;
-  months: number;
-  years: number;
-  firstActiveDate: string | null;
-  lastActiveDate: string | null;
-}
+// Pure presentational component. The stats are fetched by the caller (the
+// dashboard Server Component reads them directly from the DB via
+// getLifetimeStats) and handed in. The previous self-fetching client version
+// is gone — the data is part of the initial HTML, so the tracker no longer
+// shows a skeleton flash on dashboard load.
 
 interface TileProps {
   label: string;
@@ -47,51 +41,11 @@ function formatDate(dateStr: string): string {
   });
 }
 
-export function LifetimeTracker() {
-  const [stats, setStats] = useState<LifetimeStats | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+interface LifetimeTrackerProps {
+  stats: LifetimeStats;
+}
 
-  const fetchStats = useCallback(async () => {
-    try {
-      // Default browser caching — the API route sets Cache-Control with a
-      // 5min max-age + SWR. Lifetime stats don't need second-level freshness.
-      const res = await fetch("/api/fitness/lifetime");
-      if (!res.ok) throw new Error("Failed");
-      setStats(await res.json());
-    } catch {
-      setError(true);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchStats();
-  }, [fetchStats]);
-
-  if (loading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Your Journey</CardTitle>
-          <CardDescription>How long you've been tracking</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="h-16" />
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (error || !stats) {
-    return null;
-  }
-
+export function LifetimeTracker({ stats }: LifetimeTrackerProps) {
   return (
     <Card>
       <CardHeader>
