@@ -49,17 +49,26 @@ export async function GET() {
       return [] as Awaited<ReturnType<typeof checkAchievements>>;
     });
 
-    // Only re-query the achievements table when the backfill actually inserted
-    // something — the common case (returning visit, no new badges fired) skips
-    // the extra round-trip entirely.
-    const earned =
-      newBadges.length > 0
-        ? await db
-            .select()
-            .from(achievements)
-            .where(eq(achievements.userId, userId))
-            .orderBy(desc(achievements.earnedAt))
-        : earnedInitial;
+    // Re-query the achievements table whenever this user could have had a new
+    // badge inserted — either by our own checkAchievements call (newBadges
+    // non-empty) OR by a concurrent writer (Terra webhook or a second
+    // /achievements tab) that won the race against our onConflictDoNothing
+    // insert and made our `newBadges` come back empty even though a badge
+    // did get awarded. The proxy for "concurrent insert was possible" is
+    // "the user is not maxed out on badges yet" — once `earnedInitial`
+    // covers BADGE_DEFINITIONS, there's nothing left to award and we can
+    // safely serve the snapshot. For everyone else, pay one indexed select
+    // to guarantee they don't see a stale list after a workout/Terra-sync
+    // racing with the page load.
+    const possiblyStale =
+      newBadges.length > 0 || earnedInitial.length < BADGE_DEFINITIONS.length;
+    const earned = possiblyStale
+      ? await db
+          .select()
+          .from(achievements)
+          .where(eq(achievements.userId, userId))
+          .orderBy(desc(achievements.earnedAt))
+      : earnedInitial;
 
     const progress = computeAllProgress(userWorkouts, userStats);
 

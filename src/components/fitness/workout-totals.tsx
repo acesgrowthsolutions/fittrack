@@ -1,5 +1,3 @@
-"use client";
-
 import { CalendarCheck, CalendarDays, CalendarRange, Clock, Flame, Trophy } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";

@@ -11,7 +11,7 @@
  * from HMAC signature verification — see `verifyTerraSignature`.
  */
 
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { checkAchievements } from "@/lib/achievements";
 import { db } from "@/lib/db";
 import { dailyStats, healthIntegration } from "@/lib/schema";
@@ -99,33 +99,38 @@ async function handleDaily(event: Extract<TerraWebhookEvent, { type: string }>) 
     ? ((event as { data?: TerraDailyEntry[] }).data ?? [])
     : [];
 
-  let writtenDays = 0;
-  for (const entry of entries) {
-    const mapped = mapDailyEntry(entry);
-    if (!mapped) continue;
+  // Map every entry first, then issue a single multi-row upsert. Previously
+  // we awaited one INSERT per entry inside the loop — a Terra daily payload
+  // commonly carries a week+ of dates, and the webhook is retried (often
+  // multiple times) by Terra if the response is slow, so the sequential
+  // N round-trips were a real source of timeout-triggered retry storms.
+  // OVERWRITE semantics: Terra daily payloads are end-of-day totals, not
+  // deltas. `excluded.<col>` references the would-be-inserted row's value,
+  // so each conflicting row updates to whatever the latest payload said.
+  // Manual entries via /add-steps for the same day get clobbered — the UI
+  // hides the in-app step tracker when an integration is active so users
+  // don't double-log.
+  const rows = entries
+    .map(mapDailyEntry)
+    .filter((m): m is NonNullable<ReturnType<typeof mapDailyEntry>> => m !== null)
+    .map((mapped) => ({ userId: integration.userId, ...mapped }));
 
-    // OVERWRITE semantics: Terra daily payloads are end-of-day totals, not
-    // deltas. If we summed them we'd compound each retry. Manual entries via
-    // /add-steps for the same day get clobbered — the UI hides the in-app
-    // step tracker when an integration is active so users don't double-log.
+  if (rows.length > 0) {
     await db
       .insert(dailyStats)
-      .values({
-        userId: integration.userId,
-        ...mapped,
-      })
+      .values(rows)
       .onConflictDoUpdate({
         target: [dailyStats.userId, dailyStats.date],
         set: {
-          steps: mapped.steps,
-          distanceKm: mapped.distanceKm,
-          caloriesBurned: mapped.caloriesBurned,
-          activeMinutes: mapped.activeMinutes,
+          steps: sql`excluded.steps`,
+          distanceKm: sql`excluded.distance_km`,
+          caloriesBurned: sql`excluded.calories_burned`,
+          activeMinutes: sql`excluded.active_minutes`,
           updatedAt: new Date(),
         },
       });
-    writtenDays += 1;
   }
+  const writtenDays = rows.length;
 
   if (writtenDays > 0) {
     await db
