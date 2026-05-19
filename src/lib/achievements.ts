@@ -239,7 +239,11 @@ export function qualifies(
  */
 export async function checkAchievements(
   userId: string,
-  userTz: string = "UTC"
+  userTz: string = "UTC",
+  // Pass already-loaded workouts/stats when the caller (e.g. the achievements
+  // page route) has just queried them — saves a duplicate full-history scan
+  // on every visit to /achievements.
+  preloaded?: { workouts: Workout[]; stats: DailyStat[] }
 ): Promise<BadgeType[]> {
   const existing = await db
     .select({ badgeType: achievements.badgeType })
@@ -250,10 +254,12 @@ export async function checkAchievements(
   const pending = BADGE_DEFINITIONS.filter((b) => !earned.has(b.type));
   if (pending.length === 0) return [];
 
-  const [userWorkouts, userStats] = await Promise.all([
-    db.select().from(workouts).where(eq(workouts.userId, userId)),
-    db.select().from(dailyStats).where(eq(dailyStats.userId, userId)),
-  ]);
+  const [userWorkouts, userStats] = preloaded
+    ? [preloaded.workouts, preloaded.stats]
+    : await Promise.all([
+        db.select().from(workouts).where(eq(workouts.userId, userId)),
+        db.select().from(dailyStats).where(eq(dailyStats.userId, userId)),
+      ]);
 
   const toAward = pending.filter((b) => qualifies(b.type, userWorkouts, userStats, userTz));
   if (toAward.length === 0) return [];
