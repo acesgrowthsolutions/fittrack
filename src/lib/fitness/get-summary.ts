@@ -71,10 +71,7 @@ export interface Summary {
   profile: SummaryProfile | null;
 }
 
-function calculateStreak(
-  stats: { date: string; steps: number }[],
-  today: string
-): number {
+function calculateStreak(stats: { date: string; steps: number }[], today: string): number {
   if (stats.length === 0) return 0;
 
   const sorted = [...stats].sort((a, b) => (a.date < b.date ? 1 : -1));
@@ -207,10 +204,7 @@ export async function getSummary(userId: string, tz: string): Promise<Summary> {
     weeklyWorkoutCaloriesByDate.map((r) => [r.date, r.calories])
   );
   const dailyByDate = new Map(weeklyStats.map((s) => [s.date, s]));
-  const allWeekDates = new Set<string>([
-    ...dailyByDate.keys(),
-    ...workoutCaloriesByDate.keys(),
-  ]);
+  const allWeekDates = new Set<string>([...dailyByDate.keys(), ...workoutCaloriesByDate.keys()]);
   const enrichedWeeklyStats: SummaryWeeklyStat[] = Array.from(allWeekDates)
     .sort()
     .map((date) => {
@@ -231,9 +225,7 @@ export async function getSummary(userId: string, tz: string): Promise<Summary> {
     const target = parseFloat(goal.targetValue);
     const current = parseFloat(goal.currentValue);
     const progress = target > 0 ? Math.min((current / target) * 100, 100) : 0;
-    const daysRemaining = goal.endDate
-      ? Math.max(0, daysBetween(today, goal.endDate))
-      : null;
+    const daysRemaining = goal.endDate ? Math.max(0, daysBetween(today, goal.endDate)) : null;
     return { ...goal, progress, daysRemaining };
   });
 

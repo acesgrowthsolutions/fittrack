@@ -32,10 +32,7 @@ export function DashboardFab({ userWeightKg }: DashboardFabProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button
-          size="lg"
-          className="fixed right-6 bottom-6 z-40 h-14 w-14 rounded-full shadow-lg"
-        >
+        <Button size="lg" className="fixed right-6 bottom-6 z-40 h-14 w-14 rounded-full shadow-lg">
           <Plus className="h-6 w-6" />
           <span className="sr-only">Log Workout</span>
         </Button>
