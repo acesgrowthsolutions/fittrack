@@ -52,7 +52,18 @@ const analysisSchema = z.object({
   not_food: z.boolean().describe("True if the image does not appear to contain food"),
 });
 
-const ALLOWED_IMAGE_MIMES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
+// MIME → extension. The MIME has been validated against the keys of this map
+// before we use it for filenames, so we never trust the uploader-supplied
+// `image.name` extension — that would let an attacker force a content-type
+// mismatch on the resulting public Blob URL.
+const MIME_TO_EXT = {
+  "image/jpeg": ".jpg",
+  "image/png": ".png",
+  "image/webp": ".webp",
+  "image/gif": ".gif",
+} as const;
+type AllowedImageMime = keyof typeof MIME_TO_EXT;
+const ALLOWED_IMAGE_MIMES = new Set<string>(Object.keys(MIME_TO_EXT));
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024; // 8MB
 
@@ -113,9 +124,7 @@ export async function POST(req: Request) {
 
   let imageUrl: string | null = null;
   try {
-    const ext = image.name?.includes(".")
-      ? image.name.slice(image.name.lastIndexOf("."))
-      : `.${image.type.split("/")[1] ?? "jpg"}`;
+    const ext = MIME_TO_EXT[image.type as AllowedImageMime];
     const filename = `${session.user.id}-${Date.now()}${ext}`;
     const result = await upload(buffer, filename, "meals", {
       maxSize: MAX_IMAGE_BYTES,

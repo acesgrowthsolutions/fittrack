@@ -40,15 +40,19 @@ interface DiagnosticsResponse {
   overallStatus: StatusLevel;
 }
 
-// This endpoint is intentionally public (no auth required) because it's used
-// by the setup checklist on the homepage before users are logged in.
-// Boolean flags stay public so the checklist works; detailed error strings
-// (which may include DB host info or driver internals) are only revealed to
-// signed-in users or when running outside production, to avoid leaking
-// reconnaissance signal to unauthenticated traffic in prod.
-export async function GET(req: Request) {
+// Public endpoint, but the cost surface is asymmetric: env flags are free,
+// DB pings cost a connection + 5s timeout window, and the route used to
+// self-fetch `/api/auth/session` which doubled invocations per call. An
+// unauthenticated attacker hitting this in a loop was a real DoS amplification
+// vector (separate 5s timer per request, separate session-route invocation).
+//
+// Fix: anyone can read env-flag booleans (enough for an ops smoke test), but
+// the live DB ping is gated behind a signed-in session, and the self-fetch is
+// gone — `auth.routeResponding` is now derived statically from env config.
+export async function GET(_req: Request) {
   const session = await auth.api.getSession({ headers: await headers() }).catch(() => null);
   const includeDetails = !!session || process.env.NODE_ENV !== "production";
+  const runLiveChecks = !!session || process.env.NODE_ENV !== "production";
 
   const env = {
     POSTGRES_URL: Boolean(process.env.POSTGRES_URL),
@@ -61,11 +65,16 @@ export async function GET(req: Request) {
     EMAIL_FROM: Boolean(process.env.EMAIL_FROM),
   } as const;
 
-  // Database checks with timeout
+  // Database checks with timeout. Skipped for unauthenticated callers in
+  // production so a public hit does not trigger a DB connection + 5s timer.
   let dbConnected = false;
   let schemaApplied = false;
   let dbError: string | undefined;
-  if (env.POSTGRES_URL) {
+  if (!runLiveChecks) {
+    // Unauth in prod: report based on whether the URL is even set; do not
+    // attempt a connection.
+    dbError = env.POSTGRES_URL ? "Sign in to run live database check" : "POSTGRES_URL is not set";
+  } else if (env.POSTGRES_URL) {
     try {
       // Add timeout to prevent hanging on unreachable database
       const dbCheckPromise = (async () => {
@@ -127,29 +136,13 @@ export async function GET(req: Request) {
     dbError = "POSTGRES_URL is not set";
   }
 
-  // Auth route check: we consider the route responding if it returns any HTTP response
-  // for /api/auth/session (status codes in the 2xx-4xx range are acceptable for readiness)
-  const origin = (() => {
-    try {
-      return new URL(req.url).origin;
-    } catch {
-      return process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-    }
-  })();
-
-  let authRouteResponding: boolean | null = null;
-  try {
-    const res = await fetch(`${origin}/api/auth/session`, {
-      method: "GET",
-      headers: { Accept: "application/json" },
-      cache: "no-store",
-    });
-    authRouteResponding = res.status >= 200 && res.status < 500;
-  } catch {
-    authRouteResponding = false;
-  }
-
   const authConfigured = env.BETTER_AUTH_SECRET;
+  // Auth route readiness was previously verified by self-fetching
+  // /api/auth/session per request. That doubled the invocation count per
+  // diagnostics call and added no information beyond "is BETTER_AUTH_SECRET
+  // set" — the route is mounted statically by Better Auth and only fails to
+  // respond when auth itself is misconfigured. Derive from config instead.
+  const authRouteResponding: boolean | null = authConfigured ? true : null;
   const aiConfigured = env.OPENROUTER_API_KEY; // We avoid live-calling the AI provider here
 
   // Email config: in production, missing RESEND_API_KEY means password-reset
