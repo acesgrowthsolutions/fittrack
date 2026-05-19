@@ -1,19 +1,30 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Footprints, Flame, Dumbbell, Plus, Zap, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { UserProfile } from "@/components/auth/user-profile";
 import { ActivityRing } from "@/components/fitness/activity-ring";
-import { CalorieChart } from "@/components/fitness/calorie-chart";
 import { GoalCard } from "@/components/fitness/goal-card";
 import { LifetimeTracker } from "@/components/fitness/lifetime-tracker";
 import { StatCard } from "@/components/fitness/stat-card";
-import { WeeklyChart } from "@/components/fitness/weekly-chart";
 import { WorkoutCard } from "@/components/fitness/workout-card";
 import { WorkoutForm } from "@/components/fitness/workout-form";
+// recharts is ~95KB gzipped and only renders below-the-fold charts. Loading it
+// eagerly blocked dashboard hydration (and the FAB button) for hundreds of ms
+// on mid-tier mobile. Lazy-load both charts and render a skeleton in place.
+// ssr: false is safe — the parent page is already a Client Component.
+const WeeklyChart = dynamic(
+  () => import("@/components/fitness/weekly-chart").then((m) => m.WeeklyChart),
+  { ssr: false, loading: () => <Skeleton className="h-72" /> }
+);
+const CalorieChart = dynamic(
+  () => import("@/components/fitness/calorie-chart").then((m) => m.CalorieChart),
+  { ssr: false, loading: () => <Skeleton className="h-72" /> }
+);
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -60,7 +71,15 @@ interface SummaryData {
     daysRemaining: number | null;
   }>;
   weeklyStats: Array<{ date: string; steps: number; caloriesBurned: number }>;
-  profile: { dailyStepGoal: number; dailyCalorieGoal: number } | null;
+  // The summary route returns the full userProfile row, so weight +
+  // preferredUnits are available here too — no need for a separate
+  // /api/fitness/profile fetch on the dashboard.
+  profile: {
+    dailyStepGoal: number;
+    dailyCalorieGoal: number;
+    weight: string | null;
+    preferredUnits: string | null;
+  } | null;
 }
 
 function getGreeting(): string {
@@ -96,7 +115,6 @@ export default function DashboardPage() {
   const [summary, setSummary] = useState<SummaryData | null>(null);
   const [loading, setLoading] = useState(true);
   const [workoutDialogOpen, setWorkoutDialogOpen] = useState(false);
-  const [userWeightKg, setUserWeightKg] = useState<number | null>(null);
 
   const fetchSummary = useCallback(async () => {
     try {
@@ -114,29 +132,11 @@ export default function DashboardPage() {
     }
   }, []);
 
-  const fetchProfile = useCallback(async () => {
-    try {
-      const res = await fetch("/api/fitness/profile");
-      if (!res.ok) return;
-      const profile = await res.json();
-      if (profile?.weight) {
-        const raw = parseFloat(profile.weight);
-        if (!isNaN(raw) && raw > 0) {
-          const kg = profile.preferredUnits === "imperial" ? raw * 0.453592 : raw;
-          setUserWeightKg(kg);
-        }
-      }
-    } catch {
-      // Best-effort; auto-calculation simply won't activate
-    }
-  }, []);
-
   useEffect(() => {
     if (session) {
       fetchSummary();
-      fetchProfile();
     }
-  }, [session, fetchSummary, fetchProfile]);
+  }, [session, fetchSummary]);
 
   // Refresh whenever the user returns to the tab/window so stats stay current
   // after logging a workout on another page or coming back from another app.
@@ -189,6 +189,13 @@ export default function DashboardPage() {
 
   const stepGoal = summary.profile?.dailyStepGoal ?? 10000;
   const calorieGoal = summary.profile?.dailyCalorieGoal ?? 2000;
+  // Derive from the same summary payload instead of issuing a second
+  // /api/fitness/profile request just for these two fields.
+  const userWeightKg: number | null = (() => {
+    const raw = summary.profile?.weight ? parseFloat(summary.profile.weight) : NaN;
+    if (!isFinite(raw) || raw <= 0) return null;
+    return summary.profile?.preferredUnits === "imperial" ? raw * 0.453592 : raw;
+  })();
   const stepsPercent = Math.min((summary.today.steps / stepGoal) * 100, 100);
   const caloriesPercent = Math.min((summary.today.caloriesBurned / calorieGoal) * 100, 100);
   // Use 60 active minutes as a reasonable daily goal
