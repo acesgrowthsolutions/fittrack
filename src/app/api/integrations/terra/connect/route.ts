@@ -7,7 +7,7 @@ import { generateWidgetSession, getTerraConfig } from "@/lib/terra";
 // wearables can pick one without us re-deploying.
 const DEFAULT_PROVIDERS = ["APPLE", "GOOGLE", "FITBIT", "GARMIN", "OURA", "WHOOP"];
 
-export async function POST(req: Request) {
+export async function POST(_req: Request) {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session) {
@@ -19,15 +19,28 @@ export async function POST(req: Request) {
       return Response.json({ error: "Terra integration is not configured" }, { status: 503 });
     }
 
-    // Build redirect URLs from the request origin so this works on preview
-    // deployments and localhost without per-env config. Falls back to
-    // NEXT_PUBLIC_APP_URL if the request URL isn't parseable for any reason.
-    let origin: string;
-    try {
-      origin = new URL(req.url).origin;
-    } catch {
-      origin = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-    }
+    // Pick a trusted origin for the post-auth redirect that the user lands on
+    // when coming back from Terra. The previous implementation derived this
+    // from `new URL(req.url).origin`, which on Vercel reflects whichever Host
+    // header reached the function — an attacker could swap that for an
+    // arbitrary host via header injection and turn the success/failure URLs
+    // into an open redirect.
+    //
+    // Resolution order, all values are set by the platform or by config
+    // (never by request headers):
+    //   1. VERCEL_PROJECT_PRODUCTION_URL — the canonical prod URL of this
+    //      project. Same value across every deployment, including previews,
+    //      so users sent through Terra come back to prod regardless of which
+    //      preview they started from. Acceptable trade-off because Terra
+    //      callback URLs must be allow-listed in Terra's dashboard anyway,
+    //      and trying to allow every preview URL there is impractical.
+    //   2. NEXT_PUBLIC_APP_URL — explicit override for self-hosting.
+    //   3. localhost — dev only.
+    const origin = (() => {
+      const prodHost = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+      if (prodHost) return `https://${prodHost}`;
+      return process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+    })();
 
     const result = await generateWidgetSession({
       config,

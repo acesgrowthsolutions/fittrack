@@ -152,10 +152,19 @@ export async function upload(
   const hasVercelBlob = Boolean(process.env.BLOB_READ_WRITE_TOKEN);
 
   if (hasVercelBlob) {
-    // Use Vercel Blob storage
+    // Use Vercel Blob storage.
+    //
+    // addRandomSuffix: @vercel/blob >= 2.x defaults this to false, which means
+    // two requests in the same millisecond (a double-click, a Terra retry, a
+    // burst of meal saves) hit the same pathname and the second `put` throws.
+    // The caller has typically just paid for an AI vision call by that point.
+    // The random suffix is appended to the pathname, not the public URL prefix,
+    // and we always store the returned `blob.url` so collisions never silently
+    // overwrite a previous upload either.
     const pathname = folder ? `${folder}/${sanitizedFilename}` : sanitizedFilename;
     const blob = await put(pathname, buffer, {
       access: "public",
+      addRandomSuffix: true,
     });
 
     return {
