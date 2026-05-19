@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -115,8 +115,17 @@ export default function DashboardPage() {
   const [summary, setSummary] = useState<SummaryData | null>(null);
   const [loading, setLoading] = useState(true);
   const [workoutDialogOpen, setWorkoutDialogOpen] = useState(false);
+  // Tracks the last time we hit /api/fitness/summary so the focus/visibility
+  // listeners can skip the call when the data is already fresh. Without this,
+  // every alt-tab back to the dashboard triggered a 9-query summary refetch.
+  const lastFetchRef = useRef<number>(0);
+  const REFETCH_THROTTLE_MS = 60_000;
 
-  const fetchSummary = useCallback(async () => {
+  const fetchSummary = useCallback(async (opts?: { force?: boolean }) => {
+    if (!opts?.force && Date.now() - lastFetchRef.current < REFETCH_THROTTLE_MS) {
+      return;
+    }
+    lastFetchRef.current = Date.now();
     try {
       const res = await fetch("/api/fitness/summary");
       if (res.status === 401) {
@@ -134,27 +143,29 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (session) {
-      fetchSummary();
+      // First load always runs — throttle only gates background refreshes.
+      fetchSummary({ force: true });
     }
   }, [session, fetchSummary]);
 
   // Refresh whenever the user returns to the tab/window so stats stay current
   // after logging a workout on another page or coming back from another app.
+  // Throttled inside fetchSummary so a user alt-tabbing repeatedly doesn't
+  // hammer the summary endpoint (which runs 9 DB queries).
   useEffect(() => {
     if (!session) return;
 
+    const refresh = () => fetchSummary();
     const handleVisibility = () => {
-      if (document.visibilityState === "visible") {
-        fetchSummary();
-      }
+      if (document.visibilityState === "visible") refresh();
     };
 
     document.addEventListener("visibilitychange", handleVisibility);
-    window.addEventListener("focus", fetchSummary);
+    window.addEventListener("focus", refresh);
 
     return () => {
       document.removeEventListener("visibilitychange", handleVisibility);
-      window.removeEventListener("focus", fetchSummary);
+      window.removeEventListener("focus", refresh);
     };
   }, [session, fetchSummary]);
 
@@ -399,7 +410,9 @@ export default function DashboardPage() {
             userWeightKg={userWeightKg}
             onSuccess={() => {
               setWorkoutDialogOpen(false);
-              fetchSummary();
+              // Just logged a workout — bypass the throttle so the new entry
+              // shows up in the dashboard rings/lists immediately.
+              fetchSummary({ force: true });
             }}
           />
         </DialogContent>

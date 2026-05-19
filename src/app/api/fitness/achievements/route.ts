@@ -17,24 +17,14 @@ export async function GET() {
 
     const userId = session.user.id;
 
-    // Lazy backfill: award any badges the user newly qualifies for before we
-    // read. Catches users who already met the criteria for a badge before
-    // that badge existed in BADGE_DEFINITIONS (e.g. the 10 added in a later
-    // release) — without this, those users would never see them awarded
-    // because checkAchievements otherwise only runs after a mutating event
-    // (workout/steps log). Safe on every visit: the unique index +
-    // onConflictDoNothing inside checkAchievements make it idempotent.
-    // userTz threads through so time-of-day badges (early_bird, night_owl)
-    // are evaluated in the user's local hours during the lazy backfill,
-    // not in Vercel's UTC.
-    await checkAchievements(userId, await getUserTz()).catch((err) => {
-      console.error("Lazy checkAchievements failed for", userId, err);
-    });
-
-    // Pull earned achievements plus the raw inputs needed to compute progress
-    // toward un-earned ones, all in parallel. Same set checkAchievements()
-    // already reads, so no extra round-trip vs the previous behavior.
-    const [earned, userWorkouts, userStats] = await Promise.all([
+    // Load earned achievements + the raw inputs needed for both the lazy
+    // backfill below AND the per-badge progress bars. Previously the lazy
+    // checkAchievements() call did its own internal workouts+stats scan,
+    // and then this Promise.all repeated the same two queries — a full
+    // double-scan of the user's history on every /achievements visit. By
+    // loading once here and passing the rows into checkAchievements as
+    // `preloaded`, we cut that page's DB cost roughly in half.
+    const [earnedInitial, userWorkouts, userStats] = await Promise.all([
       db
         .select()
         .from(achievements)
@@ -43,6 +33,33 @@ export async function GET() {
       db.select().from(workouts).where(eq(workouts.userId, userId)),
       db.select().from(dailyStats).where(eq(dailyStats.userId, userId)),
     ]);
+
+    // Lazy backfill: award any badges the user newly qualifies for before we
+    // read. Catches users who already met the criteria for a badge before
+    // that badge existed in BADGE_DEFINITIONS (e.g. the 10 added in a later
+    // release) — without this, those users would never see them awarded
+    // because checkAchievements otherwise only runs after a mutating event
+    // (workout/steps log). Safe on every visit: the unique index +
+    // onConflictDoNothing inside checkAchievements make it idempotent.
+    const newBadges = await checkAchievements(userId, await getUserTz(), {
+      workouts: userWorkouts,
+      stats: userStats,
+    }).catch((err) => {
+      console.error("Lazy checkAchievements failed for", userId, err);
+      return [] as Awaited<ReturnType<typeof checkAchievements>>;
+    });
+
+    // Only re-query the achievements table when the backfill actually inserted
+    // something — the common case (returning visit, no new badges fired) skips
+    // the extra round-trip entirely.
+    const earned =
+      newBadges.length > 0
+        ? await db
+            .select()
+            .from(achievements)
+            .where(eq(achievements.userId, userId))
+            .orderBy(desc(achievements.earnedAt))
+        : earnedInitial;
 
     const progress = computeAllProgress(userWorkouts, userStats);
 
