@@ -1,43 +1,15 @@
 import { headers } from "next/headers";
-import { eq, and, gte, desc, lte, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
-import { addDays, daysBetween, mondayOf, todayInTz } from "@/lib/date-tz";
-import { db } from "@/lib/db";
-import { dailyStats, workouts, goals, userProfile } from "@/lib/schema";
+import { getSummary } from "@/lib/fitness/get-summary";
 import { getUserTz } from "@/lib/user-tz";
 
 /**
- * Calculate the user's current step streak: consecutive days (ending today
- * or yesterday in the user's timezone) that have step data > 0.
+ * Thin wrapper around the shared getSummary helper in
+ * lib/fitness/get-summary. The dashboard Server Component calls the helper
+ * directly to avoid an HTTP self-fetch — this route is kept for any other
+ * consumers (mobile app, scripts, future widgets) and as a stable JSON
+ * contract.
  */
-function calculateStreak(stats: { date: string; steps: number }[], today: string): number {
-  if (stats.length === 0) return 0;
-
-  // Sort by date descending so the most recent day is first
-  const sorted = [...stats].sort((a, b) => (a.date < b.date ? 1 : -1));
-
-  const yesterday = addDays(today, -1);
-  const first = sorted[0];
-  if (!first) return 0;
-
-  // Streak must start from today or yesterday
-  if (first.date !== today && first.date !== yesterday) {
-    return 0;
-  }
-
-  let streak = 0;
-  let expected = first.date;
-
-  for (const stat of sorted) {
-    if (stat.date !== expected) break;
-    if (stat.steps <= 0) break;
-    streak += 1;
-    expected = addDays(expected, -1);
-  }
-
-  return streak;
-}
-
 export async function GET() {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
@@ -45,179 +17,8 @@ export async function GET() {
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userId = session.user.id;
-    const tz = await getUserTz();
-    const today = todayInTz(tz);
-    const weekAgo = addDays(today, -7);
-    const monthAgo = addDays(today, -30);
-    const mondayStr = mondayOf(today);
-
-    // Run all independent queries in parallel
-    const [
-      todayStatsResult,
-      todayWorkoutTotalsResult,
-      recentStats,
-      weeklyStats,
-      weekWorkouts,
-      recentWorkouts,
-      activeGoals,
-      profileResult,
-      weeklyWorkoutCaloriesByDate,
-    ] = await Promise.all([
-      // Fetch today's stats
-      db
-        .select()
-        .from(dailyStats)
-        .where(and(eq(dailyStats.userId, userId), eq(dailyStats.date, today)))
-        .limit(1),
-
-      // Aggregate today's workouts (calories, minutes, distance) so the
-      // dashboard rings reflect logged workouts, not just step-based stats.
-      db
-        .select({
-          calories: sql<number>`COALESCE(SUM(${workouts.caloriesBurned}), 0)::int`,
-          minutes: sql<number>`COALESCE(SUM(${workouts.durationMinutes}), 0)::int`,
-          distanceKm: sql<string>`COALESCE(SUM(${workouts.distanceKm}), 0)::text`,
-        })
-        .from(workouts)
-        .where(and(eq(workouts.userId, userId), eq(workouts.workoutDate, today))),
-
-      // Fetch last 30 days of stats for streak calculation
-      db
-        .select()
-        .from(dailyStats)
-        .where(and(eq(dailyStats.userId, userId), gte(dailyStats.date, monthAgo)))
-        .orderBy(desc(dailyStats.date)),
-
-      // Fetch last 7 days of stats for weekly chart
-      db
-        .select()
-        .from(dailyStats)
-        .where(and(eq(dailyStats.userId, userId), gte(dailyStats.date, weekAgo)))
-        .orderBy(dailyStats.date),
-
-      // Fetch this week's workouts (since Monday)
-      db
-        .select()
-        .from(workouts)
-        .where(
-          and(
-            eq(workouts.userId, userId),
-            gte(workouts.workoutDate, mondayStr),
-            lte(workouts.workoutDate, today)
-          )
-        ),
-
-      // Fetch recent 5 workouts
-      db
-        .select()
-        .from(workouts)
-        .where(eq(workouts.userId, userId))
-        .orderBy(desc(workouts.workoutDate), desc(workouts.createdAt))
-        .limit(5),
-
-      // Fetch active (incomplete) goals
-      db
-        .select()
-        .from(goals)
-        .where(and(eq(goals.userId, userId), eq(goals.completed, false)))
-        .orderBy(desc(goals.createdAt)),
-
-      // Fetch user profile for step goal
-      db.select().from(userProfile).where(eq(userProfile.userId, userId)).limit(1),
-
-      // Aggregate workout calories per day over the last 7 days. Merged into
-      // weeklyStats below so the calorie chart reflects steps + workouts,
-      // matching the "Today" tile which already combines both sources.
-      db
-        .select({
-          date: workouts.workoutDate,
-          calories: sql<number>`COALESCE(SUM(${workouts.caloriesBurned}), 0)::int`,
-        })
-        .from(workouts)
-        .where(
-          and(
-            eq(workouts.userId, userId),
-            gte(workouts.workoutDate, weekAgo),
-            lte(workouts.workoutDate, today)
-          )
-        )
-        .groupBy(workouts.workoutDate),
-    ]);
-
-    const todayStats = todayStatsResult[0];
-    const profile = profileResult[0];
-    const workoutTotals = todayWorkoutTotalsResult[0] ?? {
-      calories: 0,
-      minutes: 0,
-      distanceKm: "0",
-    };
-
-    // Step-based stats live in daily_stats; workout stats live in workouts.
-    // Combine both so today's rings reflect total daily activity.
-    const baseSteps = todayStats?.steps ?? 0;
-    const baseCalories = todayStats?.caloriesBurned ?? 0;
-    const baseMinutes = todayStats?.activeMinutes ?? 0;
-    const baseDistance = todayStats ? parseFloat(todayStats.distanceKm) : 0;
-    const workoutDistance = parseFloat(workoutTotals.distanceKm) || 0;
-
-    const todayCombined = {
-      date: today,
-      steps: baseSteps,
-      distanceKm: (baseDistance + workoutDistance).toString(),
-      caloriesBurned: baseCalories + workoutTotals.calories,
-      activeMinutes: baseMinutes + workoutTotals.minutes,
-    };
-
-    // Merge workout calories into the weekly stats so the calorie chart
-    // shows total daily energy expenditure. Days with only a workout
-    // (no daily_stats row) get a synthetic zero-step entry.
-    const workoutCaloriesByDate = new Map(
-      weeklyWorkoutCaloriesByDate.map((r) => [r.date, r.calories])
-    );
-    const dailyByDate = new Map(weeklyStats.map((s) => [s.date, s]));
-    const allWeekDates = new Set<string>([...dailyByDate.keys(), ...workoutCaloriesByDate.keys()]);
-    const enrichedWeeklyStats = Array.from(allWeekDates)
-      .sort()
-      .map((date) => {
-        const row = dailyByDate.get(date);
-        const workoutCals = workoutCaloriesByDate.get(date) ?? 0;
-        return {
-          date,
-          steps: row?.steps ?? 0,
-          distanceKm: row?.distanceKm ?? "0",
-          caloriesBurned: (row?.caloriesBurned ?? 0) + workoutCals,
-          activeMinutes: row?.activeMinutes ?? 0,
-        };
-      });
-
-    // Calculate streak
-    const streak = calculateStreak(recentStats, today);
-
-    // Calculate goal progress percentages
-    const goalsWithProgress = activeGoals.map((goal) => {
-      const target = parseFloat(goal.targetValue);
-      const current = parseFloat(goal.currentValue);
-      const progress = target > 0 ? Math.min((current / target) * 100, 100) : 0;
-
-      // Compute in the user's tz: parsing endDate via `new Date(...)` treats
-      // it as UTC midnight, so a PT user with an endDate of "today" would see
-      // "1 day remaining" until 5pm local. Both dates are now YYYY-MM-DD
-      // calendar strings in the same tz.
-      const daysRemaining = goal.endDate ? Math.max(0, daysBetween(today, goal.endDate)) : null;
-
-      return { ...goal, progress, daysRemaining };
-    });
-
-    return Response.json({
-      today: todayCombined,
-      streak,
-      weeklyWorkoutCount: weekWorkouts.length,
-      recentWorkouts,
-      activeGoals: goalsWithProgress,
-      weeklyStats: enrichedWeeklyStats,
-      profile: profile ?? null,
-    });
+    const summary = await getSummary(session.user.id, await getUserTz());
+    return Response.json(summary);
   } catch (error) {
     console.error("Error fetching summary:", error);
     return Response.json({ error: "Failed to fetch summary" }, { status: 500 });
