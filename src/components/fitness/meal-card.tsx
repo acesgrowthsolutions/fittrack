@@ -55,7 +55,6 @@ export function MealCard({ meal, onDelete }: MealCardProps) {
                 fill
                 sizes="128px"
                 className="object-cover"
-                unoptimized
               />
             </div>
           )}

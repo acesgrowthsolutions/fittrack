@@ -2,8 +2,11 @@ import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Enable standalone output for Docker
-  output: "standalone",
+  // No `output: "standalone"` — that's a Docker-only build mode that traces
+  // and copies node_modules into a self-contained server. On Vercel it adds
+  // 30–90s to every deploy (preview and prod) for zero runtime benefit, since
+  // Vercel does its own tracing. Re-enable only if/when we ship a Docker image
+  // alongside Vercel.
   // Image optimization configuration
   images: {
     remotePatterns: [
