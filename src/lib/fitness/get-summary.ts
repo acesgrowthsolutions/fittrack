@@ -221,12 +221,28 @@ export async function getSummary(userId: string, tz: string): Promise<Summary> {
 
   const streak = calculateStreak(recentStats, today);
 
+  // Explicit field pick — the goal row carries userId, createdAt, updatedAt
+  // that the dashboard doesn't render. Spreading the row would ship those
+  // fields across the RSC→Client serialization boundary and into the page's
+  // network payload. List the SummaryGoal fields exactly so the boundary
+  // stays narrow.
   const goalsWithProgress: SummaryGoal[] = activeGoals.map((goal) => {
     const target = parseFloat(goal.targetValue);
     const current = parseFloat(goal.currentValue);
     const progress = target > 0 ? Math.min((current / target) * 100, 100) : 0;
     const daysRemaining = goal.endDate ? Math.max(0, daysBetween(today, goal.endDate)) : null;
-    return { ...goal, progress, daysRemaining };
+    return {
+      id: goal.id,
+      type: goal.type,
+      targetValue: goal.targetValue,
+      currentValue: goal.currentValue,
+      unit: goal.unit,
+      startDate: goal.startDate,
+      endDate: goal.endDate,
+      completed: goal.completed,
+      progress,
+      daysRemaining,
+    };
   });
 
   const profileShape: SummaryProfile | null = profile

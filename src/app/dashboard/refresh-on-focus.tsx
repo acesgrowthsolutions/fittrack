@@ -14,13 +14,18 @@ const REFETCH_THROTTLE_MS = 60_000;
 export function RefreshOnFocus() {
   const router = useRouter();
   // Initialized to 0 — Date.now() can't run during render (react-hooks/purity).
-  // The mount effect below seeds it with the actual current time so the very
-  // first focus event after mount is still throttled (data is fresh from the
-  // server render that just rendered us).
+  // The mount effect below seeds it with the actual current time so the
+  // first focus event after mount is still throttled. Re-seeding has to be
+  // gated: the effect re-runs every time `router` changes identity (which
+  // happens on every router.refresh()), so an unguarded `lastRefreshRef =
+  // Date.now()` would push the throttle window forward and effectively
+  // double it. Only seed on the true initial mount.
   const lastRefreshRef = useRef<number>(0);
 
   useEffect(() => {
-    lastRefreshRef.current = Date.now();
+    if (lastRefreshRef.current === 0) {
+      lastRefreshRef.current = Date.now();
+    }
 
     const refresh = () => {
       if (Date.now() - lastRefreshRef.current < REFETCH_THROTTLE_MS) return;
