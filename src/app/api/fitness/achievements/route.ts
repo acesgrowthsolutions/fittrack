@@ -60,8 +60,7 @@ export async function GET() {
     // safely serve the snapshot. For everyone else, pay one indexed select
     // to guarantee they don't see a stale list after a workout/Terra-sync
     // racing with the page load.
-    const possiblyStale =
-      newBadges.length > 0 || earnedInitial.length < BADGE_DEFINITIONS.length;
+    const possiblyStale = newBadges.length > 0 || earnedInitial.length < BADGE_DEFINITIONS.length;
     const earned = possiblyStale
       ? await db
           .select()
